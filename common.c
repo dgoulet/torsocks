@@ -15,6 +15,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 
 /* Globals */
@@ -37,7 +38,7 @@ unsigned int resolve_ip(char *host, int showmsg, int allownames) {
 			#ifdef HAVE_GETHOSTBYNAME
 			if ((new = gethostbyname(host)) == (struct hostent *) 0) {
 			#endif
-				return(-1);
+				return(0);
 			#ifdef HAVE_GETHOSTBYNAME
 			} else {
 				ip = ((struct in_addr *) * new->h_addr_list);
@@ -47,7 +48,7 @@ unsigned int resolve_ip(char *host, int showmsg, int allownames) {
 			}
 			#endif
 		} else
-			return(-1);
+			return(0);
 	}
 
 	return (hostaddr);
@@ -99,10 +100,10 @@ int count_netmask_bits(uint32_t mask)
     return nbits;
 }
 
-void show_msg(int level, char *fmt, ...) {
-	va_list ap;
-	int saveerr;
-	extern char *progname;
+void show_msg(int level, const char *fmt, ...) {
+   va_list ap;
+   int saveerr;
+/*   extern char *progname; */
    char timestring[20];
    time_t timestamp;
 
@@ -128,7 +129,7 @@ void show_msg(int level, char *fmt, ...) {
       fprintf(logfile, "%s ", timestring);
    }
 
-   // fputs(progname, logfile);
+   /* fputs(progname, logfile); */
 
    if (logstamp) {
       fprintf(logfile, "(%d)", getpid());
