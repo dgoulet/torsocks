@@ -16,7 +16,7 @@ typedef struct struct_pool_ent pool_ent;
 
 struct struct_dead_pool {
   pool_ent *entries;            /* Points to array of pool entries */
-  int n_entries;                /* Number of entries in the deadpool */
+  unsigned int n_entries;       /* Number of entries in the deadpool */
   unsigned int deadrange_base;  /* Deadrange start IP in host byte order */
   unsigned int deadrange_mask;  /* Deadrange netmask in host byte order */
   unsigned int deadrange_size;  /* Number of IPs in the deadrange */
@@ -29,7 +29,7 @@ struct struct_dead_pool {
 
 typedef struct struct_dead_pool dead_pool;
 
-dead_pool *init_pool(int deadpool_size, struct in_addr deadrange_base, 
+dead_pool *init_pool(unsigned int deadpool_size, struct in_addr deadrange_base, 
     struct in_addr deadrange_mask, char *sockshost, uint16_t socksport);
 int is_dead_address(dead_pool *pool, uint32_t addr);
 char *get_pool_entry(dead_pool *pool, struct in_addr *addr);

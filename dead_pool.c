@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -29,10 +30,11 @@ strcasecmpend(const char *s1, const char *s2)
 }
 
 dead_pool *
-init_pool(int pool_size, struct in_addr deadrange_base, 
+init_pool(unsigned int pool_size, struct in_addr deadrange_base, 
     struct in_addr deadrange_mask, char *sockshost, uint16_t socksport)
 {
-    int i, deadrange_bits, deadrange_width, deadrange_size;
+    unsigned int i, deadrange_size, deadrange_width;
+    int deadrange_bits;
     struct in_addr socks_server;
     dead_pool *newpool = NULL;
 
@@ -182,7 +184,7 @@ store_pool_entry(dead_pool *pool, char *hostname, struct in_addr *addr)
 int 
 search_pool_for_name(dead_pool *pool, const char *name) 
 {
-  int i;
+  unsigned int i;
   for(i=0; i < pool->n_entries; i++){
     if(strcmp(name, pool->entries[i].name) == 0){
       return i;
@@ -194,7 +196,7 @@ search_pool_for_name(dead_pool *pool, const char *name)
 char *
 get_pool_entry(dead_pool *pool, struct in_addr *addr)
 {
-  int i;
+  unsigned int i;
   uint32_t intaddr = addr->s_addr;
 
   if(pool == NULL) {

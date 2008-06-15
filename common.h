@@ -1,7 +1,7 @@
 /* Common functions provided in common.c */
 
 void set_log_options(int, char *, int);
-void show_msg(int level, char *, ...);
+void show_msg(int level, const char *, ...);
 int count_netmask_bits(uint32_t mask);
 unsigned int resolve_ip(char *, int, int);
 
