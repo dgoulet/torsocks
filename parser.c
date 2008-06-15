@@ -24,15 +24,15 @@ static int handle_line(struct parsedfile *, char *, int);
 static int check_server(struct serverent *);
 static int tokenize(char *, int, char *[]);
 static int handle_path(struct parsedfile *, int, int, char *[]);
-static int handle_endpath(struct parsedfile *, int, int, char *[]);
-static int handle_reaches(struct parsedfile *, int, char *);
+static int handle_endpath(struct parsedfile *, int, int);
+static int handle_reaches(int, char *);
 static int handle_server(struct parsedfile *, int, char *);
 static int handle_type(struct parsedfile *config, int, char *);
 static int handle_port(struct parsedfile *config, int, char *);
-static int handle_local(struct parsedfile *, int, char *);
+static int handle_local(struct parsedfile *, int, const char *);
 static int handle_tordns_enabled(struct parsedfile *, int, char *);
-static int handle_tordns_deadpool_range(struct parsedfile *, int, char *);
-static int handle_tordns_cache_size(struct parsedfile *, int, char *);
+static int handle_tordns_deadpool_range(struct parsedfile *, int, const char *);
+static int handle_tordns_cache_size(struct parsedfile *, char *);
 static int handle_defuser(struct parsedfile *, int, char *);
 static int handle_defpass(struct parsedfile *, int, char *);
 static int make_netent(char *value, struct netent **ent);
@@ -54,6 +54,7 @@ int read_config (char *filename, struct parsedfile *config) {
    config->tordns_cache_size = 256;
    config->tordns_enabled = 1;
 
+
 	/* If a filename wasn't provided, use the default */
 	if (filename == NULL) {
 		strncpy(line, CONF_FILE, sizeof(line) - 1);
@@ -62,15 +63,19 @@ int read_config (char *filename, struct parsedfile *config) {
 		filename = line;
 	}
 
-	/* Read the configuration file */
+	/* If there is no configuration file use reasonable defaults for Tor */
 	if ((conf = fopen(filename, "r")) == NULL) {
 		show_msg(MSGERR, "Could not open socks configuration file "
 			   "(%s), assuming all networks local\n", filename);
-        handle_local(config, 0, "0.0.0.0/0.0.0.0");
+        memset(&(config->defaultserver), 0x0, sizeof(config->defaultserver));
+		check_server(&(config->defaultserver));
+		handle_local(config, 0, "127.0.0.0/255.0.0.0");
+/*        handle_local(config, 0, "0.0.0.0/0.0.0.0");*/
 		rc = 1; /* Severe errors reading configuration */
 	}	
 	else {
-      memset(&(config->defaultserver), 0x0, sizeof(config->defaultserver));
+
+        memset(&(config->defaultserver), 0x0, sizeof(config->defaultserver));
 
 		while (NULL != fgets(line, MAXLINE, conf)) {
 			/* This line _SHOULD_ end in \n so we  */
@@ -82,11 +87,8 @@ int read_config (char *filename, struct parsedfile *config) {
 		} 
 		fclose(conf);
 
-		if (!config->localnets) {
-                        /* Use 127.0.0.1/255.0.0.0 by default */
-                        handle_local(config, 0, "127.0.0.0/255.0.0.0");
-                }
-
+		/* Always add the 127.0.0.1/255.0.0.0 subnet to local */
+		handle_local(config, 0, "127.0.0.0/255.0.0.0");
 
 		/* Check default server */
 		check_server(&(config->defaultserver));
@@ -108,9 +110,14 @@ int read_config (char *filename, struct parsedfile *config) {
 /* Check server entries (and establish defaults) */
 static int check_server(struct serverent *server) {
 
-	/* Default to the default SOCKS port */
+	/* Default to the default Tor Socks port */
 	if (server->port == 0) {
-		server->port = 1080;
+		server->port = 9050;
+	}
+
+	/* Default to a presumably local installation of Tor */
+	if (server->address == NULL) {
+		server->address = strdup("127.0.0.1");
 	}
 
 	/* Default to SOCKS V4 */
@@ -137,7 +144,7 @@ static int handle_line(struct parsedfile *config, char *line, int lineno) {
 	/* Set the spare slots to an empty string to simplify */
 	/* processing                                         */
 	for (i = nowords; i < 10; i++) 
-		words[i] = "";
+		words[i] = NULL;
 
 	if (nowords > 0) {
 		/* Now this can either be a "path" block starter or */
@@ -146,7 +153,7 @@ static int handle_line(struct parsedfile *config, char *line, int lineno) {
 		if (!strcmp(words[0], "path")) {
 			handle_path(config, lineno, nowords, words);
 		} else if (!strcmp(words[0], "}")) {
-			handle_endpath(config, lineno, nowords, words);
+			handle_endpath(config, lineno, nowords);
 		} else {
 			/* Has to be a pair */
 			if ((nowords != 3) || (strcmp(words[1], "="))) {
@@ -154,7 +161,7 @@ static int handle_line(struct parsedfile *config, char *line, int lineno) {
 					   "on line %d in configuration "
 					   "file, \"%s\"\n", lineno, savedline);
 			} else if (!strcmp(words[0], "reaches")) {
-				handle_reaches(config, lineno, words[2]);
+				handle_reaches(lineno, words[2]);
 			} else if (!strcmp(words[0], "server")) {
 				handle_server(config, lineno, words[2]);
 			} else if (!strcmp(words[0], "server_port")) {
@@ -172,7 +179,7 @@ static int handle_line(struct parsedfile *config, char *line, int lineno) {
             } else if (!strcmp(words[0], "tordns_deadpool_range")) {
                 handle_tordns_deadpool_range(config, lineno, words[2]);
             } else if (!strcmp(words[0], "tordns_cache_size")) {
-                handle_tordns_cache_size(config, lineno, words[2]);
+                handle_tordns_cache_size(config, words[2]);
             } else {
 				show_msg(MSGERR, "Invalid pair type (%s) specified "
 					   "on line %d in configuration file, "
@@ -244,7 +251,7 @@ static int handle_path(struct parsedfile *config, int lineno, int nowords, char 
 	return(0);
 }
 
-static int handle_endpath(struct parsedfile *config, int lineno, int nowords, char *words[]) {
+static int handle_endpath(struct parsedfile *config, int lineno, int nowords) {
 
 	if (nowords != 1) {
 		show_msg(MSGERR, "Badly formed path close statement on line "
@@ -261,7 +268,7 @@ static int handle_endpath(struct parsedfile *config, int lineno, int nowords, ch
 	return(0);
 }
 
-static int handle_reaches(struct parsedfile *config, int lineno, char *value) {
+static int handle_reaches(int lineno, char *value) {
 	int rc;
 	struct netent *ent;
 
@@ -465,7 +472,7 @@ static int handle_tordns_enabled(struct parsedfile *config, int lineno,
     return 0;
 }
 
-static int handle_tordns_cache_size(struct parsedfile *config, int lineno,
+static int handle_tordns_cache_size(struct parsedfile *config,
                            char *value)
 {
     char *endptr;
@@ -489,7 +496,7 @@ static int handle_tordns_cache_size(struct parsedfile *config, int lineno,
 }
 
 static int handle_tordns_deadpool_range(struct parsedfile *config, int lineno, 
-                           char *value)
+                           const char *value)
 {
     int rc;
     struct netent *ent;
@@ -508,7 +515,7 @@ static int handle_tordns_deadpool_range(struct parsedfile *config, int lineno,
         return(0);
     }
 
-    rc = make_netent(value, &ent);
+    rc = make_netent((char *)value, &ent);
     /* This is copied from handle_local and should probably be folded into
        a generic whinge() function or something */
     switch(rc) {
@@ -559,7 +566,7 @@ static int handle_tordns_deadpool_range(struct parsedfile *config, int lineno,
     return 0;
 }
 
-static int handle_local(struct parsedfile *config, int lineno, char *value) {
+static int handle_local(struct parsedfile *config, int lineno, const char *value) {
 	int rc;
 	struct netent *ent;
 
@@ -571,7 +578,7 @@ static int handle_local(struct parsedfile *config, int lineno, char *value) {
 		return(0);
 	}
 
-	rc = make_netent(value, &ent);
+	rc = make_netent((char *)value, &ent);
 	switch(rc) {
 		case 1:
 			show_msg(MSGERR, "Local network specification (%s) is not validly "
@@ -777,7 +784,7 @@ int pick_server(struct parsedfile *config, struct serverent **ent,
 /* standard strsep and this function is that this one will          */
 /* set *separator to the character separator found if it isn't null */
 char *strsplit(char *separator, char **text, const char *search) {
-   int len;
+   unsigned int len;
    char *ret;
 
    ret = *text;
