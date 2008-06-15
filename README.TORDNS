@@ -1,0 +1,187 @@
+
+TORDNS
+======
+
+What is it?
+-----------
+
+This patch modifies the tsocks library to use SOCKS for name resolution.
+
+
+Why should I use it?
+--------------------
+
+* It's easier.
+
+When using this patch you don't (always..) need to run 'tor-resolve' when 
+using 'torify' anymore.  Also, 'torify' now works directly with SSH without 
+the need for connect scripts or other fiddling. [As long as SSH is not 
+installed suid root].
+
+* It allows you to use programs which are not SOCKS aware to connect to 
+.onion sites. 
+
+For example, you can ssh directly to a .onion site, or use telnet / netcat
+without hassle.  
+
+
+QUICK: what do I need to do to make it work?
+--------------------------------------------
+
+Configuration instructions:
+
+1) Get the sources
+
+wget http://ftp1.sourceforge.net/tsocks/tsocks-1.8beta5.tar.gz
+wget http://www.totalinfosecurity.com/patches/tor-tsocks/tordns-1.8b5.patch
+
+2) Unpack and apply the tsocks patch
+
+tar xzvf tsocks-1.8beta5.tar.gz
+cd tsocks-1.8
+patch -p1 < ../tordns-1.8b5.patch
+
+3) Configure, compile and install
+
+NOTE: The default 'configure' settings for tsocks have been changed by 
+this patch.  The --disable-hostnames option (don't try to use DNS to look
+up SOCKS servers) is now enabled by default.  Also, tordns is enabled 
+by default.
+
+./configure 
+make 
+make install 
+
+All the tordns config options have sane default values which you should
+not need to change.  
+
+
+Why did I need to use 'tor-resolve' with 'torify' in the first place?
+---------------------------------------------------------------------
+
+Because if you run "torify telnet bar.foo.com 31337", for example, then 
+you're leaking information about what sites you're visiting to DNS servers.  
+
+The tor-resolve utility resolves names through tor using SOCKS, in a way
+that shouldn't compromise your privacy.
+
+
+What won't work with this?
+--------------------------
+
+The 'tordns' feature for tsocks only works with applications using the 
+standard c library name lookup mechanisms.
+
+Some programs roll their own name lookup functions, for example, 'curl' 
+uses the 'adns' library, not the standard c library name lookup calls.  
+In this case, you'll still be leaking DNS requests.
+
+However, it seems that most programs which go to the trouble of implementing 
+asynchronous DNS requests or doing other tricky things have native SOCKS or
+HTTP proxy support.  
+
+Requests for reverse name lookups are not intercepted.
+
+Finally, the tsocks library is NOT thread-safe, with or without this patch.
+You should not 'torify' multithreaded applications.
+
+
+How does it work?
+-----------------
+
+This patch adds interceptors for common name resolution calls to tsocks.  
+Specifically, the 'gethostbyname', 'getaddrinfo' and 'getipnodebyname' library 
+functions. (gethostbyname_r is not supported).
+
+When a call to one of these functions is intercepted, a SOCKS4A resolve 
+request is used to retrieve the relevant information, and the results are
+cached. 
+
+When the application calls 'connect', the cache is consulted and instead
+of making a SOCKS5 request and supplying the IP address, we connect using 
+the name.  This prevents those messages in the tor logs which look like:
+
+  Sep 23 10:12:20.901 [warn] fetch_from_buf_socks(): Your application (using s
+  ocks5 on port 80) is giving Tor only an IP address. Applications that do DNS
+  resolves themselves may leak information. Consider using Socks4A (e.g. via
+  privoxy or socat) instead.
+
+There are special provisions for handling .onion sites.  When a program asks
+to resolve a name ending in '.onion', no name lookup is performed.  A bogus IP 
+address is returned. The range of unused IP addresses to hand out is called the 
+"deadpool".  This IP address doesn't mean anything in particular, and could be 
+considered a cookie associated with the name.  When the application eventually 
+calls 'connect' with this bogus IP, the cache is consulted and the result is a 
+SOCKS5 request which includes the name of the .onion site.
+
+The default deadpool range is '127.0.69.0/255.255.255.0'.  NOTE: if a resolve
+request results in an IP from the deadpool range then the response is rejected,
+and it appears to the application that the lookup failed.
+
+The lookup cache is kept in mmap'd memory and shared across fork() calls.
+This is because some programs perform name lookups in a child process and 
+then invoke 'connect' in the parent as a kind of "poor man's async DNS".  
+
+
+Advanced configuration options
+------------------------------
+
+The following options have been added to the tsocks configuration file:
+
+tordns_enable
+
+  The default value is 'true'.  If you set it to 'false', tsocks should work 
+  just like it did without the tordns patch.  
+
+  
+tordns_deadpool_range
+
+  The default value is '127.0.69.0/255.255.255.0'.  This specifies what range
+  of IP addresses will be handed to the application as "cookies" for .onion
+  names.  Of course, you should pick a block of addresses which you aren't 
+  going to ever need to actually connect to.    
+
+
+tordns_cache_size
+
+  This specifies the number of IP addresses looked up through socks to cache.
+  The default value is 256. The default value is 256.  Each entry consumes 260 
+  bytes of memory, so the default adds 66,560 bytes of overhead to each 
+  'torified' process. NOTE: if the number of IP addresses in 
+  tordns_deadpool_range is less than the value specified for tordns_cache_size, 
+  then the cache will be shrunk to fit the deadpool range. This is to prevent 
+  duplicate deadpool addresses from ever appearing in the cache.
+
+
+TODO
+----
+
+* Think about how local names get resolved.  Is it important?  For example,
+  if I 'telnet localhost' which using tordns, what should happen?  Should
+  we search through /etc/hosts ourselves or what?  
+  
+* What about the isc library calls like res_init and so on?  How widely are
+  they use?  Does this present a more elegant way to implement this stuff?
+
+* Perhaps intercept res_query etc and try to do something appropriate.
+
+* It should be possible to make this thread-safe with --enable-threads.
+
+* validateconf needs to be updated to understand (and show information about)
+  the tordns configuration options.
+
+* Perhaps intercept reverse name lookups?
+
+* In fact, one could modify tsocks further to play nicely with tor.  For 
+  example, you could prevent nonlocal UDP traffic from being sent at all,
+  and so on.
+
+
+******************************************************
+Questions or comments, please contact:
+Blair Strang (bls@totalinfosecurity.com)
+Caleb Anderson (caleb.anderson@totalinfosecurity.com)
+Carl Purvis (carl.purvis@totalinfosecurity.com)
+
+Total Information Security Ltd.
+http://www.totalinfosecurity.com/

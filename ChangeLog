@@ -1,0 +1,121 @@
+version 1.81 - 2006.11.17 ruben@ugr.es
+  Integrated and resolved the conflicts for the following
+  patches:
+    -DNS from totalinfosecurity mentioned below
+    -Infinite Loop from weasel
+    -Getpeername from weasel
+    -Documentation patch from Roderick Schertler
+    -Localhost patch from Roger Dingledine
+  (patches 1, 3, 4, 5 and 7 from 
+  http://wiki.noreply.org/noreply/TheOnionRouter/TSocksPatches)
+  Patches 2 and 6 were not applied because I don't have access to
+  osx or bsd and can't test them. (And the bsd patch breaks linux)
+
+version 1.80tordns - 2005.10.4 bls@totalinfosecurity.com
+   Intercept gethostbyname() and friends, added --tordns
+   option for better name resolution with Tor.
+
+version 1.80Beta5 - 2002.?.?? delius@progsoc.uts.edu.au
+   Intercept close() to fix problems with tsocks and 
+      kmail 
+   Add FAQ to distribution
+
+version 1.80Beta4 - 2002.3.17 delius@progsoc.uts.edu.au
+   Allow TSOCKS_CONF_FILE to specify location of config
+   If the config is not found, assume all local
+   Now respects the default_user and pass specified for path
+   Added the tsocks shell script and tsocks(1) from the
+      debian package
+
+version 1.80Beta3 - 2002.2.20 delius@progsoc.uts.edu.au
+   A large portion of tsocks has been rewritten
+   Relax parser handling of whitespace, i.e it's ignored
+   Fix validateconf path detection to handle local paths
+   Expand logging/debugging support, can now provide 
+      detailed debugging info to stderr or file)
+   Improve autoconf script, much more robust
+   Default to ECONNREFUSED when no valid server found
+   Support for non-blocking sockets by intercepting 
+      select() and poll()
+   Add support for DESTDIR during make for RPM build, 
+   Don't insist on root.root installation
+   Document the --libdir vs --prefix difference better
+      in INSTALL and tsocks.8
+
+version 1.80Beta2 - 2002.1.19 delius@progsoc.uts.edu.au
+   Fix showstopper bug with SOCKS server port numbers
+
+version 1.80Beta - 2002.1.12 delius@progsoc.uts.edu.au
+   Allow choice of SOCKS server by port number (based on 
+      suggestions from Joakim Recht)
+   Fix bugs with error logging (reported by Paul Pot)
+
+version 1.70Beta4 - 2001.7.11 delius@progsoc.uts.edu.au
+	References to verifyconf fixed to point to validateconf
+
+version 1.70Beta3 - 2001.3.13 delius@progsoc.uts.edu.au
+	Late resolution of socks servers
+	Addition of validateconf to check configuration
+	Conf file location can now be specified to configure script
+	Much advanced configuration syntax allowing multiple socks servers
+	Default user can now be specified without password (but not password
+		without user)
+	Much improved documentation (with new tsocks.conf(5) page)
+
+version 1.70Beta2 - 2001.3.3 delius@progsoc.uts.edu.au
+	Showstopper bug with socks server subnet verification fixed
+	Return code and errno issues corrected
+	Correct use of sockaddr union under Linux
+
+version 1.70Beta - 2001.2.27 delius@progsoc.uts.edu.au
+	Automated configuration using the GNU autoconf suite
+	RH7 Compilation issues resolved
+	SOCKS servers can now be specified as hostnames
+	Security problems with lengths of usernames and passwords resolved
+	Installation process in makefile improved
+	Common functions cleaned up and moved to seperate module	
+	Configuration read delayed to reduce overhead for UDP etc
+	Silly debug messages removed
+
+version 1.60 - 2000.7.11 delius@progsoc.uts.edu.au
+	Fixed segmentation fault when reading configuration file
+	Fixed Makefile.solaris issues
+	Corrected Solaris support, should now work I hope :)
+	Fixed Makefile problem
+	Fixed localhost issues (127.0.0.0/255.0.0.0 is now automatically
+      added as a local network)
+	Removed limitation to number of local nets and reduced memory
+      footprint
+	Added inspectsocks utility
+	Added initial support for SOCKS version 5
+	Fixed bad connect return codes
+	Update man page, announce and README
+
+version 1.50 - 2000.5.23 delius@progsoc.uts.edu.au
+	Fixed bug with setsockopt code thanks to Ronnie Misra
+	Added support to force TCP dns lookups (i.e allow socksified
+      DNS) thanks to Joris van Rantwijk
+	Properly generate errors for unresolved symbols
+
+version 1.40 - 2000.5.12 delius@progsoc.uts.edu.au
+	Fix Solaris support, should now compile on 2.6, 7 and 8
+	Fix Makefile problem
+
+version 1.30 - 2000.5.10 delius@progsoc.uts.edu.au
+	Added server_port configuration option
+	Experimental Solaris support
+
+version 1.20 - 2000.5.5 delius@progsoc.uts.edu.au
+	Correctly parse configuration file (finally :))
+	Configuration file renamed to tsocks.conf (conflict with Netscape)
+	Detect non local SOCKS server and show error
+
+version 1.10 - 2000.5.3 delius@progsoc.uts.edu.au
+	Correctly parse the SOCKS server's return code for our request
+	Provide an INSTALL guide
+	Improved error handling
+	Provide a program to try to save those people who break their
+      ld.so.preload file
+
+version 1.00 - 2000.5.2 delius@progsoc.uts.edu.au
+	First Release

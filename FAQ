@@ -1,0 +1,42 @@
+
+Q: tsocks doesn't seem to be working for SSH, why?
+
+A:
+
+tsocks can be used a number of ways, the most common being the LD_PRELOAD
+environment variable. When set (often through the 'tsocks' script) this
+requests that the system dynamic loader load tsocks into each process
+before execution of the process begins. This allows tsocks to redirect
+calls to standard networking functions to force them to be socksified. 
+
+Unfortunately LD_PRELOAD simply doesn't work for setuid programs when the
+user running the program is not the same as the owner of the executable.
+This is because being able to load code into a privileged executable
+would be a major security flaw. To fix this problem you may wish to
+removed the setuid bit from SSH (this will force it not to use privileged
+TCP ports, disable some forms of RSA authentication to older servers and
+may have other effects). Alternatively you might wish to force tsocks to
+be loaded into all processes using the /etc/ld.so.preload file, for more
+information please see the tsocks man page.
+
+
+Q: tsocks doesn't seem to be working for ftp, why?
+
+A: 
+
+tsocks can only socksify outgoing connection requests from applications,
+in ftp there are normally two channels, one is made from the client to
+the server (called the control channel) and another from the server back
+to the client (called the data channel). If a SOCKS server is between the
+client and the server the server will incorrectly try to connect back to
+the SOCKS server rather than the client. Thus the data channel connection
+will be fail (not that it would likely succeed even if it did try to
+connect back to the correct client, given the SOCKS server is probably
+firewalling the network off). 
+
+The simplest solution to this problem is to use passive mode ftp, in this
+form of ftp all connections are made from the client to server, even the
+data channel. Most ftp clients and servers support passive mode, check
+your documentation (as a tip the Linux command line ftp client uses
+passive mode when invoced with the -p option) 
+

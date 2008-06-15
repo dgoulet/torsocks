@@ -1,0 +1,422 @@
+Only in /home/robert/Development/tork/src/tsocks/: .#Makefile.in.1.12
+Only in /home/robert/Development/tork/src/tsocks/: .deps
+Only in /home/robert/Development/tork/src/tsocks/: .libs
+Only in /home/robert/Development/tork/src/tsocks/: CVS
+diff -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO ./ChangeLog /home/robert/Development/tork/src/tsocks/ChangeLog
+1,12c1,2
+< version 1.81 - 2006.11.17 ruben@ugr.es
+<   Integrated and resolved the conflicts for the following
+<   patches:
+<     -DNS from totalinfosecurity mentioned below
+<     -Infinite Loop from weasel
+<     -Getpeername from weasel
+<     -Documentation patch from Roderick Schertler
+<     -Localhost patch from Roger Dingledine
+<   (patches 1, 3, 4, 5 and 7 from 
+<   http://wiki.noreply.org/noreply/TheOnionRouter/TSocksPatches)
+<   Patches 2 and 6 were not applied because I don't have access to
+<   osx or bsd and can't test them. (And the bsd patch breaks linux)
+---
+> Renamed for TorK to avoid conflicts with existing tsocks installations.
+> Robert Hogan
+Only in /home/robert/Development/tork/src/tsocks/: Makefile
+Only in /home/robert/Development/tork/src/tsocks/: Makefile.am~
+Only in /home/robert/Development/tork/src/tsocks/: Makefile.in~
+Only in /home/robert/Development/tork/src/tsocks/: README
+Only in /home/robert/Development/tork/src/tsocks/: TODO~
+Only in .: acconfig.h
+Only in /home/robert/Development/tork/src/tsocks/: aclocal
+diff -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO ./common.c /home/robert/Development/tork/src/tsocks/common.c
+7c7
+< #include <config.h>
+---
+> #include "../../config.h"
+17a18
+> #include <sys/types.h>
+40c41
+< 				return(-1);
+---
+> 				return(0);
+50c51
+< 			return(-1);
+---
+> 			return(0);
+102,105c103,106
+< void show_msg(int level, char *fmt, ...) {
+< 	va_list ap;
+< 	int saveerr;
+< 	extern char *progname;
+---
+> void show_msg(int level, const char *fmt, ...) {
+>    va_list ap;
+>    int saveerr;
+> /*   extern char *progname; */
+131c132
+<    // fputs(progname, logfile);
+---
+>    /* fputs(progname, logfile); */
+Only in /home/robert/Development/tork/src/tsocks/: common.c~
+diff -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO ./common.h /home/robert/Development/tork/src/tsocks/common.h
+4c4
+< void show_msg(int level, char *, ...);
+---
+> void show_msg(int level, const char *, ...);
+Only in /home/robert/Development/tork/src/tsocks/: common.lo
+Only in .: config.guess
+Only in .: config.h.in
+Only in .: config.status
+Only in .: config.sub
+Only in .: configure.in
+diff -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO ./dead_pool.c /home/robert/Development/tork/src/tsocks/dead_pool.c
+2a3
+> #include <sys/types.h>
+32c33
+< init_pool(int pool_size, struct in_addr deadrange_base, 
+---
+> init_pool(unsigned int pool_size, struct in_addr deadrange_base, 
+35c36,37
+<     int i, deadrange_bits, deadrange_width, deadrange_size;
+---
+>     unsigned int i, deadrange_size, deadrange_width;
+>     int deadrange_bits;
+185c187
+<   int i;
+---
+>   unsigned int i;
+197c199
+<   int i;
+---
+>   unsigned int i;
+Only in /home/robert/Development/tork/src/tsocks/: dead_pool.c~
+diff -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO ./dead_pool.h /home/robert/Development/tork/src/tsocks/dead_pool.h
+4c4
+< #include <config.h>
+---
+> #include "../../config.h"
+19c19
+<   int n_entries;                /* Number of entries in the deadpool */
+---
+>   unsigned int n_entries;       /* Number of entries in the deadpool */
+32c32
+< dead_pool *init_pool(int deadpool_size, struct in_addr deadrange_base, 
+---
+> dead_pool *init_pool(unsigned int deadpool_size, struct in_addr deadrange_base, 
+Only in /home/robert/Development/tork/src/tsocks/: dead_pool.lo
+Only in /home/robert/Development/tork/src/tsocks/: getpeername.patch
+Only in /home/robert/Development/tork/src/tsocks/: infiniteloop.patch
+diff -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO ./inspectsocks.c /home/robert/Development/tork/src/tsocks/inspectsocks.c
+26c26
+< char *progname = "inspectsocks";	   /* Name for error msgs      */
+---
+> const char *progname = "inspectsocks";	   /* Name for error msgs      */
+30c30
+< #include <config.h>
+---
+> #include "../../config.h"
+37a38
+> #include <sys/types.h>
+47c48
+< 	char *usage = "Usage: <socks server name/ip> [portno]";
+---
+> 	const char *usage = "Usage: <socks server name/ip> [portno]";
+71c72
+<                             ==  -1) {
+---
+>                             ==  0) {
+Only in /home/robert/Development/tork/src/tsocks/: inspectsocks.c~
+Only in /home/robert/Development/tork/src/tsocks/: libtorksocks.la
+diff -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO ./parser.c /home/robert/Development/tork/src/tsocks/parser.c
+15c15
+< #include <config.h>
+---
+> #include "../../config.h"
+27,28c27,28
+< static int handle_endpath(struct parsedfile *, int, int, char *[]);
+< static int handle_reaches(struct parsedfile *, int, char *);
+---
+> static int handle_endpath(struct parsedfile *, int, int);
+> static int handle_reaches(int, char *);
+32c32
+< static int handle_local(struct parsedfile *, int, char *);
+---
+> static int handle_local(struct parsedfile *, int, const char *);
+34,35c34,35
+< static int handle_tordns_deadpool_range(struct parsedfile *, int, char *);
+< static int handle_tordns_cache_size(struct parsedfile *, int, char *);
+---
+> static int handle_tordns_deadpool_range(struct parsedfile *, int, const char *);
+> static int handle_tordns_cache_size(struct parsedfile *, char *);
+56a57
+> 
+65c66
+< 	/* Read the configuration file */
+---
+> 	/* If there is no configuration file use reasonable defaults for Tor */
+69c70,73
+<         handle_local(config, 0, "0.0.0.0/0.0.0.0");
+---
+>         memset(&(config->defaultserver), 0x0, sizeof(config->defaultserver));
+> 		check_server(&(config->defaultserver));
+> 		handle_local(config, 0, "127.0.0.0/255.0.0.0");
+> /*        handle_local(config, 0, "0.0.0.0/0.0.0.0");*/
+73c77,78
+<       memset(&(config->defaultserver), 0x0, sizeof(config->defaultserver));
+---
+> 
+>         memset(&(config->defaultserver), 0x0, sizeof(config->defaultserver));
+85,89c90,91
+< 		if (!config->localnets) {
+<                         /* Use 127.0.0.1/255.0.0.0 by default */
+<                         handle_local(config, 0, "127.0.0.0/255.0.0.0");
+<                 }
+< 
+---
+> 		/* Always add the 127.0.0.1/255.0.0.0 subnet to local */
+> 		handle_local(config, 0, "127.0.0.0/255.0.0.0");
+111c113
+< 	/* Default to the default SOCKS port */
+---
+> 	/* Default to the default Tor Socks port */
+113c115,120
+< 		server->port = 1080;
+---
+> 		server->port = 9050;
+> 	}
+> 
+> 	/* Default to a presumably local installation of Tor */
+> 	if (server->address == NULL) {
+> 		server->address = strdup("127.0.0.1");
+140c147
+< 		words[i] = "";
+---
+> 		words[i] = NULL;
+149c156
+< 			handle_endpath(config, lineno, nowords, words);
+---
+> 			handle_endpath(config, lineno, nowords);
+157c164
+< 				handle_reaches(config, lineno, words[2]);
+---
+> 				handle_reaches(lineno, words[2]);
+175c182
+<                 handle_tordns_cache_size(config, lineno, words[2]);
+---
+>                 handle_tordns_cache_size(config, words[2]);
+247c254
+< static int handle_endpath(struct parsedfile *config, int lineno, int nowords, char *words[]) {
+---
+> static int handle_endpath(struct parsedfile *config, int lineno, int nowords) {
+264c271
+< static int handle_reaches(struct parsedfile *config, int lineno, char *value) {
+---
+> static int handle_reaches(int lineno, char *value) {
+468c475
+< static int handle_tordns_cache_size(struct parsedfile *config, int lineno,
+---
+> static int handle_tordns_cache_size(struct parsedfile *config,
+492c499
+<                            char *value)
+---
+>                            const char *value)
+511c518
+<     rc = make_netent(value, &ent);
+---
+>     rc = make_netent((char *)value, &ent);
+562c569
+< static int handle_local(struct parsedfile *config, int lineno, char *value) {
+---
+> static int handle_local(struct parsedfile *config, int lineno, const char *value) {
+574c581
+< 	rc = make_netent(value, &ent);
+---
+> 	rc = make_netent((char *)value, &ent);
+780c787
+<    int len;
+---
+>    unsigned int len;
+Only in /home/robert/Development/tork/src/tsocks/: parser.c~
+diff -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO ./parser.h /home/robert/Development/tork/src/tsocks/parser.h
+38c38
+<    int tordns_cache_size;
+---
+>    unsigned int tordns_cache_size;
+Only in /home/robert/Development/tork/src/tsocks/: parser.lo
+Only in /home/robert/Development/tork/src/tsocks/: soname.diff
+Only in /home/robert/Development/tork/src/tsocks/: stamp-h2
+Only in /home/robert/Development/tork/src/tsocks/: tork-tsocks.conf
+Only in /home/robert/Development/tork/src/tsocks/: torkify
+Only in /home/robert/Development/tork/src/tsocks/: torkify.1
+Only in /home/robert/Development/tork/src/tsocks/: torkify.in
+Only in .: torksock.diff
+Only in /home/robert/Development/tork/src/tsocks/: torksocks
+Only in /home/robert/Development/tork/src/tsocks/: torksocks.1
+Only in /home/robert/Development/tork/src/tsocks/: torksocks.8
+Only in /home/robert/Development/tork/src/tsocks/: torksocks.announce
+Only in /home/robert/Development/tork/src/tsocks/: torksocks.conf.5
+Only in .: torksocks.diff
+Only in /home/robert/Development/tork/src/tsocks/: torksocks.in
+Only in /home/robert/Development/tork/src/tsocks/: torksocks.in~
+Only in .: torksockscols.diff
+Only in .: tsocks
+Only in .: tsocks.1
+Only in .: tsocks.8
+Only in .: tsocks.announce
+diff -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO ./tsocks.c /home/robert/Development/tork/src/tsocks/tsocks.c
+24c24
+< #include <config.h>
+---
+> #include "../../config.h"
+31c31
+< char *progname = "libtsocks";         	   /* Name used in err msgs    */
+---
+> const char *progname = "libtsocks";         	   /* Name used in err msgs    */
+41a42
+> #include <sys/types.h>
+79c80
+< void _init(void);
+---
+> void __attribute__ ((constructor)) tsocks_init(void);
+117c118
+< static int deadpool_init();
+---
+> static int deadpool_init(void);
+121c122
+< void _init(void) {
+---
+> void tsocks_init(void) {
+142,146c143,147
+<         #ifdef USE_TOR_DNS
+< 	realgethostbyname = dlsym(RTLD_NEXT, "gethostbyname");
+< 	realgetaddrinfo = dlsym(RTLD_NEXT, "getaddrinfo");
+< 	realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
+<         #endif
+---
+>     #ifdef USE_TOR_DNS
+>     realgethostbyname = dlsym(RTLD_NEXT, "gethostbyname");
+>     realgetaddrinfo = dlsym(RTLD_NEXT, "getaddrinfo");
+>     realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
+>     #endif
+152d152
+< 	realgetpeername = dlsym(lib, "getpeername");
+156,161c156,161
+< 	#ifdef USE_TOR_DNS
+< 	realgethostbyname = dlsym(lib, "gethostbyname");
+< 	realgetaddrinfo = dlsym(lib, "getaddrinfo");
+< 	realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
+<         #endif
+< 	dlclose(lib);
+---
+>     #ifdef USE_TOR_DNS
+>     realgethostbyname = dlsym(lib, "gethostbyname");
+>     realgetaddrinfo = dlsym(lib, "getaddrinfo");
+>     realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
+>     #endif
+>     dlclose(lib);	
+164c164
+< 	dlclose(lib);
+---
+> 	dlclose(lib);	
+167,171c167,170
+<      /* Unfortunately, we can't do this lazily because otherwise our mmap'd
+<         area won't be shared across fork()s. */
+<      deadpool_init();
+< #endif
+< 
+---
+>     /* Unfortunately, we can't do this lazily because otherwise our mmap'd
+>        area won't be shared across fork()s. */
+>     deadpool_init();
+> #endif 
+175a175
+> #ifdef ALLOW_MSG_OUTPUT
+179c179
+< 
+---
+> #endif
+185c185
+<    set_log_options(-1, stderr, 0);
+---
+>    set_log_options(-1, (char *)stderr, 0);
+215c215
+< 	read_config(conffile, config);
+---
+>    read_config(conffile, config);
+225,232c225,233
+< 	struct sockaddr_in *connaddr;
+< 	struct sockaddr_in peer_address;
+< 	struct sockaddr_in server_address;
+<    int gotvalidserver = 0, rc, namelen = sizeof(peer_address);
+< 	int sock_type = -1;
+< 	int sock_type_len = sizeof(sock_type);
+< 	unsigned int res = -1;
+< 	struct serverent *path;
+---
+>    struct sockaddr_in *connaddr;
+>    struct sockaddr_in peer_address;
+>    struct sockaddr_in server_address;
+>    int gotvalidserver = 0, rc;
+>    unsigned int namelen = sizeof(peer_address);
+>    int sock_type = -1;
+>    unsigned int sock_type_len = sizeof(sock_type);
+>    int res = -1;
+>    struct serverent *path;
+250a252,259
+>     show_msg(MSGDEBUG, "sin_family: %i "
+>                         "\n",
+>                      connaddr->sin_family);
+> 
+>     show_msg(MSGDEBUG, "sockopt: %i "
+>                         "\n",
+>                      sock_type);
+> 
+567c576,577
+<    int rc = 0, i;
+---
+>    int rc = 0;
+>    unsigned int i;
+1357c1367
+< static int deadpool_init()
+---
+> static int deadpool_init(void)
+Only in /home/robert/Development/tork/src/tsocks/: tsocks.c.rej
+Only in .: tsocks.conf.5
+Only in /home/robert/Development/tork/src/tsocks/: tsocks.c~
+diff -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO ./tsocks.h /home/robert/Development/tork/src/tsocks/tsocks.h
+53,54c53,54
+<    int datalen;
+<    int datadone;
+---
+>    unsigned int datalen;
+>    unsigned int datadone;
+Only in .: tsocks.kdevelop
+Only in .: tsocks.kdevelop.pcs
+Only in .: tsocks.kdevses
+Only in /home/robert/Development/tork/src/tsocks/: tsocks.lo
+diff -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO ./validateconf.c /home/robert/Development/tork/src/tsocks/validateconf.c
+26c26
+< char *progname = "validateconf";	      /* Name for error msgs      */
+---
+> const char *progname = "validateconf";	      /* Name for error msgs      */
+29c29
+< #include <config.h>
+---
+> #include "../../config.h"
+35a36
+> #include <sys/types.h>
+47c48
+< 	char *usage = "Usage: [-f conf file] [-t hostname/ip[:port]]"; 
+---
+> 	const char *usage = "Usage: [-f conf file] [-t hostname/ip[:port]]"; 
+106c107
+< 	if ((hostaddr.s_addr = resolve_ip(hostname, 0, 1)) == -1) {
+---
+> 	if ((hostaddr.s_addr = resolve_ip(hostname, 0, 1)) == 0) {
+190c191
+< 						  HOSTNAMES)) == -1 
+---
+> 						  HOSTNAMES)) == 0 
+196c197
+< 	if ((server->address != NULL) && (res.s_addr != -1) && 
+---
+> 	if ((server->address != NULL) && (res.s_addr != 0) && 
+Only in /home/robert/Development/tork/src/tsocks/: validateconf.c~

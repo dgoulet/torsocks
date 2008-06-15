@@ -1,0 +1,16 @@
+# This is the configuration for libtsocks (transparent socks)
+# Lines beginning with # and blank lines are ignored
+#
+# This sample configuration shows the simplest (and most common) use of
+# tsocks. This is a basic LAN, this machine can access anything on the 
+# local ethernet (192.168.0.*) but anything else has to use the SOCKS version
+# 4 server on the firewall. Further details can be found in the man pages,
+# tsocks(8) and tsocks.conf(5) and a more complex example is presented in 
+# tsocks.conf.complex.example
+
+# We can access 192.168.0.* directly
+local = 192.168.0.0/255.255.255.0
+
+# Otherwise we use the server
+server = 192.168.0.1
+

@@ -1,0 +1,85 @@
+Quick Installation Instructions
+-------------------------------
+
+1. Explenations of the ./configure options which might be of interest (and that are 
+   specific to tsocks include):
+	--disable-tordns	This option disables tordns, which causes
+				names to be looked up in a way designed to
+				work well with Tor.
+	--enable-socksdns	This option causes tsocks to intercept
+				DNS lookups and attempt to force them
+				to use TCP instead of UDP and thus
+				be proxied through the socks server. This
+				is not a very elegant thing to do and
+				should be avoided where possible.
+	--disable-debug		This configuration option tells tsocks
+				to never output error messages to stderr.
+				This can also be achieved at run time
+				by defining the environment variable
+				TSOCKS_NO_ERROR to be "yes"
+	--enable-oldmethod	This forces tsocks not to use the
+				RTLD_NEXT parameter to dlsym to get the
+				address of the connect() method tsocks
+				overrides, instead it loads a reference
+				to the libc shared library and then uses
+				dlsym(). Again this is not very elegant
+				and shouldn't be required.
+	--enable-hostnames	This enables DNS lookups on names
+				provided as socks servers in the config
+				file. This option is not compatible with
+				tordns or socks dns, since tsocks
+				can't send a socks dns request to resolve
+				the location of the socks server. 
+	--with-conf=<filename>	You can specify the location of the tsocks
+				configuration file using this option, it
+				defaults to '/etc/tsocks.conf'
+
+Other standard autoconf options are provided by typing './configure
+--help'
+
+2. Created files:
+
+	- libtsocks.so - the libtsocks library
+	- validateconf - a utility to verify the tsocks configuration file
+	- inspectsocks - a utility to determine the version of a socks server
+	- saveme - a statically linked utility to remove /etc/ld.so.preload
+		   if it becomes corrupt
+	- man pages - tsocks(8), tsocks(1) and tsocks.conf(5)
+
+3. Configuration
+
+You'll need to create the tsocks configuration file.
+There are two samples provided in the build directory and 
+/usr/local/share/examples/tsocks called 
+tsocks.conf.simple.example and tsocks.conf.complex.example.
+Documentation on the configuration file format is provided in the
+tsocks.conf man page ('man tsocks.conf'). 
+
+4. Having created the tsocks.conf file you should verify it using
+validateconf (some detail on validateconf can be found in the tsocks.conf
+man page). Normally validateconf is run without arguments
+('./validateconf'). Any errors which are displayed by validateconf need
+to be rectified before tsocks will function correctly.
+
+5. You can now choose to make the library affect all users or just those
+who choose to use it. If you want users to use it themselves, they can
+simply use the tsocks(1) shell script to run programs (see 'man tsocks')
+or do the following in their shell before running applications that need
+to be transparently proxied:
+
+	(in Bash) export LD_PRELOAD=<path to library>
+
+	(in CSH) setenv LD_PRELOAD <path to library>
+
+	<path to library> = e.g /usr/local/lib/tsocks/libtsocks.so.1.8
+
+6. Go ahead and use it! At this point everything should work. Again, if
+you experience any problems, use the contact points listed at
+http://tsocks.sourceforge.net/contact.php. 
+
+Thats it, 
+
+Thanks, Shaun Clowes (delius@progsoc.org)
+
+
+Adapted for FreeBSD by Marcin Jessa (yazzy@yazzy.org)
