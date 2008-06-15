@@ -1,0 +1,20 @@
+--- tsocks-1.8.orig/tsocks.c    2002-03-13 14:02:04.000000000 +0100
++++ tsocks-1.8/tsocks.c 2004-03-20 11:30:57.000000000 +0100
+@@ -951,14 +951,18 @@
+    show_msg(MSGDEBUG, "Reading from server (expecting %d bytes)\n", conn->datalen);
+    while ((rc == 0) && (conn->datadone != conn->datalen)) {
+       rc = recv(conn->sockid, conn->buffer + conn->datadone, 
+                 conn->datalen - conn->datadone, 0);
+       if (rc > 0) {
+          conn->datadone += rc;
+          rc = 0;
++      } else if (rc == 0) {
++         show_msg(MSGDEBUG, "Peer has shutdown but we only read %d of %d bytes.\n",
++            conn->datadone, conn->datalen);
++         rc = ENOTCONN; /* ENOTCONN seems like the most fitting error message */
+       } else {
+          if (errno != EWOULDBLOCK)
+             show_msg(MSGDEBUG, "Read failed, %s\n", strerror(errno));
+          rc = errno;
+       }
+    }

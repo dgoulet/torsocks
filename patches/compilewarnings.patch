@@ -1,0 +1,739 @@
+Only in /home/robert/Development/tork/src/tsocks/: .#Makefile.in.1.12
+Only in /home/robert/Development/tork/src/tsocks/: .deps
+Only in /home/robert/Development/tork/src/tsocks/: .libs
+Common subdirectories: /backup/robert/Development/torsocks/CVS and /home/robert/Development/tork/src/tsocks/CVS
+diff -u -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO /backup/robert/Development/torsocks/ChangeLog /home/robert/Development/tork/src/tsocks/ChangeLog
+--- /backup/robert/Development/torsocks/ChangeLog	2008-06-15 10:43:02.000000000 +0100
++++ /home/robert/Development/tork/src/tsocks/ChangeLog	2007-09-30 16:13:34.000000000 +0100
+@@ -1,15 +1,5 @@
+-version 1.81 - 2006.11.17 ruben@ugr.es
+-  Integrated and resolved the conflicts for the following
+-  patches:
+-    -DNS from totalinfosecurity mentioned below
+-    -Infinite Loop from weasel
+-    -Getpeername from weasel
+-    -Documentation patch from Roderick Schertler
+-    -Localhost patch from Roger Dingledine
+-  (patches 1, 3, 4, 5 and 7 from 
+-  http://wiki.noreply.org/noreply/TheOnionRouter/TSocksPatches)
+-  Patches 2 and 6 were not applied because I don't have access to
+-  osx or bsd and can't test them. (And the bsd patch breaks linux)
++Renamed for TorK to avoid conflicts with existing tsocks installations.
++Robert Hogan
+ 
+ version 1.80tordns - 2005.10.4 bls@totalinfosecurity.com
+    Intercept gethostbyname() and friends, added --tordns
+Only in /home/robert/Development/tork/src/tsocks/: Makefile
+Only in /home/robert/Development/tork/src/tsocks/: Makefile.am~
+Only in /home/robert/Development/tork/src/tsocks/: Makefile.in~
+Only in /home/robert/Development/tork/src/tsocks/: README
+Only in /home/robert/Development/tork/src/tsocks/: TODO~
+Only in /backup/robert/Development/torsocks: acconfig.h
+Only in /home/robert/Development/tork/src/tsocks/: aclocal
+diff -u -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO /backup/robert/Development/torsocks/common.c /home/robert/Development/tork/src/tsocks/common.c
+--- /backup/robert/Development/torsocks/common.c	2008-06-15 10:43:02.000000000 +0100
++++ /home/robert/Development/tork/src/tsocks/common.c	2008-04-05 22:36:40.000000000 +0100
+@@ -4,7 +4,7 @@
+ 
+ */
+ 
+-#include <config.h>
++#include <config.h>
+ #include <stdio.h>
+ #include <netdb.h>
+ #include <common.h>
+@@ -15,6 +15,7 @@
+ #include <time.h>
+ #include <unistd.h>
+ #include <arpa/inet.h>
++#include <sys/types.h>
+ #include <netinet/in.h>
+ 
+ /* Globals */
+@@ -37,7 +38,7 @@
+ 			#ifdef HAVE_GETHOSTBYNAME
+ 			if ((new = gethostbyname(host)) == (struct hostent *) 0) {
+ 			#endif
+-				return(-1);
++				return(0);
+ 			#ifdef HAVE_GETHOSTBYNAME
+ 			} else {
+ 				ip = ((struct in_addr *) * new->h_addr_list);
+@@ -47,7 +48,7 @@
+ 			}
+ 			#endif
+ 		} else
+-			return(-1);
++			return(0);
+ 	}
+ 
+ 	return (hostaddr);
+@@ -99,10 +100,10 @@
+     return nbits;
+ }
+ 
+-void show_msg(int level, char *fmt, ...) {
+-	va_list ap;
+-	int saveerr;
+-	extern char *progname;
++void show_msg(int level, const char *fmt, ...) {
++   va_list ap;
++   int saveerr;
++/*   extern char *progname; */
+    char timestring[20];
+    time_t timestamp;
+ 
+@@ -128,7 +129,7 @@
+       fprintf(logfile, "%s ", timestring);
+    }
+ 
+-   // fputs(progname, logfile);
++   /* fputs(progname, logfile); */
+ 
+    if (logstamp) {
+       fprintf(logfile, "(%d)", getpid());
+Only in /home/robert/Development/tork/src/tsocks/: common.c~
+diff -u -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO /backup/robert/Development/torsocks/common.h /home/robert/Development/tork/src/tsocks/common.h
+--- /backup/robert/Development/torsocks/common.h	2008-06-15 10:43:02.000000000 +0100
++++ /home/robert/Development/tork/src/tsocks/common.h	2007-11-02 20:23:55.000000000 +0000
+@@ -1,7 +1,7 @@
+ /* Common functions provided in common.c */
+ 
+ void set_log_options(int, char *, int);
+-void show_msg(int level, char *, ...);
++void show_msg(int level, const char *, ...);
+ int count_netmask_bits(uint32_t mask);
+ unsigned int resolve_ip(char *, int, int);
+ 
+Only in /home/robert/Development/tork/src/tsocks/: common.lo
+Only in /backup/robert/Development/torsocks: config.guess
+Only in /backup/robert/Development/torsocks: config.h.in
+Only in /backup/robert/Development/torsocks: config.status
+Only in /backup/robert/Development/torsocks: config.sub
+Only in /backup/robert/Development/torsocks: configure.in
+diff -u -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO /backup/robert/Development/torsocks/dead_pool.c /home/robert/Development/tork/src/tsocks/dead_pool.c
+--- /backup/robert/Development/torsocks/dead_pool.c	2008-06-15 10:43:02.000000000 +0100
++++ /home/robert/Development/tork/src/tsocks/dead_pool.c	2008-04-05 22:35:46.000000000 +0100
+@@ -1,5 +1,6 @@
+ #include <stdio.h>
+ #include <sys/socket.h>
++#include <sys/types.h>
+ #include <netinet/in.h>
+ #include <arpa/inet.h>
+ #include <netdb.h>
+@@ -29,10 +30,11 @@
+ }
+ 
+ dead_pool *
+-init_pool(int pool_size, struct in_addr deadrange_base, 
++init_pool(unsigned int pool_size, struct in_addr deadrange_base, 
+     struct in_addr deadrange_mask, char *sockshost, uint16_t socksport)
+ {
+-    int i, deadrange_bits, deadrange_width, deadrange_size;
++    unsigned int i, deadrange_size, deadrange_width;
++    int deadrange_bits;
+     struct in_addr socks_server;
+     dead_pool *newpool = NULL;
+ 
+@@ -182,7 +184,7 @@
+ int 
+ search_pool_for_name(dead_pool *pool, const char *name) 
+ {
+-  int i;
++  unsigned int i;
+   for(i=0; i < pool->n_entries; i++){
+     if(strcmp(name, pool->entries[i].name) == 0){
+       return i;
+@@ -194,7 +196,7 @@
+ char *
+ get_pool_entry(dead_pool *pool, struct in_addr *addr)
+ {
+-  int i;
++  unsigned int i;
+   uint32_t intaddr = addr->s_addr;
+ 
+   if(pool == NULL) {
+Only in /home/robert/Development/tork/src/tsocks/: dead_pool.c~
+diff -u -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO /backup/robert/Development/torsocks/dead_pool.h /home/robert/Development/tork/src/tsocks/dead_pool.h
+--- /backup/robert/Development/torsocks/dead_pool.h	2008-06-15 10:43:02.000000000 +0100
++++ /home/robert/Development/tork/src/tsocks/dead_pool.h	2007-11-02 20:59:58.000000000 +0000
+@@ -1,7 +1,7 @@
+ #ifndef _DEAD_POOL_H
+ #define _DEAD_POOL_H
+ 
+-#include <config.h>
++#include <config.h>
+ 
+ extern int (*realconnect)(CONNECT_SIGNATURE);
+ extern int (*realclose)(CLOSE_SIGNATURE);
+@@ -16,7 +16,7 @@
+ 
+ struct struct_dead_pool {
+   pool_ent *entries;            /* Points to array of pool entries */
+-  int n_entries;                /* Number of entries in the deadpool */
++  unsigned int n_entries;       /* Number of entries in the deadpool */
+   unsigned int deadrange_base;  /* Deadrange start IP in host byte order */
+   unsigned int deadrange_mask;  /* Deadrange netmask in host byte order */
+   unsigned int deadrange_size;  /* Number of IPs in the deadrange */
+@@ -29,7 +29,7 @@
+ 
+ typedef struct struct_dead_pool dead_pool;
+ 
+-dead_pool *init_pool(int deadpool_size, struct in_addr deadrange_base, 
++dead_pool *init_pool(unsigned int deadpool_size, struct in_addr deadrange_base, 
+     struct in_addr deadrange_mask, char *sockshost, uint16_t socksport);
+ int is_dead_address(dead_pool *pool, uint32_t addr);
+ char *get_pool_entry(dead_pool *pool, struct in_addr *addr);
+Only in /home/robert/Development/tork/src/tsocks/: dead_pool.lo
+Only in /home/robert/Development/tork/src/tsocks/: getpeername.patch
+Only in /home/robert/Development/tork/src/tsocks/: infiniteloop.patch
+diff -u -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO /backup/robert/Development/torsocks/inspectsocks.c /home/robert/Development/tork/src/tsocks/inspectsocks.c
+--- /backup/robert/Development/torsocks/inspectsocks.c	2008-06-15 10:43:02.000000000 +0100
++++ /home/robert/Development/tork/src/tsocks/inspectsocks.c	2008-04-05 22:36:40.000000000 +0100
+@@ -23,11 +23,11 @@
+ */
+ 
+ /* Global configuration variables */ 
+-char *progname = "inspectsocks";	   /* Name for error msgs      */
++const char *progname = "inspectsocks";	   /* Name for error msgs      */
+ int defaultport	= 1080;			   /* Default SOCKS port       */
+ 
+ /* Header Files */
+-#include <config.h>
++#include <config.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <unistd.h>
+@@ -35,6 +35,7 @@
+ #include <sys/socket.h>
+ #include <string.h>
+ #include <strings.h>
++#include <sys/types.h>
+ #include <netinet/in.h>
+ #include <arpa/inet.h>
+ #include <errno.h>
+@@ -44,7 +45,7 @@
+                  int reqlen, void *rep, int replen);
+ 
+ int main(int argc, char *argv[]) {
+-	char *usage = "Usage: <socks server name/ip> [portno]";
++	const char *usage = "Usage: <socks server name/ip> [portno]";
+ 	char req[9];
+ 	char resp[100];
+ 	unsigned short int portno = defaultport;
+@@ -68,7 +69,7 @@
+ 			}
+ 		case 2:
+ 			if ((server.sin_addr.s_addr = resolve_ip(argv[1], 1,HOSTNAMES))
+-                            ==  -1) {
++                            ==  0) {
+ 				show_msg(MSGERR, "Invalid IP/host specified (%s)\n", argv[1]);
+ 				show_msg(MSGERR, "%s\n", usage);
+ 				exit(1);
+Only in /home/robert/Development/tork/src/tsocks/: inspectsocks.c~
+Only in /home/robert/Development/tork/src/tsocks/: libtorksocks.la
+diff -u -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO /backup/robert/Development/torsocks/parser.c /home/robert/Development/tork/src/tsocks/parser.c
+--- /backup/robert/Development/torsocks/parser.c	2008-06-15 10:43:02.000000000 +0100
++++ /home/robert/Development/tork/src/tsocks/parser.c	2008-04-05 22:25:54.000000000 +0100
+@@ -12,7 +12,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <errno.h>
+-#include <config.h>
++#include <config.h>
+ #include "common.h"
+ #include "parser.h"
+ 
+@@ -24,15 +24,15 @@
+ static int check_server(struct serverent *);
+ static int tokenize(char *, int, char *[]);
+ static int handle_path(struct parsedfile *, int, int, char *[]);
+-static int handle_endpath(struct parsedfile *, int, int, char *[]);
+-static int handle_reaches(struct parsedfile *, int, char *);
++static int handle_endpath(struct parsedfile *, int, int);
++static int handle_reaches(int, char *);
+ static int handle_server(struct parsedfile *, int, char *);
+ static int handle_type(struct parsedfile *config, int, char *);
+ static int handle_port(struct parsedfile *config, int, char *);
+-static int handle_local(struct parsedfile *, int, char *);
++static int handle_local(struct parsedfile *, int, const char *);
+ static int handle_tordns_enabled(struct parsedfile *, int, char *);
+-static int handle_tordns_deadpool_range(struct parsedfile *, int, char *);
+-static int handle_tordns_cache_size(struct parsedfile *, int, char *);
++static int handle_tordns_deadpool_range(struct parsedfile *, int, const char *);
++static int handle_tordns_cache_size(struct parsedfile *, char *);
+ static int handle_defuser(struct parsedfile *, int, char *);
+ static int handle_defpass(struct parsedfile *, int, char *);
+ static int make_netent(char *value, struct netent **ent);
+@@ -54,6 +54,7 @@
+    config->tordns_cache_size = 256;
+    config->tordns_enabled = 1;
+ 
++
+ 	/* If a filename wasn't provided, use the default */
+ 	if (filename == NULL) {
+ 		strncpy(line, CONF_FILE, sizeof(line) - 1);
+@@ -62,15 +63,19 @@
+ 		filename = line;
+ 	}
+ 
+-	/* Read the configuration file */
++	/* If there is no configuration file use reasonable defaults for Tor */
+ 	if ((conf = fopen(filename, "r")) == NULL) {
+ 		show_msg(MSGERR, "Could not open socks configuration file "
+ 			   "(%s), assuming all networks local\n", filename);
+-        handle_local(config, 0, "0.0.0.0/0.0.0.0");
++        memset(&(config->defaultserver), 0x0, sizeof(config->defaultserver));
++		check_server(&(config->defaultserver));
++		handle_local(config, 0, "127.0.0.0/255.0.0.0");
++/*        handle_local(config, 0, "0.0.0.0/0.0.0.0");*/
+ 		rc = 1; /* Severe errors reading configuration */
+ 	}	
+ 	else {
+-      memset(&(config->defaultserver), 0x0, sizeof(config->defaultserver));
++
++        memset(&(config->defaultserver), 0x0, sizeof(config->defaultserver));
+ 
+ 		while (NULL != fgets(line, MAXLINE, conf)) {
+ 			/* This line _SHOULD_ end in \n so we  */
+@@ -82,11 +87,8 @@
+ 		} 
+ 		fclose(conf);
+ 
+-		if (!config->localnets) {
+-                        /* Use 127.0.0.1/255.0.0.0 by default */
+-                        handle_local(config, 0, "127.0.0.0/255.0.0.0");
+-                }
+-
++		/* Always add the 127.0.0.1/255.0.0.0 subnet to local */
++		handle_local(config, 0, "127.0.0.0/255.0.0.0");
+ 
+ 		/* Check default server */
+ 		check_server(&(config->defaultserver));
+@@ -108,9 +110,14 @@
+ /* Check server entries (and establish defaults) */
+ static int check_server(struct serverent *server) {
+ 
+-	/* Default to the default SOCKS port */
++	/* Default to the default Tor Socks port */
+ 	if (server->port == 0) {
+-		server->port = 1080;
++		server->port = 9050;
++	}
++
++	/* Default to a presumably local installation of Tor */
++	if (server->address == NULL) {
++		server->address = strdup("127.0.0.1");
+ 	}
+ 
+ 	/* Default to SOCKS V4 */
+@@ -137,7 +144,7 @@
+ 	/* Set the spare slots to an empty string to simplify */
+ 	/* processing                                         */
+ 	for (i = nowords; i < 10; i++) 
+-		words[i] = "";
++		words[i] = NULL;
+ 
+ 	if (nowords > 0) {
+ 		/* Now this can either be a "path" block starter or */
+@@ -146,7 +153,7 @@
+ 		if (!strcmp(words[0], "path")) {
+ 			handle_path(config, lineno, nowords, words);
+ 		} else if (!strcmp(words[0], "}")) {
+-			handle_endpath(config, lineno, nowords, words);
++			handle_endpath(config, lineno, nowords);
+ 		} else {
+ 			/* Has to be a pair */
+ 			if ((nowords != 3) || (strcmp(words[1], "="))) {
+@@ -154,7 +161,7 @@
+ 					   "on line %d in configuration "
+ 					   "file, \"%s\"\n", lineno, savedline);
+ 			} else if (!strcmp(words[0], "reaches")) {
+-				handle_reaches(config, lineno, words[2]);
++				handle_reaches(lineno, words[2]);
+ 			} else if (!strcmp(words[0], "server")) {
+ 				handle_server(config, lineno, words[2]);
+ 			} else if (!strcmp(words[0], "server_port")) {
+@@ -172,7 +179,7 @@
+             } else if (!strcmp(words[0], "tordns_deadpool_range")) {
+                 handle_tordns_deadpool_range(config, lineno, words[2]);
+             } else if (!strcmp(words[0], "tordns_cache_size")) {
+-                handle_tordns_cache_size(config, lineno, words[2]);
++                handle_tordns_cache_size(config, words[2]);
+             } else {
+ 				show_msg(MSGERR, "Invalid pair type (%s) specified "
+ 					   "on line %d in configuration file, "
+@@ -244,7 +251,7 @@
+ 	return(0);
+ }
+ 
+-static int handle_endpath(struct parsedfile *config, int lineno, int nowords, char *words[]) {
++static int handle_endpath(struct parsedfile *config, int lineno, int nowords) {
+ 
+ 	if (nowords != 1) {
+ 		show_msg(MSGERR, "Badly formed path close statement on line "
+@@ -261,7 +268,7 @@
+ 	return(0);
+ }
+ 
+-static int handle_reaches(struct parsedfile *config, int lineno, char *value) {
++static int handle_reaches(int lineno, char *value) {
+ 	int rc;
+ 	struct netent *ent;
+ 
+@@ -465,7 +472,7 @@
+     return 0;
+ }
+ 
+-static int handle_tordns_cache_size(struct parsedfile *config, int lineno,
++static int handle_tordns_cache_size(struct parsedfile *config,
+                            char *value)
+ {
+     char *endptr;
+@@ -489,7 +496,7 @@
+ }
+ 
+ static int handle_tordns_deadpool_range(struct parsedfile *config, int lineno, 
+-                           char *value)
++                           const char *value)
+ {
+     int rc;
+     struct netent *ent;
+@@ -508,7 +515,7 @@
+         return(0);
+     }
+ 
+-    rc = make_netent(value, &ent);
++    rc = make_netent((char *)value, &ent);
+     /* This is copied from handle_local and should probably be folded into
+        a generic whinge() function or something */
+     switch(rc) {
+@@ -559,7 +566,7 @@
+     return 0;
+ }
+ 
+-static int handle_local(struct parsedfile *config, int lineno, char *value) {
++static int handle_local(struct parsedfile *config, int lineno, const char *value) {
+ 	int rc;
+ 	struct netent *ent;
+ 
+@@ -571,7 +578,7 @@
+ 		return(0);
+ 	}
+ 
+-	rc = make_netent(value, &ent);
++	rc = make_netent((char *)value, &ent);
+ 	switch(rc) {
+ 		case 1:
+ 			show_msg(MSGERR, "Local network specification (%s) is not validly "
+@@ -777,7 +784,7 @@
+ /* standard strsep and this function is that this one will          */
+ /* set *separator to the character separator found if it isn't null */
+ char *strsplit(char *separator, char **text, const char *search) {
+-   int len;
++   unsigned int len;
+    char *ret;
+ 
+    ret = *text;
+Only in /home/robert/Development/tork/src/tsocks/: parser.c~
+diff -u -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO /backup/robert/Development/torsocks/parser.h /home/robert/Development/tork/src/tsocks/parser.h
+--- /backup/robert/Development/torsocks/parser.h	2008-06-15 10:43:02.000000000 +0100
++++ /home/robert/Development/tork/src/tsocks/parser.h	2007-11-02 21:00:20.000000000 +0000
+@@ -35,7 +35,7 @@
+    struct serverent *paths;
+    int tordns_enabled;
+    int tordns_failopen;
+-   int tordns_cache_size;
++   unsigned int tordns_cache_size;
+    struct netent *tordns_deadpool_range;
+ };
+ 
+Only in /home/robert/Development/tork/src/tsocks/: parser.lo
+Only in /home/robert/Development/tork/src/tsocks/: soname.diff
+Only in /home/robert/Development/tork/src/tsocks/: stamp-h2
+Only in /home/robert/Development/tork/src/tsocks/: tork-tsocks.conf
+Only in /home/robert/Development/tork/src/tsocks/: torkify
+Only in /home/robert/Development/tork/src/tsocks/: torkify.1
+Only in /home/robert/Development/tork/src/tsocks/: torkify.in
+Only in /backup/robert/Development/torsocks: torksock.diff
+Only in /home/robert/Development/tork/src/tsocks/: torksocks
+Only in /home/robert/Development/tork/src/tsocks/: torksocks.1
+Only in /home/robert/Development/tork/src/tsocks/: torksocks.8
+Only in /home/robert/Development/tork/src/tsocks/: torksocks.announce
+Only in /home/robert/Development/tork/src/tsocks/: torksocks.conf.5
+Only in /backup/robert/Development/torsocks: torksocks.diff
+Only in /home/robert/Development/tork/src/tsocks/: torksocks.in
+Only in /home/robert/Development/tork/src/tsocks/: torksocks.in~
+Only in /backup/robert/Development/torsocks: torksocks2.diff
+Only in /backup/robert/Development/torsocks: torksockscols.diff
+Only in /backup/robert/Development/torsocks: tsocks
+Only in /backup/robert/Development/torsocks: tsocks.1
+Only in /backup/robert/Development/torsocks: tsocks.8
+Only in /backup/robert/Development/torsocks: tsocks.announce
+diff -u -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO /backup/robert/Development/torsocks/tsocks.c /home/robert/Development/tork/src/tsocks/tsocks.c
+--- /backup/robert/Development/torsocks/tsocks.c	2008-06-15 10:43:01.000000000 +0100
++++ /home/robert/Development/tork/src/tsocks/tsocks.c	2008-06-14 20:11:26.000000000 +0100
+@@ -21,14 +21,14 @@
+ */
+ 
+ /* PreProcessor Defines */
+-#include <config.h>
++#include <config.h>
+ 
+ #ifdef USE_GNU_SOURCE
+ #define _GNU_SOURCE
+ #endif
+ 
+ /* Global configuration variables */
+-char *progname = "libtsocks";         	   /* Name used in err msgs    */
++const char *progname = "libtsocks";         	   /* Name used in err msgs    */
+ 
+ /* Header Files */
+ #include <stdio.h>
+@@ -39,6 +39,7 @@
+ #include <sys/socket.h>
+ #include <string.h>
+ #include <strings.h>
++#include <sys/types.h>
+ #include <netinet/in.h>
+ #include <arpa/inet.h>
+ #include <sys/poll.h>
+@@ -76,7 +77,7 @@
+ static char *conffile = NULL;
+ 
+ /* Exported Function Prototypes */
+-void _init(void);
++void __attribute__ ((constructor)) tsocks_init(void);
+ int connect(CONNECT_SIGNATURE);
+ int select(SELECT_SIGNATURE);
+ int poll(POLL_SIGNATURE);
+@@ -114,11 +115,11 @@
+ static int read_socksv5_connect(struct connreq *conn);
+ static int read_socksv5_auth(struct connreq *conn);
+ #ifdef USE_TOR_DNS
+-static int deadpool_init();
++static int deadpool_init(void);
+ static int send_socksv4a_request(struct connreq *conn, const char *onion_host);
+ #endif
+ 
+-void _init(void) {
++void tsocks_init(void) {
+ #ifdef USE_OLD_DLSYM
+ 	void *lib;
+ #endif
+@@ -139,50 +140,49 @@
+ 	#ifdef USE_SOCKS_DNS
+ 	realresinit = dlsym(RTLD_NEXT, "res_init");
+ 	#endif
+-        #ifdef USE_TOR_DNS
+-	realgethostbyname = dlsym(RTLD_NEXT, "gethostbyname");
+-	realgetaddrinfo = dlsym(RTLD_NEXT, "getaddrinfo");
+-	realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
+-        #endif
++    #ifdef USE_TOR_DNS
++    realgethostbyname = dlsym(RTLD_NEXT, "gethostbyname");
++    realgetaddrinfo = dlsym(RTLD_NEXT, "getaddrinfo");
++    realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
++    #endif
+ #else
+ 	lib = dlopen(LIBCONNECT, RTLD_LAZY);
+ 	realconnect = dlsym(lib, "connect");
+ 	realselect = dlsym(lib, "select");
+ 	realpoll = dlsym(lib, "poll");
+-	realgetpeername = dlsym(lib, "getpeername");
+ 	#ifdef USE_SOCKS_DNS
+ 	realresinit = dlsym(lib, "res_init");
+ 	#endif
+-	#ifdef USE_TOR_DNS
+-	realgethostbyname = dlsym(lib, "gethostbyname");
+-	realgetaddrinfo = dlsym(lib, "getaddrinfo");
+-	realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
+-        #endif
+-	dlclose(lib);
++    #ifdef USE_TOR_DNS
++    realgethostbyname = dlsym(lib, "gethostbyname");
++    realgetaddrinfo = dlsym(lib, "getaddrinfo");
++    realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
++    #endif
++    dlclose(lib);	
+ 	lib = dlopen(LIBC, RTLD_LAZY);
+ 	realclose = dlsym(lib, "close");
+-	dlclose(lib);
++	dlclose(lib);	
+ #endif
+ #ifdef USE_TOR_DNS
+-     /* Unfortunately, we can't do this lazily because otherwise our mmap'd
+-        area won't be shared across fork()s. */
+-     deadpool_init();
+-#endif
+-
++    /* Unfortunately, we can't do this lazily because otherwise our mmap'd
++       area won't be shared across fork()s. */
++    deadpool_init();
++#endif 
+ }
+ 
+ static int get_environment() {
+    static int done = 0;
++#ifdef ALLOW_MSG_OUTPUT
+    int loglevel = MSGERR;
+    char *logfile = NULL;
+    char *env;
+-
++#endif
+    if (done)
+       return(0);
+ 
+    /* Determine the logging level */
+ #ifndef ALLOW_MSG_OUTPUT
+-   set_log_options(-1, stderr, 0);
++   set_log_options(-1, (char *)stderr, 0);
+ #else
+    if ((env = getenv("TSOCKS_DEBUG")))
+       loglevel = atoi(env);
+@@ -212,7 +212,7 @@
+    config = malloc(sizeof(*config));
+    if (!config)
+       return(0);
+-	read_config(conffile, config);
++   read_config(conffile, config);
+    if (config->paths)
+       show_msg(MSGDEBUG, "First lineno for first path is %d\n", config->paths->lineno);
+ 
+@@ -222,14 +222,15 @@
+ }
+ 
+ int connect(CONNECT_SIGNATURE) {
+-	struct sockaddr_in *connaddr;
+-	struct sockaddr_in peer_address;
+-	struct sockaddr_in server_address;
+-   int gotvalidserver = 0, rc, namelen = sizeof(peer_address);
+-	int sock_type = -1;
+-	int sock_type_len = sizeof(sock_type);
+-	unsigned int res = -1;
+-	struct serverent *path;
++   struct sockaddr_in *connaddr;
++   struct sockaddr_in peer_address;
++   struct sockaddr_in server_address;
++   int gotvalidserver = 0, rc;
++   unsigned int namelen = sizeof(peer_address);
++   int sock_type = -1;
++   unsigned int sock_type_len = sizeof(sock_type);
++   int res = -1;
++   struct serverent *path;
+    struct connreq *newconn;
+ 
+    get_environment();
+@@ -248,6 +249,14 @@
+ 	getsockopt(__fd, SOL_SOCKET, SO_TYPE, 
+ 		   (void *) &sock_type, &sock_type_len);
+ 
++    show_msg(MSGDEBUG, "sin_family: %i "
++                        "\n",
++                     connaddr->sin_family);
++
++    show_msg(MSGDEBUG, "sockopt: %i "
++                        "\n",
++                     sock_type);
++
+ 	/* If this isn't an INET socket for a TCP stream we can't  */
+ 	/* handle it, just call the real connect now               */
+    if ((connaddr->sin_family != AF_INET) ||
+@@ -564,7 +573,8 @@
+ 
+ int poll(POLL_SIGNATURE) {
+    int nevents = 0;
+-   int rc = 0, i;
++   int rc = 0;
++   unsigned int i;
+    int setevents = 0;
+    int monitoring = 0;
+    struct connreq *conn, *nextconn;
+@@ -1354,7 +1364,7 @@
+ #endif
+ 
+ #ifdef USE_TOR_DNS
+-static int deadpool_init()
++static int deadpool_init(void)
+ {
+   if(!pool) {
+       get_environment();
+Only in /home/robert/Development/tork/src/tsocks/: tsocks.c.rej
+Only in /backup/robert/Development/torsocks: tsocks.conf.5
+Only in /home/robert/Development/tork/src/tsocks/: tsocks.c~
+diff -u -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO /backup/robert/Development/torsocks/tsocks.h /home/robert/Development/tork/src/tsocks/tsocks.h
+--- /backup/robert/Development/torsocks/tsocks.h	2008-06-15 10:43:01.000000000 +0100
++++ /home/robert/Development/tork/src/tsocks/tsocks.h	2007-11-02 20:35:02.000000000 +0000
+@@ -50,8 +50,8 @@
+    int selectevents;
+ 
+    /* Buffer for sending and receiving on the socket */
+-   int datalen;
+-   int datadone;
++   unsigned int datalen;
++   unsigned int datadone;
+    char buffer[2048];
+ 
+    struct connreq *next;
+Only in /backup/robert/Development/torsocks: tsocks.kdevelop
+Only in /backup/robert/Development/torsocks: tsocks.kdevelop.pcs
+Only in /backup/robert/Development/torsocks: tsocks.kdevses
+Only in /home/robert/Development/tork/src/tsocks/: tsocks.lo
+diff -u -x Makefile.am -x Makefile.in -x configure -x INSTALL -x README.TORDNS -x COPYING -x Changelog -x Doxyfile -x FAQ -x TODO /backup/robert/Development/torsocks/validateconf.c /home/robert/Development/tork/src/tsocks/validateconf.c
+--- /backup/robert/Development/torsocks/validateconf.c	2008-06-15 10:43:01.000000000 +0100
++++ /home/robert/Development/tork/src/tsocks/validateconf.c	2008-04-05 22:36:40.000000000 +0100
+@@ -23,16 +23,17 @@
+ */
+ 
+ /* Global configuration variables */ 
+-char *progname = "validateconf";	      /* Name for error msgs      */
++const char *progname = "validateconf";	      /* Name for error msgs      */
+ 
+ /* Header Files */
+-#include <config.h>
++#include <config.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <unistd.h>
+ #include <sys/types.h>
+ #include <sys/socket.h>
+ #include <string.h>
++#include <sys/types.h>
+ #include <netinet/in.h>
+ #include <arpa/inet.h>
+ #include <errno.h>
+@@ -44,7 +45,7 @@
+ void test_host(struct parsedfile *config, char *);
+ 
+ int main(int argc, char *argv[]) {
+-	char *usage = "Usage: [-f conf file] [-t hostname/ip[:port]]"; 
++	const char *usage = "Usage: [-f conf file] [-t hostname/ip[:port]]"; 
+ 	char *filename = NULL;
+ 	char *testhost = NULL;
+    struct parsedfile config;
+@@ -103,7 +104,7 @@
+    }
+ 
+ 	/* First resolve the host to an ip */
+-	if ((hostaddr.s_addr = resolve_ip(hostname, 0, 1)) == -1) {
++	if ((hostaddr.s_addr = resolve_ip(hostname, 0, 1)) == 0) {
+ 		fprintf(stderr, "Error: Cannot resolve %s\n", host);
+ 		return;
+ 	} else {
+@@ -187,13 +188,13 @@
+ 	if (server->address != NULL) 
+ 		printf("Server:       %s (%s)\n", server->address, 
+ 	       		((res.s_addr = resolve_ip(server->address, 0, 
+-						  HOSTNAMES)) == -1 
++						  HOSTNAMES)) == 0 
+ 			 ? "Invalid!" : inet_ntoa(res)));
+ 	else
+ 		printf("Server:       ERROR! None specified\n");
+ 
+ 	/* Check the server is on a local net */
+-	if ((server->address != NULL) && (res.s_addr != -1) && 
++	if ((server->address != NULL) && (res.s_addr != 0) && 
+ 	    (is_local(config, &res))) 
+ 		fprintf(stderr, "Error: Server is not on a network "
+ 				"specified as local\n");
+Only in /home/robert/Development/tork/src/tsocks/: validateconf.c~

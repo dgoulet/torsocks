@@ -1,0 +1,15 @@
+--- parser.c.old        2006-04-01 17:54:46.687832056 -0500
++++ parser.c    2006-04-01 17:55:47.552579208 -0500
+@@ -74,8 +74,10 @@
+                } 
+                fclose(conf);
+ 
+-               /* Always add the 127.0.0.1/255.0.0.0 subnet to local */
+-               handle_local(config, 0, "127.0.0.0/255.0.0.0");
++               if (!config->localnets) {
++                       /* Use 127.0.0.1/255.0.0.0 by default */
++                       handle_local(config, 0, "127.0.0.0/255.0.0.0");
++               }
+ 
+                /* Check default server */
+                check_server(&(config->defaultserver));

@@ -1,0 +1,78 @@
+These are the patches applied to tsocks before 15/06/08.
+
+
+File: compilewarnings.patch (Robert Hogan)
+Date: 2007
+Description:
+  Suppresses a number of compile warnings. Also introduces reasonable defaults
+  for use of Tor.
+
+
+File: getpeername.patch (Peter Palfrader <weasel@debian.org>)
+Date: Sat, 27 Mar 2004 13:20:56 +0100
+Description:
+  "If we are not done setting up the connection yet, getpeername() should
+  return -1 and ENOTCONN.
+
+  This is necessary since some applications, when using non-blocking connect,
+  (like ircII) use getpeername() to find out if they are connected already.
+
+  This results in races sometimes, where the client sends data to the socket
+  before we are done with the socks connection setup.  Another solution would
+  be to intercept send().
+
+  This could be extended to actually set the peername to the peer the
+  client application has requested, but not for now.
+
+  this patch is almost the same, only it uses state != DONE  instead of
+  state == CONNECTING to find out when to send ENOTCONN back.
+
+  this patch tries to also do continue the socks setup in getpeername(),
+  if it isn't done yet."
+
+
+File: infiniteloop.patch (Peter Palfrader <weasel@debian.org>)
+Date: Sat, 20 Mar 2004 11:41:41 +0100
+Description:
+  "If the server just disconnects when tsocks expects a reply, tsocks
+  will get stuck in an infinite busy loop."
+
+
+File: localaddresses.patch (Roger Dingledine)
+Date: Sat, 01 Apr 2006 18:17:50 -0500
+Description:
+  "I just noticed that tsocks hard-codes the 127.0.0.0/8 subnet
+  as being "local", meaning it won't ever go through the socks
+  proxy.
+
+  The Tor controller's mapaddress command can assign virtual addresses
+  in the 127/8 space: see section 3.8 of
+  http://tor.eff.org/cvs/tor/doc/control-spec.txt
+
+  We think this behavior should be allowed. Here's a patch to tsocks to
+  make it not always hard-code its local network."
+
+
+File: conffile.patch ( Roderick Schertler <roderick@argon.org>)
+Date: Fri, 03 Jun 2005 08:43:59 -0400
+Description: tsocks(8) says TSOCKS_CONFFILE but should say TSOCKS_CONF_FILE
+Details:
+  "The tsocks(8) man page says TSOCKS_CONFFILE but should say
+  TSOCKS_CONF_FILE.  Though this is a documentation error I don't think
+  it qualifies as minor.  For me the program didn't work at all because
+  I needed to run it with an alternative config file, and I needed to
+  download the source to figure out the problem."
+
+
+File: tordns.patch (Total Information Security)
+Date: 2005-10-XX (?)
+Original Reference: http://www.totalinfosecurity.com/patches/tor.php
+Description:
+  "Patch from Total Information Security to resolve the DNS leakage problem
+  and allow access to addresses with nonstandard hostnames (e.g. those ending
+  in .onion)."
+
+Notes:
+  'Total Information Security' appears to be defunct so the original link for
+  the patch is now dead. The patch stored here was taken from :
+  https://bugs.gentoo.org/show_bug.cgi?id=148550
