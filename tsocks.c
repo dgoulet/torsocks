@@ -28,7 +28,7 @@
 #endif
 
 /* Global configuration variables */
-char *progname = "libtsocks";         	   /* Name used in err msgs    */
+const char *progname = "libtsocks";         	   /* Name used in err msgs    */
 
 /* Header Files */
 #include <stdio.h>
@@ -39,6 +39,7 @@ char *progname = "libtsocks";         	   /* Name used in err msgs    */
 #include <sys/socket.h>
 #include <string.h>
 #include <strings.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/poll.h>
@@ -76,7 +77,7 @@ static int suid = 0;
 static char *conffile = NULL;
 
 /* Exported Function Prototypes */
-void _init(void);
+void __attribute__ ((constructor)) tsocks_init(void);
 int connect(CONNECT_SIGNATURE);
 int select(SELECT_SIGNATURE);
 int poll(POLL_SIGNATURE);
@@ -114,11 +115,11 @@ static int read_socksv4_req(struct connreq *conn);
 static int read_socksv5_connect(struct connreq *conn);
 static int read_socksv5_auth(struct connreq *conn);
 #ifdef USE_TOR_DNS
-static int deadpool_init();
+static int deadpool_init(void);
 static int send_socksv4a_request(struct connreq *conn, const char *onion_host);
 #endif
 
-void _init(void) {
+void tsocks_init(void) {
 #ifdef USE_OLD_DLSYM
 	void *lib;
 #endif
@@ -139,50 +140,49 @@ void _init(void) {
 	#ifdef USE_SOCKS_DNS
 	realresinit = dlsym(RTLD_NEXT, "res_init");
 	#endif
-        #ifdef USE_TOR_DNS
-	realgethostbyname = dlsym(RTLD_NEXT, "gethostbyname");
-	realgetaddrinfo = dlsym(RTLD_NEXT, "getaddrinfo");
-	realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
-        #endif
+    #ifdef USE_TOR_DNS
+    realgethostbyname = dlsym(RTLD_NEXT, "gethostbyname");
+    realgetaddrinfo = dlsym(RTLD_NEXT, "getaddrinfo");
+    realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
+    #endif
 #else
 	lib = dlopen(LIBCONNECT, RTLD_LAZY);
 	realconnect = dlsym(lib, "connect");
 	realselect = dlsym(lib, "select");
 	realpoll = dlsym(lib, "poll");
-	realgetpeername = dlsym(lib, "getpeername");
 	#ifdef USE_SOCKS_DNS
 	realresinit = dlsym(lib, "res_init");
 	#endif
-	#ifdef USE_TOR_DNS
-	realgethostbyname = dlsym(lib, "gethostbyname");
-	realgetaddrinfo = dlsym(lib, "getaddrinfo");
-	realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
-        #endif
-	dlclose(lib);
+    #ifdef USE_TOR_DNS
+    realgethostbyname = dlsym(lib, "gethostbyname");
+    realgetaddrinfo = dlsym(lib, "getaddrinfo");
+    realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
+    #endif
+    dlclose(lib);	
 	lib = dlopen(LIBC, RTLD_LAZY);
 	realclose = dlsym(lib, "close");
-	dlclose(lib);
+	dlclose(lib);	
 #endif
 #ifdef USE_TOR_DNS
-     /* Unfortunately, we can't do this lazily because otherwise our mmap'd
-        area won't be shared across fork()s. */
-     deadpool_init();
-#endif
-
+    /* Unfortunately, we can't do this lazily because otherwise our mmap'd
+       area won't be shared across fork()s. */
+    deadpool_init();
+#endif 
 }
 
 static int get_environment() {
    static int done = 0;
+#ifdef ALLOW_MSG_OUTPUT
    int loglevel = MSGERR;
    char *logfile = NULL;
    char *env;
-
+#endif
    if (done)
       return(0);
 
    /* Determine the logging level */
 #ifndef ALLOW_MSG_OUTPUT
-   set_log_options(-1, stderr, 0);
+   set_log_options(-1, (char *)stderr, 0);
 #else
    if ((env = getenv("TSOCKS_DEBUG")))
       loglevel = atoi(env);
@@ -212,7 +212,7 @@ static int get_config () {
    config = malloc(sizeof(*config));
    if (!config)
       return(0);
-	read_config(conffile, config);
+   read_config(conffile, config);
    if (config->paths)
       show_msg(MSGDEBUG, "First lineno for first path is %d\n", config->paths->lineno);
 
@@ -222,14 +222,15 @@ static int get_config () {
 }
 
 int connect(CONNECT_SIGNATURE) {
-	struct sockaddr_in *connaddr;
-	struct sockaddr_in peer_address;
-	struct sockaddr_in server_address;
-   int gotvalidserver = 0, rc, namelen = sizeof(peer_address);
-	int sock_type = -1;
-	int sock_type_len = sizeof(sock_type);
-	unsigned int res = -1;
-	struct serverent *path;
+   struct sockaddr_in *connaddr;
+   struct sockaddr_in peer_address;
+   struct sockaddr_in server_address;
+   int gotvalidserver = 0, rc;
+   unsigned int namelen = sizeof(peer_address);
+   int sock_type = -1;
+   unsigned int sock_type_len = sizeof(sock_type);
+   int res = -1;
+   struct serverent *path;
    struct connreq *newconn;
 
    get_environment();
@@ -247,6 +248,14 @@ int connect(CONNECT_SIGNATURE) {
 	/* Get the type of the socket */
 	getsockopt(__fd, SOL_SOCKET, SO_TYPE, 
 		   (void *) &sock_type, &sock_type_len);
+
+    show_msg(MSGDEBUG, "sin_family: %i "
+                        "\n",
+                     connaddr->sin_family);
+
+    show_msg(MSGDEBUG, "sockopt: %i "
+                        "\n",
+                     sock_type);
 
 	/* If this isn't an INET socket for a TCP stream we can't  */
 	/* handle it, just call the real connect now               */
@@ -564,7 +573,8 @@ int select(SELECT_SIGNATURE) {
 
 int poll(POLL_SIGNATURE) {
    int nevents = 0;
-   int rc = 0, i;
+   int rc = 0;
+   unsigned int i;
    int setevents = 0;
    int monitoring = 0;
    struct connreq *conn, *nextconn;
@@ -1354,7 +1364,7 @@ int res_init(void) {
 #endif
 
 #ifdef USE_TOR_DNS
-static int deadpool_init()
+static int deadpool_init(void)
 {
   if(!pool) {
       get_environment();

@@ -23,7 +23,7 @@
 */
 
 /* Global configuration variables */ 
-char *progname = "validateconf";	      /* Name for error msgs      */
+const char *progname = "validateconf";	      /* Name for error msgs      */
 
 /* Header Files */
 #include <config.h>
@@ -33,6 +33,7 @@ char *progname = "validateconf";	      /* Name for error msgs      */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <string.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <errno.h>
@@ -44,7 +45,7 @@ void show_conf(struct parsedfile *config);
 void test_host(struct parsedfile *config, char *);
 
 int main(int argc, char *argv[]) {
-	char *usage = "Usage: [-f conf file] [-t hostname/ip[:port]]"; 
+	const char *usage = "Usage: [-f conf file] [-t hostname/ip[:port]]"; 
 	char *filename = NULL;
 	char *testhost = NULL;
    struct parsedfile config;
@@ -103,7 +104,7 @@ void test_host(struct parsedfile *config, char *host) {
    }
 
 	/* First resolve the host to an ip */
-	if ((hostaddr.s_addr = resolve_ip(hostname, 0, 1)) == -1) {
+	if ((hostaddr.s_addr = resolve_ip(hostname, 0, 1)) == 0) {
 		fprintf(stderr, "Error: Cannot resolve %s\n", host);
 		return;
 	} else {
@@ -187,13 +188,13 @@ void show_server(struct parsedfile *config, struct serverent *server, int def) {
 	if (server->address != NULL) 
 		printf("Server:       %s (%s)\n", server->address, 
 	       		((res.s_addr = resolve_ip(server->address, 0, 
-						  HOSTNAMES)) == -1 
+						  HOSTNAMES)) == 0 
 			 ? "Invalid!" : inet_ntoa(res)));
 	else
 		printf("Server:       ERROR! None specified\n");
 
 	/* Check the server is on a local net */
-	if ((server->address != NULL) && (res.s_addr != -1) && 
+	if ((server->address != NULL) && (res.s_addr != 0) && 
 	    (is_local(config, &res))) 
 		fprintf(stderr, "Error: Server is not on a network "
 				"specified as local\n");
