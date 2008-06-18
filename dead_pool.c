@@ -15,7 +15,8 @@ void get_next_dead_address(dead_pool *pool, uint32_t *result);
 
 static int
 do_resolve(const char *hostname, uint32_t sockshost, uint16_t socksport,
-           uint32_t *result_addr);
+           uint32_t *result_addr, const void *addr,
+           int version, int reverse, char **result_hostname);
 
 /* Compares the last strlen(s2) characters of s1 with s2.  Returns as for
    strcasecmp. */
@@ -76,6 +77,8 @@ init_pool(unsigned int pool_size, struct in_addr deadrange_base,
                  "(tried to map %d bytes)\n", sizeof(dead_pool));
         return NULL;
     }
+
+    show_msg(MSGWARN, "init_pool: sockshost %s ", sockshost);
 
     /* Initialize the dead_pool structure */
 #ifdef HAVE_INET_ATON
@@ -139,6 +142,7 @@ store_pool_entry(dead_pool *pool, char *hostname, struct in_addr *addr)
   int oldpos;
   int rc;
   uint32_t intaddr;
+  char *result_hostname;
 
   show_msg(MSGDEBUG, "store_pool_entry: storing '%s'\n", hostname);
   show_msg(MSGDEBUG, "store_pool_entry: write pos is: %d\n", pool->write_pos);
@@ -156,7 +160,9 @@ store_pool_entry(dead_pool *pool, char *hostname, struct in_addr *addr)
   if(strcasecmpend(hostname, ".onion") == 0) {
       get_next_dead_address(pool, &pool->entries[position].ip);
   } else {
-      rc = do_resolve(hostname, pool->sockshost, pool->socksport, &intaddr);
+      rc = do_resolve(hostname, pool->sockshost, pool->socksport, &intaddr, 0,
+                  4 /*SOCKS5*/, 0 /*Reverse*/, &result_hostname);
+
       if(rc != 0) {
           show_msg(MSGWARN, "failed to resolve: %s\n", hostname);
           return -1;
@@ -237,7 +243,32 @@ build_socks4a_resolve_request(char **out,
   return len;
 }
 
+static int
+build_socks5_resolve_ptr_request(char **out, const void *_addr)
+{
+  size_t len;
+  const struct in_addr *addr=_addr;
+
+  len = 12;
+  *out = malloc(len);
+  (*out)[0] = 5;      /* SOCKS version 5 */
+  (*out)[1] = '\xF1'; /* Command: reverse resolve.
+                         see doc/socks-extensions.txt*/
+  (*out)[2] = '\x00'; /* RSV */
+  (*out)[3] = '\x01'; /* ATYP: IP V4 address: X'01' */
+
+  set_uint32((*out)+4, addr->s_addr);/*IP*/
+  set_uint16((*out)+4+4, 0); /* port */
+
+//   memcpy((*out)+4, &addr.s_addr,4); /*IP*/
+//   memcpy((*out)+4+4, *(uint32_t)0, 2); /* port */
+
+  return len;
+}
+
 #define RESPONSE_LEN 8
+#define SOCKS5_LEN 4
+#define METHODRESPONSE_LEN 2
 
 static int
 parse_socks4a_resolve_response(const char *response, size_t len,
@@ -272,43 +303,188 @@ parse_socks4a_resolve_response(const char *response, size_t len,
 }
 
 static int
+parse_socks5_resolve_ptr_response(int s,const char *response, size_t len,
+                               uint32_t *result_addr, char ***result_hostname)
+{
+    char reply_buf[4];
+    int r;
+
+    len=0;
+    while (len < SOCKS5_LEN) {
+      r = recv(s, reply_buf+len, SOCKS5_LEN-len, 0);
+      if (r==0) {
+        show_msg(MSGWARN, "do_resolve: EOF while reading SOCKS5 response\n"); 
+        return -1;
+      }
+      if (r<0) {
+        show_msg(MSGWARN, "do_resolve: error reading SOCKS5 response\n"); 
+        return -1;
+      }
+      len += r;
+    }
+
+    if (reply_buf[0] != 5) {
+      show_msg(MSGWARN, "Bad SOCKS5 reply version.");
+      return -1;
+    }
+    if (reply_buf[1] != 0) {
+      show_msg(MSGWARN,"Got status response '%u': SOCKS5 request failed.",
+               (unsigned)reply_buf[1]);
+      return -1;
+    }
+    if (reply_buf[3] == 1) {
+      /* IPv4 address */
+      len=0;
+      while (len < SOCKS5_LEN) {
+        r = recv(s, reply_buf+len, SOCKS5_LEN-len, 0);
+        if (r==0) {
+          show_msg(MSGWARN, "do_resolve: EOF while reading SOCKS5 response\n"); 
+          return -1;
+        }
+        if (r<0) {
+          show_msg(MSGWARN, "do_resolve: error reading address in SOCKS5 response\n"); 
+          return -1;
+        }
+        len += r;
+      }
+      *result_addr = ntohl(get_uint32(reply_buf));
+    } else if (reply_buf[3] == 3) {
+      size_t result_len;
+      len=0;
+      while (len < 1) {
+        r = recv(s, reply_buf+len, 1-len, 0);
+        if (r==0) {
+          show_msg(MSGWARN, "do_resolve: EOF while reading SOCKS5 response\n"); 
+          return -1;
+        }
+        if (r<0) {
+          show_msg(MSGWARN, "do_resolve: error reading address length in SOCKS5 response\n"); 
+          return -1;
+        }
+        len += r;
+      }
+      result_len = *(uint8_t*)(reply_buf);
+      **result_hostname = malloc(result_len+1);
+      len=0;
+      while (len < (int) result_len) {
+        r = recv(s, **result_hostname+len, result_len-len, 0);
+        if (r==0) {
+          show_msg(MSGWARN, "do_resolve: EOF while reading SOCKS5 response\n"); 
+          return -1;
+        }
+        if (r<0) {
+          show_msg(MSGWARN, "do_resolve: error reading hostname in SOCKS5 response\n");
+          return -1;
+        }
+        len += r;
+      }
+
+      (**result_hostname)[result_len] = '\0';
+    }
+
+  return 0;
+}
+
+static int
 do_resolve(const char *hostname, uint32_t sockshost, uint16_t socksport,
-           uint32_t *result_addr)
+           uint32_t *result_addr, const void *addr,
+           int version, int reverse, char **result_hostname)
 {
   int s;
   struct sockaddr_in socksaddr;
-  char *req, *cp;
-  int r, len;
+  char *req, *cp=NULL;
+  int r, len, hslen;
   char response_buf[RESPONSE_LEN];
+  const char *handshake="\x05\x01\x00";
 
   show_msg(MSGDEBUG, "do_resolve: resolving %s\n", hostname);
 
+  /* Create SOCKS connection */
   s = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (s<0) {
     show_msg(MSGWARN, "do_resolve: problem creating socket\n"); 
     return -1;
   }
 
+  /* Connect to SOCKS server */
   memset(&socksaddr, 0, sizeof(socksaddr));
   socksaddr.sin_family = AF_INET;
   socksaddr.sin_port = htons(socksport);
   socksaddr.sin_addr.s_addr = htonl(sockshost);
   if (realconnect(s, (struct sockaddr*)&socksaddr, sizeof(socksaddr))) {
     show_msg(MSGWARN, "do_resolve: error connecting to SOCKS server\n");
+    realclose(s);
     return -1;
   }
 
-  if ((len = build_socks4a_resolve_request(&req, "", hostname))<0) {
-    show_msg(MSGWARN, "do_resolve: error generating SOCKS request\n"); 
-    return -1;
+  /* If a SOCKS5 connection, perform handshake */
+  if (version == 5) {
+    char method_buf[2];
+    hslen=3;
+    while (hslen) {
+      r = send(s, handshake, hslen, 0);
+      if (r<0) {
+        show_msg(MSGWARN, "do_resolve: error sending SOCKS5 method list.\n");
+        realclose(s);
+        return -1;
+      }
+      hslen -= r;
+      handshake += r;
+    }
+
+    len = 0;
+    while (len < METHODRESPONSE_LEN) {
+      r = recv(s, method_buf+len, METHODRESPONSE_LEN-len, 0);
+      if (r==0) {
+        show_msg(MSGWARN, "do_resolve: EOF while reading SOCKS response\n");
+        realclose(s);
+        return -1;
+      }
+      if (r<0) {
+        show_msg(MSGWARN, "do_resolve: error reading SOCKS response\n");
+        realclose(s);
+        return -1;
+      }
+      len += r;
+    }
+
+    if (method_buf[0] != '\x05') {
+      show_msg(MSGWARN, "Unrecognized socks version: %u",
+              (unsigned)method_buf[0]);
+      realclose(s);
+      return -1;
+    }
+    if (method_buf[1] != '\x00') {
+      show_msg(MSGWARN, "Unrecognized socks authentication method: %u",
+              (unsigned)method_buf[1]);
+      realclose(s);
+      return -1;
+    }
   }
 
+  /* Create SOCKS request */
+  if (reverse) {
+    if ((len = build_socks5_resolve_ptr_request(&req, addr))<0) {
+      show_msg(MSGWARN, "do_resolve: error generating reverse SOCKS request\n");
+      realclose(s);
+      return -1;
+    }
+  }else{
+    if ((len = build_socks4a_resolve_request(&req, "", hostname))<0) {
+      show_msg(MSGWARN, "do_resolve: error generating SOCKS request\n");
+      realclose(s);
+      return -1;
+    }
+  }
+
+  /* Send SOCKS request */
   cp = req;
   while (len) {
     r = send(s, cp, len, 0);
     if (r<0) {
       show_msg(MSGWARN, "do_resolve: error sending SOCKS request\n"); 
       free(req);
+      realclose(s);
       return -1;
     }
     len -= r;
@@ -316,30 +492,91 @@ do_resolve(const char *hostname, uint32_t sockshost, uint16_t socksport,
   }
   free(req);
 
-  len = 0;
-  while (len < RESPONSE_LEN) {
-    r = recv(s, response_buf+len, RESPONSE_LEN-len, 0);
-    if (r==0) {
-      show_msg(MSGWARN, "do_resolve: EOF while reading SOCKS response\n"); 
+  /* Handle SOCKS Response */
+  if (reverse) {
+    if (parse_socks5_resolve_ptr_response(s, response_buf, RESPONSE_LEN,
+                                          result_addr, &result_hostname) < 0){
+      show_msg(MSGWARN, "do_resolve: error parsing SOCKS response\n");
+      realclose(s);
       return -1;
     }
-    if (r<0) {
-      show_msg(MSGWARN, "do_resolve: error reading SOCKS response\n"); 
+  }else{
+    /* Process SOCKS response */
+    len = 0;
+    while (len < RESPONSE_LEN) {
+      r = recv(s, response_buf+len, RESPONSE_LEN-len, 0);
+      if (r==0) {
+        show_msg(MSGWARN, "do_resolve: EOF while reading SOCKS response\n");
+        realclose(s);
+        return -1;
+      }
+      if (r<0) {
+        show_msg(MSGWARN, "do_resolve: error reading SOCKS response\n");
+        realclose(s);
+        return -1;
+      }
+      len += r;
+    }
+    realclose(s);
+
+    /* Parse SOCKS response */
+    if (parse_socks4a_resolve_response(response_buf, RESPONSE_LEN, result_addr) < 0){
+      show_msg(MSGWARN, "do_resolve: error parsing SOCKS response\n");
       return -1;
     }
-    len += r;
   }
 
-  realclose(s);
-
-  if (parse_socks4a_resolve_response(response_buf, RESPONSE_LEN, result_addr) < 0){
-    show_msg(MSGWARN, "do_resolve: error parsing SOCKS response\n");
-    return -1;
-  }
 
   show_msg(MSGDEBUG, "do_resolve: success\n");
 
   return 0;
+}
+
+struct hostent *
+our_gethostbyaddr(dead_pool *pool, const void *_addr, socklen_t len, int type)
+{
+  const struct in_addr *addr=_addr;
+  static struct hostent he;
+  uint32_t intaddr=0;
+  char *result_hostname=NULL;
+  int rc=0;
+  static char *addrs[2];
+  static char *aliases[2];
+
+  rc = do_resolve("", pool->sockshost, pool->socksport, &intaddr, addr,
+                  5 /*SOCKS5*/, 1 /*Reverse*/, &result_hostname);
+
+
+  if(rc != 0) {
+      show_msg(MSGWARN, "failed to reverse resolve: %s\n",
+               inet_ntoa(*((struct in_addr *)addr)));
+      result_hostname=NULL;
+      addrs[0] = NULL;
+      addrs[1] = NULL;
+  }else{
+      addrs[0] = (char *)addr;
+      addrs[1] = NULL;
+  }
+
+  if (result_hostname)
+    he.h_name = result_hostname;
+  else
+    he.h_name = inet_ntoa(*((struct in_addr *)addr));
+
+//   aliases = malloc(sizeof(char *));
+  aliases[0] = NULL;
+  aliases[1] = NULL;
+
+  he.h_aliases = aliases;
+  he.h_length    = len;
+  he.h_addrtype  = type;
+  he.h_addr_list = addrs;
+
+  show_msg(MSGDEBUG, "our_gethostbyaddr: resolved '%s' to: '%s'\n",
+           inet_ntoa(*((struct in_addr *)he.h_addr)), result_hostname);
+
+  return &he;
+
 }
 
 struct hostent *

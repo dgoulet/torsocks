@@ -63,6 +63,7 @@ static int (*realresinit)(void);
 #ifdef USE_TOR_DNS
 static dead_pool *pool = NULL;
 static struct hostent *(*realgethostbyname)(GETHOSTBYNAME_SIGNATURE);
+static struct hostent *(*realgethostbyaddr)(GETHOSTBYADDR_SIGNATURE);
 int (*realgetaddrinfo)(GETADDRINFO_SIGNATURE);
 static struct hostent *(*realgetipnodebyname)(GETIPNODEBYNAME_SIGNATURE);
 #endif
@@ -77,7 +78,7 @@ static int suid = 0;
 static char *conffile = NULL;
 
 /* Exported Function Prototypes */
-void __attribute__ ((constructor)) tsocks_init(void);
+void __attribute__ ((constructor)) _init(void);
 int connect(CONNECT_SIGNATURE);
 int select(SELECT_SIGNATURE);
 int poll(POLL_SIGNATURE);
@@ -88,6 +89,7 @@ int res_init(void);
 #endif
 #ifdef USE_TOR_DNS
 struct hostent *gethostbyname(GETHOSTBYNAME_SIGNATURE);
+struct hostent *gethostbyaddr(GETHOSTBYADDR_SIGNATURE);
 int getaddrinfo(GETADDRINFO_SIGNATURE);
 struct hostent *getipnodebyname(GETIPNODEBYNAME_SIGNATURE);
 #endif 
@@ -119,11 +121,12 @@ static int deadpool_init(void);
 static int send_socksv4a_request(struct connreq *conn, const char *onion_host);
 #endif
 
-void tsocks_init(void) {
+void _init(void) {
 #ifdef USE_OLD_DLSYM
 	void *lib;
 #endif
 
+    show_msg(MSGWARN, "In tsocks_init \n");
 	/* We could do all our initialization here, but to be honest */
 	/* most programs that are run won't use our services, so     */
 	/* we do our general initialization on first call            */
@@ -142,6 +145,7 @@ void tsocks_init(void) {
 	#endif
     #ifdef USE_TOR_DNS
     realgethostbyname = dlsym(RTLD_NEXT, "gethostbyname");
+    //realgethostbyaddr = dlsym(RTLD_NEXT, "gethostbyaddr");
     realgetaddrinfo = dlsym(RTLD_NEXT, "getaddrinfo");
     realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
     #endif
@@ -155,6 +159,7 @@ void tsocks_init(void) {
 	#endif
     #ifdef USE_TOR_DNS
     realgethostbyname = dlsym(lib, "gethostbyname");
+    realgethostbyaddr = dlsym(lib, "gethostbyaddr");
     realgetaddrinfo = dlsym(lib, "getaddrinfo");
     realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
     #endif
@@ -1100,6 +1105,7 @@ static int send_socksv5_connect(struct connreq *conn) {
    conn->datalen = sizeof(constring);
 
 #ifdef USE_TOR_DNS
+
    show_msg(MSGDEBUG, "send_socksv5_connect: looking for: %s\n",
             inet_ntoa(conn->connaddr.sin_addr));
 
@@ -1391,6 +1397,15 @@ struct hostent *gethostbyname(GETHOSTBYNAME_SIGNATURE)
       return our_gethostbyname(pool, name);
   } else {
       return realgethostbyname(name);
+  }  
+}
+
+struct hostent *gethostbyaddr(GETHOSTBYADDR_SIGNATURE)
+{
+  if(pool) {
+      return our_gethostbyaddr(pool, addr, len, type);
+  } else {
+      return realgethostbyaddr(addr, len, type);
   }  
 }
 

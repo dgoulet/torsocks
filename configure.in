@@ -384,6 +384,10 @@ dnl Emit signature for gethostbyname
 PROTO="const char *name"
 AC_DEFINE_UNQUOTED(GETHOSTBYNAME_SIGNATURE, [${PROTO}])
 
+dnl Emit signature for gethostbyaddr
+PROTO="const void *addr, socklen_t len, int type"
+AC_DEFINE_UNQUOTED(GETHOSTBYADDR_SIGNATURE, [${PROTO}], [Description])
+
 dnl Emit signature for getaddrinfo
 PROTO="const char *node, const char *service, void *hints, void *res"
 AC_DEFINE_UNQUOTED(GETADDRINFO_SIGNATURE, [${PROTO}])

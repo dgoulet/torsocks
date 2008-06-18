@@ -83,6 +83,9 @@ in inspectsocks */
 #undef GETIPNODEBYNAME_SIGNATURE
 
 
+/* Description */
+#undef GETHOSTBYADDR_SIGNATURE
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 

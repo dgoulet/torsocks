@@ -26,6 +26,52 @@ char logfilename[256];    /* Name of file to which log messages should
 FILE *logfile = NULL;     /* File to which messages should be logged */
 int logstamp = 0;         /* Timestamp (and pid stamp) messages */
 
+
+/**
+ * Read a 16-bit value beginning at <b>cp</b>.  Equivalent to
+ * *(uint16_t*)(cp), but will not cause segfaults on platforms that forbid
+ * unaligned memory access.
+ */
+uint16_t
+get_uint16(const char *cp)
+{
+  uint16_t v;
+  memcpy(&v,cp,2);
+  return v;
+}
+/**
+ * Read a 32-bit value beginning at <b>cp</b>.  Equivalent to
+ * *(uint32_t*)(cp), but will not cause segfaults on platforms that forbid
+ * unaligned memory access.
+ */
+uint32_t
+get_uint32(const char *cp)
+{
+  uint32_t v;
+  memcpy(&v,cp,4);
+  return v;
+}
+/**
+ * Set a 16-bit value beginning at <b>cp</b> to <b>v</b>. Equivalent to
+ * *(uint16_t)(cp) = v, but will not cause segfaults on platforms that forbid
+ * unaligned memory access. */
+void
+set_uint16(char *cp, uint16_t v)
+{
+  memcpy(cp,&v,2);
+}
+/**
+ * Set a 32-bit value beginning at <b>cp</b> to <b>v</b>. Equivalent to
+ * *(uint32_t)(cp) = v, but will not cause segfaults on platforms that forbid
+ * unaligned memory access. */
+void
+set_uint32(char *cp, uint32_t v)
+{
+  memcpy(cp,&v,4);
+}
+
+
+
 unsigned int resolve_ip(char *host, int showmsg, int allownames) {
 	struct hostent *new;
 	unsigned int	hostaddr;

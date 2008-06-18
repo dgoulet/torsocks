@@ -50,8 +50,8 @@ struct connreq {
    int selectevents;
 
    /* Buffer for sending and receiving on the socket */
-   int datalen;
-   int datadone;
+   unsigned int datalen;
+   unsigned int datadone;
    char buffer[2048];
 
    struct connreq *next;

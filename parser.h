@@ -35,7 +35,7 @@ struct parsedfile {
    struct serverent *paths;
    int tordns_enabled;
    int tordns_failopen;
-   int tordns_cache_size;
+   unsigned int tordns_cache_size;
    struct netent *tordns_deadpool_range;
 };
 

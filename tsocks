@@ -46,10 +46,10 @@ case "$1" in
 	on)
 		if [ -z "$LD_PRELOAD" ]
 			then
-				export LD_PRELOAD="/usr/lib/libtsocks.so"
+				export LD_PRELOAD="/lib/libtsocks.so"
 			else
-				echo $LD_PRELOAD | grep -q "/usr/lib/libtsocks\.so" || \
-				export LD_PRELOAD="/usr/lib/libtsocks.so $LD_PRELOAD"
+				echo $LD_PRELOAD | grep -q "/lib/libtsocks\.so" || \
+				export LD_PRELOAD="/lib/libtsocks.so $LD_PRELOAD"
 		fi
 	;;
 	off)
@@ -68,10 +68,10 @@ case "$1" in
 	*)
 		if [ -z "$LD_PRELOAD" ]
 		then
-			export LD_PRELOAD="/usr/lib/libtsocks.so"
+			export LD_PRELOAD="/lib/libtsocks.so"
 		else
-			echo $LD_PRELOAD | grep -q "/usr/lib/libtsocks\.so" || \
-			export LD_PRELOAD="/usr/lib/libtsocks.so $LD_PRELOAD"
+			echo $LD_PRELOAD | grep -q "/lib/libtsocks\.so" || \
+			export LD_PRELOAD="/lib/libtsocks.so $LD_PRELOAD"
 		fi
 
 		if [ $# = 0 ]

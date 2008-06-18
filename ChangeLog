@@ -1,15 +1,19 @@
-version 1.81 - 2006.11.17 ruben@ugr.es
-  Integrated and resolved the conflicts for the following
-  patches:
-    -DNS from totalinfosecurity mentioned below
-    -Infinite Loop from weasel
-    -Getpeername from weasel
-    -Documentation patch from Roderick Schertler
-    -Localhost patch from Roger Dingledine
-  (patches 1, 3, 4, 5 and 7 from 
-  http://wiki.noreply.org/noreply/TheOnionRouter/TSocksPatches)
-  Patches 2 and 6 were not applied because I don't have access to
-  osx or bsd and can't test them. (And the bsd patch breaks linux)
+2008-06-18 Robert Hogan <robert@roberthogan.net>
+	Add support for getaddrbyhost. 
+
+2008-06-15 Robert Hogan <robert@roberthogan.net>
+	Add 'patches' directory and store a copy of all prior changes to tsocks.
+
+2008-06-15 Robert Hogan <robert@roberthogan.net>
+	Update TODO 
+
+2008-06-15 Robert Hogan <robert@roberthogan.net>
+	parser.c: Fix compilation warnings. Use defaults sensible for Tor. 
+
+2008-06-15 Robert Hogan <robert@roberthogan.net>
+	dead_pool.c/h, inspectsocks.c, common.c, tsocks.c, validateconf.c:
+    Fix compilation warnings.
+
 
 version 1.80tordns - 2005.10.4 bls@totalinfosecurity.com
    Intercept gethostbyname() and friends, added --tordns

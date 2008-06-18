@@ -23,7 +23,7 @@
 */
 
 /* Global configuration variables */ 
-char *progname = "inspectsocks";	   /* Name for error msgs      */
+const char *progname = "inspectsocks";	   /* Name for error msgs      */
 int defaultport	= 1080;			   /* Default SOCKS port       */
 
 /* Header Files */
@@ -35,6 +35,7 @@ int defaultport	= 1080;			   /* Default SOCKS port       */
 #include <sys/socket.h>
 #include <string.h>
 #include <strings.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <errno.h>
@@ -44,7 +45,7 @@ int send_request(struct sockaddr_in *server, void *req,
                  int reqlen, void *rep, int replen);
 
 int main(int argc, char *argv[]) {
-	char *usage = "Usage: <socks server name/ip> [portno]";
+	const char *usage = "Usage: <socks server name/ip> [portno]";
 	char req[9];
 	char resp[100];
 	unsigned short int portno = defaultport;
@@ -68,7 +69,7 @@ int main(int argc, char *argv[]) {
 			}
 		case 2:
 			if ((server.sin_addr.s_addr = resolve_ip(argv[1], 1,HOSTNAMES))
-                            ==  -1) {
+                            ==  0) {
 				show_msg(MSGERR, "Invalid IP/host specified (%s)\n", argv[1]);
 				show_msg(MSGERR, "%s\n", usage);
 				exit(1);
