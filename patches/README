@@ -1,5 +1,10 @@
-These are the patches applied to tsocks before 15/06/08.
+This is a list of the patches applied to tsocks between it's last
+official release and 15/06/08. All changes applied to the source after
+that date are recorded in the Changelog.
 
+NB: These patches are stored for historical reasons only. I have not
+    confirmed that they all apply cleanly to the tsocks source. I do not
+    know in what order they should be applied.
 
 File: compilewarnings.patch (Robert Hogan)
 Date: 2007

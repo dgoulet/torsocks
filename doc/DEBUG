@@ -1,0 +1,4 @@
+gdb ./gethostbyaddr
+set environment LD_PRELOAD /lib/libtsocks.so.1
+b our_gethostbyaddr
+run
