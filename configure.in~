@@ -1,0 +1,424 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(src/saveme.c)
+AC_CONFIG_HEADER(config.h)
+
+AM_INIT_AUTOMAKE(torsocks, 0.1)
+
+dnl Our default prefix is /usr/ since most people will be using tsocks
+dnl on Linux systems and that /usr/local/ stuff annoys them
+dnl AC_PREFIX_DEFAULT(/usr)
+
+dnl if libdir hasn't been set by the user default it to /lib since
+dnl tsocks needs to be on the root partition if put in the
+dnl /etc/ld.so.preload file
+dnl test "$libdir" = "\${exec_prefix}/lib" && libdir="/lib"
+
+dnl Arguments we allow
+AC_ARG_ENABLE(socksdns,
+[  --enable-socksdns       force dns lookups to use tcp ])
+AC_ARG_ENABLE(tordns,
+[  --disable-tordns         don't override name lookup calls to use SOCKS ])   
+AC_ARG_ENABLE(debug,
+[  --disable-debug         disable ALL error messages from tsocks ])
+AC_ARG_ENABLE(oldmethod,
+[  --enable-oldmethod      use the old method to override connect ])
+AC_ARG_ENABLE(hostnames,
+[  --enable-hostnames      enable hostname lookups for socks servers ])
+AC_ARG_ENABLE(envconf,
+[  --disable-envconf       do not allow TSOCKS_CONF_FILE to specify configuration file ])
+AC_ARG_WITH(conf,
+[  --with-conf=<file>      location of configuration file (/etc/tsocks.conf default)],[
+if test "${withval}" = "yes" ; then
+  AC_MSG_ERROR("--with-conf requires the location of the configuration file as an argument")
+else
+  AC_DEFINE_UNQUOTED([CONF_FILE], ["${withval}"],[Description])
+fi
+], [
+  AC_DEFINE_UNQUOTED([CONF_FILE], ["/etc/tsocks.conf"],[Description])
+])
+
+dnl -----------------------------------
+dnl Get hostname and other information.
+dnl -----------------------------------
+AC_CANONICAL_HOST
+
+dnl Checks for programs.
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_LN_S
+
+dnl Check if the C compiler accepts -Wall
+AC_MSG_CHECKING(if the C compiler accepts -Wall)
+OLDCFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -Wall"
+AC_TRY_COMPILE(,,AC_MSG_RESULT(yes),[
+   CFLAGS="$OLDCFLAGS"
+   AC_MSG_RESULT(no)])
+
+dnl Checks for standard header files.
+AC_HEADER_STDC
+
+dnl Check for the dynamic loader function header
+AC_CHECK_HEADER(dlfcn.h,,AC_MSG_ERROR("dlfcn.h not found"))
+
+dnl Check for the socket header
+AC_CHECK_HEADER(sys/socket.h,,AC_MSG_ERROR("sys/socket.h not found"))
+
+dnl Check for the arpa/inet.h header (inet_ntoa and inet_addr)
+AC_CHECK_HEADER(arpa/inet.h,,AC_MSG_ERROR("arpa/inet.h not found"))
+
+dnl Check for the fcntl header
+AC_CHECK_HEADER(fcntl.h,,AC_MSG_ERROR("fcntl.h not found"))
+
+dnl Check for the poll header
+AC_CHECK_HEADER(sys/poll.h,,AC_MSG_ERROR("sys/poll.h not found"))
+
+dnl Check for the mmap header
+AC_CHECK_HEADER(sys/mman.h,,AC_MSG_ERROR("sys/mman.h not found"))
+
+dnl Other headers we're interested in
+AC_CHECK_HEADERS(unistd.h)
+
+dnl Checks for library functions.
+AC_CHECK_FUNCS(strcspn strdup strerror strspn strtol mmap strcasecmp \
+   strncasecmp strtol,,[AC_MSG_ERROR("Required function not found")])
+
+dnl Find which version of gethostbyname_r we should be using (actually this
+dnl isn't used right now).
+dnl AX_FUNC_WHICH_GETHOSTBYNAME_R
+
+dnl First find the library that contains connect() (obviously
+dnl the most important library for us). Once we've found it
+dnl we chuck it on the end of LIBS, that lib may end up there
+dnl more than once (since we do our search with an empty libs
+dnl list) but that isn't a problem
+OLDLIBS="${LIBS}"
+LIBS=
+CONNECTLIB=
+for LIB in c socket; do
+  AC_CHECK_LIB("${LIB}",connect,[
+    CONNECTLIB="${LIB}"
+    break
+  ],)
+done
+LIBS="${OLDLIBS} -l${CONNECTLIB}"
+if test "${CONNECTLIB}" = ""; then
+  AC_MSG_ERROR('Could not find library containing connect()')
+fi
+
+dnl Check for socket
+AC_CHECK_FUNC(socket,, [
+  AC_CHECK_LIB(socket, socket,,AC_MSG_ERROR("socket function not found"))])
+
+dnl Check for a function to convert an ascii ip address
+dnl to a sin_addr. 
+AC_CHECK_FUNC(inet_aton, AC_DEFINE([HAVE_INET_ATON],[],[Description]), [
+  AC_CHECK_FUNC(inet_addr, AC_DEFINE([HAVE_INET_ADDR],[],[Description]), [
+    AC_CHECK_LIB(nsl, inet_addr, [ AC_DEFINE([HAVE_INET_ADDR],[],[Description])
+                                   LIBS="${LIBS} -lnsl" ], [
+		AC_MSG_ERROR("Neither inet_aton or inet_addr present")])])])
+
+dnl Look for gethostbyname (needed by tsocks and inspectsocks)
+AC_CHECK_FUNC(gethostbyname, AC_DEFINE([HAVE_GETHOSTBYNAME],[],[Description]), [
+  AC_CHECK_LIB(xnet, gethostbyname, AC_DEFINE([HAVE_GETHOSTBYNAME],[],[Description]), [
+	       AC_MSG_ERROR(["gethostbyname not found, name lookups in " \
+		      "tsocks and inspectsocks disabled"])])])
+
+dnl The simple programs (saveme and inspectsocks) have no further 
+dnl requirements, so save the libs needed here and use them in the
+dnl Makefile
+SIMPLELIBS=${LIBS}
+LIBS=
+
+dnl Checks for libraries.
+dnl Replace `main' with a function in -ldl:
+
+AC_CHECK_LIB(dl, dlsym, [ tempdso="yes" ],tempdso="no")
+if test "$tempdso" = "no"; then
+  AC_CHECK_LIB(c, dlsym,,AC_MSG_ERROR("dlsym() not found in libc or libdl." \
+               "Check your system for libc.so and/or libdl.so."))
+fi
+
+dnl If we're using gcc here define _GNU_SOURCE
+AC_MSG_CHECKING(for RTLD_NEXT from dlfcn.h)
+AC_EGREP_CPP(yes,
+[
+ #include <dlfcn.h>
+ #ifdef RTLD_NEXT
+	yes
+ #endif
+], [
+  AC_MSG_RESULT(yes)
+], [
+  AC_MSG_RESULT(no)
+  AC_MSG_CHECKING(for RTLD_NEXT from dlfcn.h with _GNU_SOURCE)
+  AC_EGREP_CPP(yes,
+  [
+   #define _GNU_SOURCE
+   #include <dlfcn.h>
+   #ifdef RTLD_NEXT
+	yes
+   #endif
+  ], [
+    AC_MSG_RESULT(yes)
+    AC_DEFINE([USE_GNU_SOURCE],[],[Description])
+  ], [
+    AC_MSG_RESULT(no)
+    AC_DEFINE([USE_OLD_DLSYM],[],[Description])
+    oldmethod="yes"
+  ])    
+])
+
+if test "${enable_socksdns}" = "yes"; then
+  AC_DEFINE([USE_SOCKS_DNS],[],[Description])
+fi
+
+AC_MSG_CHECKING(whether to enable tordns)
+if test "x${enable_tordns}" = "x"; then
+  AC_DEFINE([USE_TOR_DNS],[],[Description])
+  DEADPOOL_O="\${DEADPOOL}.o"
+  AC_MSG_RESULT(yes)
+else 
+  DEADPOOL_O=""
+  AC_MSG_RESULT(no)
+fi
+AC_SUBST(DEADPOOL_O)
+
+if test "x${enable_envconf}" = "x"; then
+  AC_DEFINE([ALLOW_ENV_CONFIG],[],[Description])
+fi
+
+if test "${enable_oldmethod}" = "yes"; then
+  AC_DEFINE([USE_OLD_DLSYM],[],[Description])
+  oldmethod="yes"
+fi
+
+if test "x${enable_debug}" = "x"; then
+  AC_DEFINE([ALLOW_MSG_OUTPUT],[],[Description])
+fi
+
+AC_DEFINE([HOSTNAMES],[0],[Description])
+
+if test "x${enable_hostnames}" = "xyes"; then
+  AC_DEFINE([HOSTNAMES],[1],[Description])
+fi
+
+if test "${enable_socksdns}" = "yes" -a \
+        "x${enable_hostnames}" = "xyes" ; then
+  AC_MSG_ERROR("--enable-socksdns is not valid with --enable-hostnames")
+fi
+
+if test "x${enable_tordns}" = "x" -a \
+        "x${enable_hostnames}" = "xyes" ; then
+  AC_MSG_ERROR("--enable-tordns is not valid with --enable-hostnames")
+fi
+
+dnl If we have to use the old method of overriding connect (i.e no
+dnl RTLD_NEXT) we need to know the location of the library that
+dnl contains connect(), select(), poll() and close()
+if test "${oldmethod}" = "yes"; then 
+  dnl We need to find the path to the library, to do 
+  dnl this we use find on the usual suspects, i.e /lib and
+  dnl /usr/lib
+
+  dnl Check that find is available, it should be somehere
+  dnl in the path 
+  AC_CHECK_PROG(FIND, find, find)
+  if test "${FIND}" = ""; then
+    AC_MSG_ERROR('find not found in path')
+  fi
+
+  dnl Find tail, it should always be somewhere in the path
+  dnl but for safety's sake
+  AC_CHECK_PROG(TAIL, tail, tail)
+  if test "${TAIL}" = ""; then
+    AC_MSG_ERROR('tail not found in path')
+  fi
+
+  dnl Now find the library we need
+  AC_MSG_CHECKING(location of lib${CONNECTLIB}.so)
+  LIBCONNECT=
+  for DIR in '/lib' '/usr/lib'; do
+    if test "${LIBCONNECT}" = ""; then
+      LIBCONNECT=`$FIND $DIR -name "lib${CONNECTLIB}.so.?" 2>/dev/null | $TAIL -1`
+    fi
+  done
+  AC_DEFINE_UNQUOTED([LIBCONNECT],["${LIBCONNECT}"],[Description])
+  if test "${LIBCONNECT}" = ""; then
+     AC_MSG_ERROR("not found!")
+  fi
+
+  AC_MSG_RESULT($LIBCONNECT)
+
+  dnl close() should be in libc, find it
+  AC_MSG_CHECKING(location of libc.so)
+  LIBC=
+  for DIR in '/lib' '/usr/lib'; do
+    if test "${LIBC}" = ""; then
+      LIBC=`$FIND $DIR -name "libc.so.?" 2>/dev/null | $TAIL -1`
+    fi
+  done
+
+  AC_DEFINE_UNQUOTED([LIBC],["${LIBC}"],[Description])
+  if test "${LIBC}" = ""; then
+     AC_MSG_ERROR("not found!")
+  fi
+
+  AC_MSG_RESULT($LIBC)
+fi
+
+dnl Find the correct select prototype on this machine 
+AC_MSG_CHECKING(for correct select prototype)
+PROTO=
+for testproto in 'int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout' 
+do
+  if test "${PROTO}" = ""; then
+    AC_TRY_COMPILE([
+      #include <sys/time.h>
+      #include <sys/types.h>
+      #include <unistd.h>
+      int select($testproto);
+    ],,[PROTO="$testproto";],)
+  fi
+done
+if test "${PROTO}" = ""; then
+  AC_MSG_ERROR("no match found!")
+fi
+AC_MSG_RESULT([select(${PROTO})])
+AC_DEFINE_UNQUOTED([SELECT_SIGNATURE],[${PROTO}],[Description])
+
+dnl Find the correct connect prototype on this machine 
+AC_MSG_CHECKING(for correct connect prototype)
+PROTO=
+PROTO1='int __fd, const struct sockaddr * __addr, int len'
+PROTO2='int __fd, const struct sockaddr_in * __addr, socklen_t __len'
+PROTO3='int __fd, struct sockaddr * __addr, int __len'
+PROTO4='int __fd, const struct sockaddr * __addr, socklen_t __len'
+for testproto in "${PROTO1}" \
+                 "${PROTO2}" \
+                 "${PROTO3}" \
+                 "${PROTO4}" 
+do
+  if test "${PROTO}" = ""; then
+    AC_TRY_COMPILE([
+      #include <sys/types.h>
+      #include <sys/socket.h>
+      int connect($testproto);
+    ],,[PROTO="$testproto";],)
+  fi
+done
+if test "${PROTO}" = ""; then
+  AC_MSG_ERROR("no match found!")
+fi
+AC_MSG_RESULT([connect(${PROTO})])
+AC_DEFINE_UNQUOTED([CONNECT_SIGNATURE],[${PROTO}],[Description])
+
+dnl Pick which of the sockaddr type arguments we need for
+dnl connect(), we need to cast one of ours to it later 
+SOCKETARG="struct sockaddr *"
+case "${PROTO}" in
+   *sockaddr_in*)
+      SOCKETARG="struct sockaddr_in *"
+      ;;
+esac
+AC_DEFINE_UNQUOTED([CONNECT_SOCKARG],[${SOCKETARG}],[Description])
+
+dnl Find the correct close prototype on this machine 
+AC_MSG_CHECKING(for correct close prototype)
+PROTO=
+PROTO1='int fd'
+for testproto in "${PROTO1}" 
+do
+  if test "${PROTO}" = ""; then
+    AC_TRY_COMPILE([
+      #include <stdlib.h>
+      int close($testproto);
+    ],,[PROTO="$testproto";],)
+  fi
+done
+if test "${PROTO}" = ""; then
+  AC_MSG_ERROR("no match found!")
+fi
+AC_MSG_RESULT([close(${PROTO})])
+AC_DEFINE_UNQUOTED([CLOSE_SIGNATURE], [${PROTO}],[Description])
+
+dnl Find the correct getpeername prototype on this machine
+AC_MSG_CHECKING(for correct getpeername prototype)
+PROTO=
+PROTO1='int __fd, const struct sockaddr * __name, int *__namelen'
+PROTO2='int __fd, const struct sockaddr_in * __name, socklen_t *__namelen'
+PROTO3='int __fd, struct sockaddr * __name, socklen_t *__namelen'
+PROTO4='int __fd, const struct sockaddr * __name, socklen_t *__namelen'
+for testproto in "${PROTO1}" \
+                 "${PROTO2}" \
+                 "${PROTO3}" \
+                 "${PROTO4}"
+do
+  if test "${PROTO}" = ""; then
+    AC_TRY_COMPILE([
+      #include <sys/socket.h>
+      int getpeername($testproto);
+    ],,[PROTO="$testproto";],)
+  fi
+done
+if test "${PROTO}" = ""; then
+  AC_MSG_ERROR("no match found!")
+fi
+AC_MSG_RESULT([getpeername(${PROTO})])
+AC_DEFINE_UNQUOTED(GETPEERNAME_SIGNATURE, [${PROTO}],[Description])
+
+
+dnl Find the correct poll prototype on this machine 
+AC_MSG_CHECKING(for correct poll prototype)
+PROTO=
+for testproto in 'struct pollfd *ufds, unsigned long nfds, int timeout' \
+                 'struct pollfd *ufds, nfds_t nfds, int timeout'
+do
+  if test "${PROTO}" = ""; then
+    AC_TRY_COMPILE([
+      #include <sys/poll.h>
+      int poll($testproto);
+    ],,[PROTO="$testproto";],)
+  fi
+done
+if test "${PROTO}" = ""; then
+  AC_MSG_ERROR("no match found!")
+fi
+AC_MSG_RESULT([poll(${PROTO})])
+AC_DEFINE_UNQUOTED([POLL_SIGNATURE], [${PROTO}],[Description])
+
+dnl Emit signature for gethostbyname
+PROTO="const char *name"
+AC_DEFINE_UNQUOTED([GETHOSTBYNAME_SIGNATURE], [${PROTO}],[Description])
+
+dnl Emit signature for getaddrinfo
+PROTO="const char *node, const char *service, void *hints, void *res"
+AC_DEFINE_UNQUOTED([GETADDRINFO_SIGNATURE], [${PROTO}],[Description])
+
+dnl Emit signature for getipnodebyname
+PROTO="const char *name, int af, int flags, int *error_num"
+AC_DEFINE_UNQUOTED([GETIPNODEBYNAME_SIGNATURE], [${PROTO}],[Description])
+
+dnl Emit signature for gethostbyaddr
+PROTO="const void *addr, socklen_t len, int type"
+AC_DEFINE_UNQUOTED(GETHOSTBYADDR_SIGNATURE, [${PROTO}], [Description])
+
+
+dnl Output the special librarys (libdl etc needed for tsocks)
+SPECIALLIBS=${LIBS}
+AC_SUBST(SPECIALLIBS)
+LIBS=${SIMPLELIBS}
+
+AC_CONFIG_FILES([src/torify src/torsocks])
+
+AC_LANG_C
+AC_PROG_CC
+
+AC_LIBTOOL_DLOPEN
+AC_PROG_LIBTOOL
+AC_SUBST(LIBTOOL_DEPS)
+AC_ENABLE_SHARED
+AC_ENABLE_STATIC
+
+AC_OUTPUT(Makefile src/Makefile)
+

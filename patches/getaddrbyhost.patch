@@ -1,0 +1,696 @@
+Index: common.c
+===================================================================
+RCS file: /cvsroot/tork/torsocks/common.c,v
+retrieving revision 1.2
+diff -p -U3 -r1.2 common.c
+--- common.c	15 Jun 2008 10:01:03 -0000	1.2
++++ common.c	18 Jun 2008 21:21:34 -0000
+@@ -26,6 +26,52 @@ char logfilename[256];    /* Name of fil
+ FILE *logfile = NULL;     /* File to which messages should be logged */
+ int logstamp = 0;         /* Timestamp (and pid stamp) messages */
+ 
++
++/**
++ * Read a 16-bit value beginning at <b>cp</b>.  Equivalent to
++ * *(uint16_t*)(cp), but will not cause segfaults on platforms that forbid
++ * unaligned memory access.
++ */
++uint16_t
++get_uint16(const char *cp)
++{
++  uint16_t v;
++  memcpy(&v,cp,2);
++  return v;
++}
++/**
++ * Read a 32-bit value beginning at <b>cp</b>.  Equivalent to
++ * *(uint32_t*)(cp), but will not cause segfaults on platforms that forbid
++ * unaligned memory access.
++ */
++uint32_t
++get_uint32(const char *cp)
++{
++  uint32_t v;
++  memcpy(&v,cp,4);
++  return v;
++}
++/**
++ * Set a 16-bit value beginning at <b>cp</b> to <b>v</b>. Equivalent to
++ * *(uint16_t)(cp) = v, but will not cause segfaults on platforms that forbid
++ * unaligned memory access. */
++void
++set_uint16(char *cp, uint16_t v)
++{
++  memcpy(cp,&v,2);
++}
++/**
++ * Set a 32-bit value beginning at <b>cp</b> to <b>v</b>. Equivalent to
++ * *(uint32_t)(cp) = v, but will not cause segfaults on platforms that forbid
++ * unaligned memory access. */
++void
++set_uint32(char *cp, uint32_t v)
++{
++  memcpy(cp,&v,4);
++}
++
++
++
+ unsigned int resolve_ip(char *host, int showmsg, int allownames) {
+ 	struct hostent *new;
+ 	unsigned int	hostaddr;
+Index: dead_pool.c
+===================================================================
+RCS file: /cvsroot/tork/torsocks/dead_pool.c,v
+retrieving revision 1.2
+diff -p -U3 -r1.2 dead_pool.c
+--- dead_pool.c	15 Jun 2008 10:02:41 -0000	1.2
++++ dead_pool.c	18 Jun 2008 21:21:35 -0000
+@@ -15,7 +15,8 @@ void get_next_dead_address(dead_pool *po
+ 
+ static int
+ do_resolve(const char *hostname, uint32_t sockshost, uint16_t socksport,
+-           uint32_t *result_addr);
++           uint32_t *result_addr, const void *addr,
++           int version, int reverse, char **result_hostname);
+ 
+ /* Compares the last strlen(s2) characters of s1 with s2.  Returns as for
+    strcasecmp. */
+@@ -77,6 +78,8 @@ init_pool(unsigned int pool_size, struct
+         return NULL;
+     }
+ 
++    show_msg(MSGWARN, "init_pool: sockshost %s ", sockshost);
++
+     /* Initialize the dead_pool structure */
+ #ifdef HAVE_INET_ATON
+     inet_aton(sockshost, &socks_server);
+@@ -139,6 +142,7 @@ store_pool_entry(dead_pool *pool, char *
+   int oldpos;
+   int rc;
+   uint32_t intaddr;
++  char *result_hostname;
+ 
+   show_msg(MSGDEBUG, "store_pool_entry: storing '%s'\n", hostname);
+   show_msg(MSGDEBUG, "store_pool_entry: write pos is: %d\n", pool->write_pos);
+@@ -156,7 +160,9 @@ store_pool_entry(dead_pool *pool, char *
+   if(strcasecmpend(hostname, ".onion") == 0) {
+       get_next_dead_address(pool, &pool->entries[position].ip);
+   } else {
+-      rc = do_resolve(hostname, pool->sockshost, pool->socksport, &intaddr);
++      rc = do_resolve(hostname, pool->sockshost, pool->socksport, &intaddr, 0,
++                  4 /*SOCKS5*/, 0 /*Reverse*/, &result_hostname);
++
+       if(rc != 0) {
+           show_msg(MSGWARN, "failed to resolve: %s\n", hostname);
+           return -1;
+@@ -237,7 +243,32 @@ build_socks4a_resolve_request(char **out
+   return len;
+ }
+ 
++static int
++build_socks5_resolve_ptr_request(char **out, const void *_addr)
++{
++  size_t len;
++  const struct in_addr *addr=_addr;
++
++  len = 12;
++  *out = malloc(len);
++  (*out)[0] = 5;      /* SOCKS version 5 */
++  (*out)[1] = '\xF1'; /* Command: reverse resolve.
++                         see doc/socks-extensions.txt*/
++  (*out)[2] = '\x00'; /* RSV */
++  (*out)[3] = '\x01'; /* ATYP: IP V4 address: X'01' */
++
++  set_uint32((*out)+4, addr->s_addr);/*IP*/
++  set_uint16((*out)+4+4, 0); /* port */
++
++//   memcpy((*out)+4, &addr.s_addr,4); /*IP*/
++//   memcpy((*out)+4+4, *(uint32_t)0, 2); /* port */
++
++  return len;
++}
++
+ #define RESPONSE_LEN 8
++#define SOCKS5_LEN 4
++#define METHODRESPONSE_LEN 2
+ 
+ static int
+ parse_socks4a_resolve_response(const char *response, size_t len,
+@@ -272,43 +303,188 @@ parse_socks4a_resolve_response(const cha
+ }
+ 
+ static int
++parse_socks5_resolve_ptr_response(int s,const char *response, size_t len,
++                               uint32_t *result_addr, char ***result_hostname)
++{
++    char reply_buf[4];
++    int r;
++
++    len=0;
++    while (len < SOCKS5_LEN) {
++      r = recv(s, reply_buf+len, SOCKS5_LEN-len, 0);
++      if (r==0) {
++        show_msg(MSGWARN, "do_resolve: EOF while reading SOCKS5 response\n"); 
++        return -1;
++      }
++      if (r<0) {
++        show_msg(MSGWARN, "do_resolve: error reading SOCKS5 response\n"); 
++        return -1;
++      }
++      len += r;
++    }
++
++    if (reply_buf[0] != 5) {
++      show_msg(MSGWARN, "Bad SOCKS5 reply version.");
++      return -1;
++    }
++    if (reply_buf[1] != 0) {
++      show_msg(MSGWARN,"Got status response '%u': SOCKS5 request failed.",
++               (unsigned)reply_buf[1]);
++      return -1;
++    }
++    if (reply_buf[3] == 1) {
++      /* IPv4 address */
++      len=0;
++      while (len < SOCKS5_LEN) {
++        r = recv(s, reply_buf+len, SOCKS5_LEN-len, 0);
++        if (r==0) {
++          show_msg(MSGWARN, "do_resolve: EOF while reading SOCKS5 response\n"); 
++          return -1;
++        }
++        if (r<0) {
++          show_msg(MSGWARN, "do_resolve: error reading address in SOCKS5 response\n"); 
++          return -1;
++        }
++        len += r;
++      }
++      *result_addr = ntohl(get_uint32(reply_buf));
++    } else if (reply_buf[3] == 3) {
++      size_t result_len;
++      len=0;
++      while (len < 1) {
++        r = recv(s, reply_buf+len, 1-len, 0);
++        if (r==0) {
++          show_msg(MSGWARN, "do_resolve: EOF while reading SOCKS5 response\n"); 
++          return -1;
++        }
++        if (r<0) {
++          show_msg(MSGWARN, "do_resolve: error reading address length in SOCKS5 response\n"); 
++          return -1;
++        }
++        len += r;
++      }
++      result_len = *(uint8_t*)(reply_buf);
++      **result_hostname = malloc(result_len+1);
++      len=0;
++      while (len < (int) result_len) {
++        r = recv(s, **result_hostname+len, result_len-len, 0);
++        if (r==0) {
++          show_msg(MSGWARN, "do_resolve: EOF while reading SOCKS5 response\n"); 
++          return -1;
++        }
++        if (r<0) {
++          show_msg(MSGWARN, "do_resolve: error reading hostname in SOCKS5 response\n");
++          return -1;
++        }
++        len += r;
++      }
++
++      (**result_hostname)[result_len] = '\0';
++    }
++
++  return 0;
++}
++
++static int
+ do_resolve(const char *hostname, uint32_t sockshost, uint16_t socksport,
+-           uint32_t *result_addr)
++           uint32_t *result_addr, const void *addr,
++           int version, int reverse, char **result_hostname)
+ {
+   int s;
+   struct sockaddr_in socksaddr;
+-  char *req, *cp;
+-  int r, len;
++  char *req, *cp=NULL;
++  int r, len, hslen;
+   char response_buf[RESPONSE_LEN];
++  const char *handshake="\x05\x01\x00";
+ 
+   show_msg(MSGDEBUG, "do_resolve: resolving %s\n", hostname);
+ 
++  /* Create SOCKS connection */
+   s = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+   if (s<0) {
+     show_msg(MSGWARN, "do_resolve: problem creating socket\n"); 
+     return -1;
+   }
+ 
++  /* Connect to SOCKS server */
+   memset(&socksaddr, 0, sizeof(socksaddr));
+   socksaddr.sin_family = AF_INET;
+   socksaddr.sin_port = htons(socksport);
+   socksaddr.sin_addr.s_addr = htonl(sockshost);
+   if (realconnect(s, (struct sockaddr*)&socksaddr, sizeof(socksaddr))) {
+     show_msg(MSGWARN, "do_resolve: error connecting to SOCKS server\n");
++    realclose(s);
+     return -1;
+   }
+ 
+-  if ((len = build_socks4a_resolve_request(&req, "", hostname))<0) {
+-    show_msg(MSGWARN, "do_resolve: error generating SOCKS request\n"); 
+-    return -1;
++  /* If a SOCKS5 connection, perform handshake */
++  if (version == 5) {
++    char method_buf[2];
++    hslen=3;
++    while (hslen) {
++      r = send(s, handshake, hslen, 0);
++      if (r<0) {
++        show_msg(MSGWARN, "do_resolve: error sending SOCKS5 method list.\n");
++        realclose(s);
++        return -1;
++      }
++      hslen -= r;
++      handshake += r;
++    }
++
++    len = 0;
++    while (len < METHODRESPONSE_LEN) {
++      r = recv(s, method_buf+len, METHODRESPONSE_LEN-len, 0);
++      if (r==0) {
++        show_msg(MSGWARN, "do_resolve: EOF while reading SOCKS response\n");
++        realclose(s);
++        return -1;
++      }
++      if (r<0) {
++        show_msg(MSGWARN, "do_resolve: error reading SOCKS response\n");
++        realclose(s);
++        return -1;
++      }
++      len += r;
++    }
++
++    if (method_buf[0] != '\x05') {
++      show_msg(MSGWARN, "Unrecognized socks version: %u",
++              (unsigned)method_buf[0]);
++      realclose(s);
++      return -1;
++    }
++    if (method_buf[1] != '\x00') {
++      show_msg(MSGWARN, "Unrecognized socks authentication method: %u",
++              (unsigned)method_buf[1]);
++      realclose(s);
++      return -1;
++    }
++  }
++
++  /* Create SOCKS request */
++  if (reverse) {
++    if ((len = build_socks5_resolve_ptr_request(&req, addr))<0) {
++      show_msg(MSGWARN, "do_resolve: error generating reverse SOCKS request\n");
++      realclose(s);
++      return -1;
++    }
++  }else{
++    if ((len = build_socks4a_resolve_request(&req, "", hostname))<0) {
++      show_msg(MSGWARN, "do_resolve: error generating SOCKS request\n");
++      realclose(s);
++      return -1;
++    }
+   }
+ 
++  /* Send SOCKS request */
+   cp = req;
+   while (len) {
+     r = send(s, cp, len, 0);
+     if (r<0) {
+       show_msg(MSGWARN, "do_resolve: error sending SOCKS request\n"); 
+       free(req);
++      realclose(s);
+       return -1;
+     }
+     len -= r;
+@@ -316,26 +492,40 @@ do_resolve(const char *hostname, uint32_
+   }
+   free(req);
+ 
+-  len = 0;
+-  while (len < RESPONSE_LEN) {
+-    r = recv(s, response_buf+len, RESPONSE_LEN-len, 0);
+-    if (r==0) {
+-      show_msg(MSGWARN, "do_resolve: EOF while reading SOCKS response\n"); 
++  /* Handle SOCKS Response */
++  if (reverse) {
++    if (parse_socks5_resolve_ptr_response(s, response_buf, RESPONSE_LEN,
++                                          result_addr, &result_hostname) < 0){
++      show_msg(MSGWARN, "do_resolve: error parsing SOCKS response\n");
++      realclose(s);
+       return -1;
+     }
+-    if (r<0) {
+-      show_msg(MSGWARN, "do_resolve: error reading SOCKS response\n"); 
++  }else{
++    /* Process SOCKS response */
++    len = 0;
++    while (len < RESPONSE_LEN) {
++      r = recv(s, response_buf+len, RESPONSE_LEN-len, 0);
++      if (r==0) {
++        show_msg(MSGWARN, "do_resolve: EOF while reading SOCKS response\n");
++        realclose(s);
++        return -1;
++      }
++      if (r<0) {
++        show_msg(MSGWARN, "do_resolve: error reading SOCKS response\n");
++        realclose(s);
++        return -1;
++      }
++      len += r;
++    }
++    realclose(s);
++
++    /* Parse SOCKS response */
++    if (parse_socks4a_resolve_response(response_buf, RESPONSE_LEN, result_addr) < 0){
++      show_msg(MSGWARN, "do_resolve: error parsing SOCKS response\n");
+       return -1;
+     }
+-    len += r;
+   }
+ 
+-  realclose(s);
+-
+-  if (parse_socks4a_resolve_response(response_buf, RESPONSE_LEN, result_addr) < 0){
+-    show_msg(MSGWARN, "do_resolve: error parsing SOCKS response\n");
+-    return -1;
+-  }
+ 
+   show_msg(MSGDEBUG, "do_resolve: success\n");
+ 
+@@ -343,6 +533,53 @@ do_resolve(const char *hostname, uint32_
+ }
+ 
+ struct hostent *
++our_gethostbyaddr(dead_pool *pool, const void *_addr, socklen_t len, int type)
++{
++  const struct in_addr *addr=_addr;
++  static struct hostent he;
++  uint32_t intaddr=0;
++  char *result_hostname=NULL;
++  int rc=0;
++  static char *addrs[2];
++  static char *aliases[2];
++
++  rc = do_resolve("", pool->sockshost, pool->socksport, &intaddr, addr,
++                  5 /*SOCKS5*/, 1 /*Reverse*/, &result_hostname);
++
++
++  if(rc != 0) {
++      show_msg(MSGWARN, "failed to reverse resolve: %s\n",
++               inet_ntoa(*((struct in_addr *)addr)));
++      result_hostname=NULL;
++      addrs[0] = NULL;
++      addrs[1] = NULL;
++  }else{
++      addrs[0] = (char *)addr;
++      addrs[1] = NULL;
++  }
++
++  if (result_hostname)
++    he.h_name = result_hostname;
++  else
++    he.h_name = inet_ntoa(*((struct in_addr *)addr));
++
++//   aliases = malloc(sizeof(char *));
++  aliases[0] = NULL;
++  aliases[1] = NULL;
++
++  he.h_aliases = aliases;
++  he.h_length    = len;
++  he.h_addrtype  = type;
++  he.h_addr_list = addrs;
++
++  show_msg(MSGDEBUG, "our_gethostbyaddr: resolved '%s' to: '%s'\n",
++           inet_ntoa(*((struct in_addr *)he.h_addr)), result_hostname);
++
++  return &he;
++
++}
++
++struct hostent *
+ our_gethostbyname(dead_pool *pool, const char *name)
+ {
+   int pos;
+Index: inspectsocks.c
+===================================================================
+RCS file: /cvsroot/tork/torsocks/inspectsocks.c,v
+retrieving revision 1.1.1.1
+diff -p -U3 -r1.1.1.1 inspectsocks.c
+--- inspectsocks.c	15 Jun 2008 09:43:02 -0000	1.1.1.1
++++ inspectsocks.c	18 Jun 2008 21:21:35 -0000
+@@ -23,7 +23,7 @@
+ */
+ 
+ /* Global configuration variables */ 
+-char *progname = "inspectsocks";	   /* Name for error msgs      */
++const char *progname = "inspectsocks";	   /* Name for error msgs      */
+ int defaultport	= 1080;			   /* Default SOCKS port       */
+ 
+ /* Header Files */
+@@ -35,6 +35,7 @@ int defaultport	= 1080;			   /* Default 
+ #include <sys/socket.h>
+ #include <string.h>
+ #include <strings.h>
++#include <sys/types.h>
+ #include <netinet/in.h>
+ #include <arpa/inet.h>
+ #include <errno.h>
+@@ -44,7 +45,7 @@ int send_request(struct sockaddr_in *ser
+                  int reqlen, void *rep, int replen);
+ 
+ int main(int argc, char *argv[]) {
+-	char *usage = "Usage: <socks server name/ip> [portno]";
++	const char *usage = "Usage: <socks server name/ip> [portno]";
+ 	char req[9];
+ 	char resp[100];
+ 	unsigned short int portno = defaultport;
+@@ -68,7 +69,7 @@ int main(int argc, char *argv[]) {
+ 			}
+ 		case 2:
+ 			if ((server.sin_addr.s_addr = resolve_ip(argv[1], 1,HOSTNAMES))
+-                            ==  -1) {
++                            ==  0) {
+ 				show_msg(MSGERR, "Invalid IP/host specified (%s)\n", argv[1]);
+ 				show_msg(MSGERR, "%s\n", usage);
+ 				exit(1);
+Index: tsocks.c
+===================================================================
+RCS file: /cvsroot/tork/torsocks/tsocks.c,v
+retrieving revision 1.2
+diff -p -U3 -r1.2 tsocks.c
+--- tsocks.c	15 Jun 2008 10:06:03 -0000	1.2
++++ tsocks.c	18 Jun 2008 21:21:37 -0000
+@@ -63,6 +63,7 @@ static int (*realresinit)(void);
+ #ifdef USE_TOR_DNS
+ static dead_pool *pool = NULL;
+ static struct hostent *(*realgethostbyname)(GETHOSTBYNAME_SIGNATURE);
++static struct hostent *(*realgethostbyaddr)(GETHOSTBYADDR_SIGNATURE);
+ int (*realgetaddrinfo)(GETADDRINFO_SIGNATURE);
+ static struct hostent *(*realgetipnodebyname)(GETIPNODEBYNAME_SIGNATURE);
+ #endif
+@@ -77,7 +78,7 @@ static int suid = 0;
+ static char *conffile = NULL;
+ 
+ /* Exported Function Prototypes */
+-void __attribute__ ((constructor)) tsocks_init(void);
++void __attribute__ ((constructor)) _init(void);
+ int connect(CONNECT_SIGNATURE);
+ int select(SELECT_SIGNATURE);
+ int poll(POLL_SIGNATURE);
+@@ -88,6 +89,7 @@ int res_init(void);
+ #endif
+ #ifdef USE_TOR_DNS
+ struct hostent *gethostbyname(GETHOSTBYNAME_SIGNATURE);
++struct hostent *gethostbyaddr(GETHOSTBYADDR_SIGNATURE);
+ int getaddrinfo(GETADDRINFO_SIGNATURE);
+ struct hostent *getipnodebyname(GETIPNODEBYNAME_SIGNATURE);
+ #endif 
+@@ -119,11 +121,12 @@ static int deadpool_init(void);
+ static int send_socksv4a_request(struct connreq *conn, const char *onion_host);
+ #endif
+ 
+-void tsocks_init(void) {
++void _init(void) {
+ #ifdef USE_OLD_DLSYM
+ 	void *lib;
+ #endif
+ 
++    show_msg(MSGWARN, "In tsocks_init \n");
+ 	/* We could do all our initialization here, but to be honest */
+ 	/* most programs that are run won't use our services, so     */
+ 	/* we do our general initialization on first call            */
+@@ -142,6 +145,7 @@ void tsocks_init(void) {
+ 	#endif
+     #ifdef USE_TOR_DNS
+     realgethostbyname = dlsym(RTLD_NEXT, "gethostbyname");
++    //realgethostbyaddr = dlsym(RTLD_NEXT, "gethostbyaddr");
+     realgetaddrinfo = dlsym(RTLD_NEXT, "getaddrinfo");
+     realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
+     #endif
+@@ -155,6 +159,7 @@ void tsocks_init(void) {
+ 	#endif
+     #ifdef USE_TOR_DNS
+     realgethostbyname = dlsym(lib, "gethostbyname");
++    realgethostbyaddr = dlsym(lib, "gethostbyaddr");
+     realgetaddrinfo = dlsym(lib, "getaddrinfo");
+     realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
+     #endif
+@@ -1100,6 +1105,7 @@ static int send_socksv5_connect(struct c
+    conn->datalen = sizeof(constring);
+ 
+ #ifdef USE_TOR_DNS
++
+    show_msg(MSGDEBUG, "send_socksv5_connect: looking for: %s\n",
+             inet_ntoa(conn->connaddr.sin_addr));
+ 
+@@ -1394,6 +1400,15 @@ struct hostent *gethostbyname(GETHOSTBYN
+   }  
+ }
+ 
++struct hostent *gethostbyaddr(GETHOSTBYADDR_SIGNATURE)
++{
++  if(pool) {
++      return our_gethostbyaddr(pool, addr, len, type);
++  } else {
++      return realgethostbyaddr(addr, len, type);
++  }  
++}
++
+ int getaddrinfo(GETADDRINFO_SIGNATURE)
+ {
+   if(pool) {
+Index: common.h
+===================================================================
+RCS file: /cvsroot/tork/torsocks/common.h,v
+retrieving revision 1.2
+diff -p -U3 -r1.2 common.h
+--- common.h	15 Jun 2008 10:01:41 -0000	1.2
++++ common.h	18 Jun 2008 21:21:37 -0000
+@@ -1,4 +1,33 @@
+ /* Common functions provided in common.c */
++/* GCC has several useful attributes. */
++#if defined(__GNUC__) && __GNUC__ >= 3
++#define ATTR_NORETURN __attribute__((noreturn))
++#define ATTR_PURE __attribute__((pure))
++#define ATTR_CONST __attribute__((const))
++#define ATTR_MALLOC __attribute__((malloc))
++#define ATTR_NORETURN __attribute__((noreturn))
++#define ATTR_NONNULL(x) __attribute__((nonnull x))
++/** Macro: Evaluates to <b>exp</b> and hints the compiler that the value
++ * of <b>exp</b> will probably be true. */
++#define PREDICT_LIKELY(exp) __builtin_expect((exp), 1)
++/** Macro: Evaluates to <b>exp</b> and hints the compiler that the value
++ * of <b>exp</b> will probably be false. */
++#define PREDICT_UNLIKELY(exp) __builtin_expect((exp), 0)
++#else
++#define ATTR_NORETURN
++#define ATTR_PURE
++#define ATTR_CONST
++#define ATTR_MALLOC
++#define ATTR_NORETURN
++#define ATTR_NONNULL(x)
++#define PREDICT_LIKELY(exp) (exp)
++#define PREDICT_UNLIKELY(exp) (exp)
++#endif
++
++uint16_t get_uint16(const char *cp) ATTR_PURE ATTR_NONNULL((1));
++uint32_t get_uint32(const char *cp) ATTR_PURE ATTR_NONNULL((1));
++void set_uint16(char *cp, uint16_t v) ATTR_NONNULL((1));
++void set_uint32(char *cp, uint32_t v) ATTR_NONNULL((1));
+ 
+ void set_log_options(int, char *, int);
+ void show_msg(int level, const char *, ...);
+Index: dead_pool.h
+===================================================================
+RCS file: /cvsroot/tork/torsocks/dead_pool.h,v
+retrieving revision 1.2
+diff -p -U3 -r1.2 dead_pool.h
+--- dead_pool.h	15 Jun 2008 10:02:53 -0000	1.2
++++ dead_pool.h	18 Jun 2008 21:21:38 -0000
+@@ -35,6 +35,8 @@ int is_dead_address(dead_pool *pool, uin
+ char *get_pool_entry(dead_pool *pool, struct in_addr *addr);
+ int search_pool_for_name(dead_pool *pool, const char *name);
+ struct hostent *our_gethostbyname(dead_pool *pool, const char *name);
++struct hostent *our_gethostbyaddr(dead_pool *pool, const void *addr,
++                                  socklen_t len, int type);
+ int our_getaddrinfo(dead_pool *pool, const char *node, const char *service, 
+     void *hints, void *res);
+ struct hostent *our_getipnodebyname(dead_pool *pool, const char *name, 
+Index: parser.h
+===================================================================
+RCS file: /cvsroot/tork/torsocks/parser.h,v
+retrieving revision 1.1.1.1
+diff -p -U3 -r1.1.1.1 parser.h
+--- parser.h	15 Jun 2008 09:43:02 -0000	1.1.1.1
++++ parser.h	18 Jun 2008 21:21:38 -0000
+@@ -35,7 +35,7 @@ struct parsedfile {
+    struct serverent *paths;
+    int tordns_enabled;
+    int tordns_failopen;
+-   int tordns_cache_size;
++   unsigned int tordns_cache_size;
+    struct netent *tordns_deadpool_range;
+ };
+ 
+Index: tsocks.h
+===================================================================
+RCS file: /cvsroot/tork/torsocks/tsocks.h,v
+retrieving revision 1.1.1.1
+diff -p -U3 -r1.1.1.1 tsocks.h
+--- tsocks.h	15 Jun 2008 09:43:01 -0000	1.1.1.1
++++ tsocks.h	18 Jun 2008 21:21:38 -0000
+@@ -50,8 +50,8 @@ struct connreq {
+    int selectevents;
+ 
+    /* Buffer for sending and receiving on the socket */
+-   int datalen;
+-   int datadone;
++   unsigned int datalen;
++   unsigned int datadone;
+    char buffer[2048];
+ 
+    struct connreq *next;
+Index: config.h.in
+===================================================================
+RCS file: /cvsroot/tork/torsocks/config.h.in,v
+retrieving revision 1.1.1.1
+diff -p -U3 -r1.1.1.1 config.h.in
+--- config.h.in	15 Jun 2008 09:43:02 -0000	1.1.1.1
++++ config.h.in	18 Jun 2008 21:21:38 -0000
+@@ -83,6 +83,9 @@ in inspectsocks */
+ #undef GETIPNODEBYNAME_SIGNATURE
+ 
+ 
++/* Description */
++#undef GETHOSTBYADDR_SIGNATURE
++
+ /* Define to 1 if you have the <inttypes.h> header file. */
+ #undef HAVE_INTTYPES_H
+ 
+Index: configure.in
+===================================================================
+RCS file: /cvsroot/tork/torsocks/configure.in,v
+retrieving revision 1.1.1.1
+diff -p -U3 -r1.1.1.1 configure.in
+--- configure.in	15 Jun 2008 09:43:00 -0000	1.1.1.1
++++ configure.in	18 Jun 2008 21:21:38 -0000
+@@ -384,6 +384,10 @@ dnl Emit signature for gethostbyname
+ PROTO="const char *name"
+ AC_DEFINE_UNQUOTED(GETHOSTBYNAME_SIGNATURE, [${PROTO}])
+ 
++dnl Emit signature for gethostbyaddr
++PROTO="const void *addr, socklen_t len, int type"
++AC_DEFINE_UNQUOTED(GETHOSTBYADDR_SIGNATURE, [${PROTO}], [Description])
++
+ dnl Emit signature for getaddrinfo
+ PROTO="const char *node, const char *service, void *hints, void *res"
+ AC_DEFINE_UNQUOTED(GETADDRINFO_SIGNATURE, [${PROTO}])

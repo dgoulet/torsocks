@@ -1,0 +1,16 @@
+torsocks is a fork of tsocks.
+
+It is maintained by: Robert Hogan (robert at roberthogan.net)
+                     Ruben Garcia (ruben at ugr.es)
+
+The purpose of this fork is to maintain a working implementation of tsocks
+that is primarily useful for Tor.
+
+Original tsocks project (apparently abandoned):
+http://sourceforge.net/project/showfiles.php?group_id=17338
+
+Ruben's fork of tsocks on which this is based:
+https://giig.ugr.es/~rgarcia/tsocks/
+
+The Tor project's list of tsocks patches:
+http://wiki.noreply.org/noreply/TheOnionRouter/TSocksPatches
