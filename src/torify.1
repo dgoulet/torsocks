@@ -1,0 +1,30 @@
+.TH TORKIFY 1 "" "TORKIFY"
+
+.SH NAME
+.BR torkify 
+\- Shell wrapper to simplify the use of the torkify(8) library to 
+transparently allow an application to use a SOCKS proxy. Basically a renamed, patched torkify.
+.SH SYNOPSIS
+.B torkify
+.RB [application\ [application's\ arguments]]
+.br
+or
+.B torkify
+.RB [on|off]
+.br
+or
+.B torkify
+.SH DESCRIPTION
+.B torkify
+is a wrapper between the torksocks library and the application what you
+would like to run socksified.
+.SH OPTIONS
+.IP \fB[application\ \fB[application's\ arguments]]
+run the application as specified with the environment (LD_PRELOAD) set
+such that torkify(8) will transparently proxy SOCKS connections in 
+that program
+.SH AUTHOR
+This script was created by Tamas SZERB <toma@rulez.org> for the debian
+package of torify. It (along with this manual page) have since been 
+adapted into the main torify project and modified. Torkify is a modified
+copy for the TorK project.

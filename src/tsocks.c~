@@ -121,7 +121,7 @@ static int deadpool_init(void);
 static int send_socksv4a_request(struct connreq *conn, const char *onion_host);
 #endif
 
-void _init(void) {
+void tsocks_init(void) {
 #ifdef USE_OLD_DLSYM
 	void *lib;
 #endif
