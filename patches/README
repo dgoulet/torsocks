@@ -6,6 +6,11 @@ NB: These patches are stored for historical reasons only. I have not
     confirmed that they all apply cleanly to the tsocks source. I do not
     know in what order they should be applied.
 
+File: getaddrbyhost.patch (Robert Hogan)
+Date: 18/06/08
+Description:
+Add support for getaddrbyhost.
+
 File: compilewarnings.patch (Robert Hogan)
 Date: 2007
 Description:

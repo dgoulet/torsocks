@@ -1,31 +1,16 @@
 <?xml version = '1.0' encoding = 'UTF-8'?>
 <!DOCTYPE KDevPrjSession>
 <KDevPrjSession>
- <DocsAndViews NumberOfDocuments="8" >
-  <Doc0 NumberOfViews="1" URL="file:///backup/robert/Development/torsocks/dead_pool.c" >
-   <View0 Encoding="" line="81" Type="Source" />
+ <DocsAndViews NumberOfDocuments="3" >
+  <Doc0 NumberOfViews="1" URL="file:///backup/robert/Development/torsocksold/configure.in" >
+   <View0 Encoding="" line="13" Type="Source" />
   </Doc0>
-  <Doc1 NumberOfViews="1" URL="file:///backup/robert/Development/torsocks/common.c" >
-   <View0 Encoding="" line="16" Type="Source" />
-  </Doc1>
-  <Doc2 NumberOfViews="1" URL="file:///backup/robert/Development/torsocks/common.h" >
-   <View0 Encoding="" line="26" Type="Source" />
-  </Doc2>
-  <Doc3 NumberOfViews="1" URL="file:///backup/robert/Development/torsocks/tsockstest" >
-   <View0 Encoding="ISO 8859-1" line="78" Type="Source" />
-  </Doc3>
-  <Doc4 NumberOfViews="1" URL="file:///backup/robert/Development/torsocks/parser.c" >
-   <View0 Encoding="" line="67" Type="Source" />
-  </Doc4>
-  <Doc5 NumberOfViews="1" URL="file:///backup/robert/Development/torsocks/tsocks.c" >
-   <View0 Encoding="" line="128" Type="Source" />
-  </Doc5>
-  <Doc6 NumberOfViews="1" URL="file:///backup/robert/Development/torsocks/tsocks" >
-   <View0 Encoding="" line="48" Type="Source" />
-  </Doc6>
-  <Doc7 NumberOfViews="1" URL="file:///backup/robert/Development/torsocks/config.h" >
+  <Doc1 NumberOfViews="1" URL="file:///backup/robert/Development/torsocksold/acconfig.h" >
    <View0 Encoding="" line="0" Type="Source" />
-  </Doc7>
+  </Doc1>
+  <Doc2 NumberOfViews="1" URL="file:///backup/robert/Development/torsocksold/Makefile.in" >
+   <View0 Encoding="" line="0" Type="Source" />
+  </Doc2>
  </DocsAndViews>
  <pluginList>
   <kdevdebugger>

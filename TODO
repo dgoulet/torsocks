@@ -1,3 +1,5 @@
+cvs -z3 -d:ext:hoganrobert@tork.cvs.sourceforge.net:/cvsroot/tork import -m "Initial Load" torsocks hoganrobert initial
+
 - Update FAQ to include information about the install location of the
   tsocks library
 
@@ -21,7 +23,7 @@ TODO
 * validateconf needs to be updated to understand (and show information about)
   the tordns configuration options.
 
-* Perhaps intercept reverse name lookups?
+* Perhaps intercept reverse name lookups? - DONE - getaddrbyhost (RH)
 
 * In fact, one could modify tsocks further to play nicely with tor.  For 
   example, you could prevent nonlocal UDP traffic from being sent at all,
