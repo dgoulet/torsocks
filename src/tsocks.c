@@ -145,7 +145,7 @@ void tsocks_init(void) {
 	#endif
     #ifdef USE_TOR_DNS
     realgethostbyname = dlsym(RTLD_NEXT, "gethostbyname");
-    //realgethostbyaddr = dlsym(RTLD_NEXT, "gethostbyaddr");
+    realgethostbyaddr = dlsym(RTLD_NEXT, "gethostbyaddr");
     realgetaddrinfo = dlsym(RTLD_NEXT, "getaddrinfo");
     realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
     #endif
@@ -261,6 +261,19 @@ int connect(CONNECT_SIGNATURE) {
     show_msg(MSGDEBUG, "sockopt: %i "
                         "\n",
                      sock_type);
+
+#ifdef USE_TOR_DNS
+	/* If this a UDP socket with a non-local destination address  */
+	/* then we refuse it, since it is probably a DNS request      */
+   if (sock_type == SOCK_DGRAM){
+      show_msg(MSGDEBUG, "Connection is a UDP stream.\n");
+
+      if (!(is_local(config, &(connaddr->sin_addr))))
+        show_msg(MSGWARN, "Connection is a UDP stream with a non-local "
+                           "destination, may be a DNS request: rejecting.\n");
+        return -1;
+   }
+#endif
 
 	/* If this isn't an INET socket for a TCP stream we can't  */
 	/* handle it, just call the real connect now               */
