@@ -161,7 +161,7 @@ void tsocks_init(void) {
     realgethostbyname = dlsym(lib, "gethostbyname");
     realgethostbyaddr = dlsym(lib, "gethostbyaddr");
     realgetaddrinfo = dlsym(lib, "getaddrinfo");
-    realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
+    realgetipnodebyname = dlsym(lib, "getipnodebyname");
     #endif
     dlclose(lib);	
 	lib = dlopen(LIBC, RTLD_LAZY);
