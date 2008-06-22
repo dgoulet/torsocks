@@ -1,7 +1,7 @@
 #! /bin/sh
 
-# Wrapper script for use of the torksocks(8) transparent socksification library
-# See the torksocks(1) and torkify(1) manpages.
+# Wrapper script for use of the torsocks(8) transparent socksification library
+# See the torsocks(1) and torify(1) manpages.
 
 # Copyright (c) 2004, 2006 Peter Palfrader
 # Modified by Jacob Appelbaum <jacob@appelbaum.net> April 16th 2006
@@ -9,12 +9,12 @@
 # May be distributed under the same terms as Tor itself
 
 
-# Define and ensure we have torksocks
+# Define and ensure we have torsocks
 # XXX: what if we don't have which?
-TSOCKS="`which torksocks`"
+TSOCKS="`which torsocks`"
 if [ ! -x "$TSOCKS" ]
 then
-        echo "$0: Can't find torksocks in PATH. Perhaps you haven't installed it?" >&2
+        echo "$0: Can't find torsocks in PATH. Perhaps you haven't installed it?" >&2
         exit 1
 fi
 
@@ -30,17 +30,17 @@ then
         exit 0
 fi
 
-# Define our torksocks config file
-TSOCKS_CONF_FILE="@CONFDIR@/tork-tsocks.conf"
+# Define our torsocks config file
+TSOCKS_CONF_FILE="@CONFDIR@/torsocks.conf"
 export TSOCKS_CONF_FILE
 
-# Check that we've got a torksocks config file
+# Check that we've got a torsocks config file
 if [ -r "$TSOCKS_CONF_FILE" ]
 then
-	exec torksocks "$@"
-	echo "$0: Failed to exec torksocks $@" >&2
+	exec torsocks "$@"
+	echo "$0: Failed to exec torsocks $@" >&2
 	exit 1
 else
-	echo "$0: Missing torksocks configuration file \"$TSOCKS_CONF_FILE\"." >&2
+	echo "$0: Missing torsocks configuration file \"$TSOCKS_CONF_FILE\"." >&2
 	exit 1
 fi

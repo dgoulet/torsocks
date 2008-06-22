@@ -1,46 +1,46 @@
-.TH TSOCKS 1 "" "TSOCKS"
+.TH TORSOCKS 1 "" "TORSOCKS"
 
 .SH NAME
-.BR tsocks 
-\- Shell wrapper to simplify the use of the tsocks(8) library to 
-transparently allow an application to use a SOCKS proxy. Basically a renamed, patched tsocks.
+.BR torsocks
+\- Shell wrapper to simplify the use of the torsocks(8) library to
+transparently allow an application to use a SOCKS proxy. Basically a renamed, patched torsocks.
 .SH SYNOPSIS
-.B tsocks
+.B torsocks
 .RB [application\ [application's\ arguments]]
 .br
 or
-.B tsocks
+.B torsocks
 .RB [on|off]
 .br
 or
-.B tsocks
+.B torsocks
 .SH DESCRIPTION
-.B tsocks
-is a wrapper between the tsocks library and the application what you
+.B torsocks
+is a wrapper between the torsocks library and the application what you
 would like to run socksified.
 .SH OPTIONS
 .IP \fB[application\ \fB[application's\ arguments]]
 run the application as specified with the environment (LD_PRELOAD) set
-such that tsocks(8) will transparently proxy SOCKS connections in 
+such that torsocks(8) will transparently proxy SOCKS connections in
 that program
 .IP \fB[on|off]
-this option adds or removes tsocks(8) from the LD_PRELOAD environment
-variable. When tsocks(8) is in this variable all executed
+this option adds or removes torsocks(8) from the LD_PRELOAD environment
+variable. When torsocks(8) is in this variable all executed
 applications are automatically socksified. If you want to
 use this function, you HAVE to source the shell script from yours,
-like this: "source /usr/bin/tsocks" or ". /usr/bin/tsocks"
+like this: "source /usr/bin/torsocks" or ". /usr/bin/torsocks"
 .br
 Example:
 .br
-". tsocks on" -- add the tsocks lib to LD_PRELOAD
+". torsocks on" -- add the torsocks lib to LD_PRELOAD
 .br
-". tsocks off" -- remove the tsocks lib from LD_PRELOAD
+". torsocks off" -- remove the torsocks lib from LD_PRELOAD
 .IP \fB[show|sh]
 show the current value of the LD_PRELOAD variable
 .IP \fB<without\ any\ argument>
-create a new shell with LD_PRELOAD including tsocks(8). 
+create a new shell with LD_PRELOAD including torsocks(8).
 .PP
 .SH AUTHOR
 This script was created by Tamas SZERB <toma@rulez.org> for the debian
-package of tsocks. It (along with this manual page) have since been 
-adapted into the main tsocks project and modified.
+package of tsocks. It (along with this manual page) have since been
+adapted into the main torsocks project and modified.

@@ -1,5 +1,19 @@
 cvs -z3 -d:ext:hoganrobert@tork.cvs.sourceforge.net:/cvsroot/tork import -m "Initial Load" torsocks hoganrobert initial
 
+Current prioritized items:
+
+* What about the isc library calls like res_init and so on?  How widely are
+  they use?  Does this present a more elegant way to implement this stuff?
+
+* It should be possible to make this thread-safe with --enable-threads.
+
+* In fact, one could modify tsocks further to play nicely with tor.  For 
+  example, you could prevent nonlocal UDP traffic from being sent at all,
+  and so on.
+
+------------------------------------------------------------------------
+Original TODO:
+
 - Update FAQ to include information about the install location of the
   tsocks library
 

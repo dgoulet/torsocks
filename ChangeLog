@@ -1,3 +1,6 @@
+2008-06-22 Robert Hogan <robert@roberthogan.net>
+    Port to automake build system.
+
 2008-06-18 Robert Hogan <robert@roberthogan.net>
 	Add support for getaddrbyhost. 
 

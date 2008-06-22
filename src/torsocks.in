@@ -1,40 +1,40 @@
 #!/bin/sh
-# Wrapper script for use of the torksocks(8) transparent socksification library
+# Wrapper script for use of the torsocks(8) transparent socksification library
 #
 # There are three forms of usage for this script:
 #
-# @prefix@/bin/torksocks program [program arguments...]
+# @prefix@/bin/torsocks program [program arguments...]
 #
-# This form sets the users LD_PRELOAD environment variable so that torksocks(8) 
+# This form sets the users LD_PRELOAD environment variable so that torsocks(8)
 # will be loaded to socksify the application then executes the specified 
 # program (with the provided arguments). The following simple example might 
-# be used to telnet to www.foo.org via a torksocks.conf(5) configured socks server:
+# be used to telnet to www.foo.org via a torsocks.conf(5) configured socks server:
 #
-# @prefix@/bin/torksocks telnet www.foo.org
+# @prefix@/bin/torsocks telnet www.foo.org
 #
-# The second form allows for torksocks(8) to be switched on and off for a 
-# session (that is, it adds and removes torksocks from the LD_PRELOAD environment
+# The second form allows for torsocks(8) to be switched on and off for a
+# session (that is, it adds and removes torsocks from the LD_PRELOAD environment
 # variable). This form must be _sourced_ into the user's existing session
 # (and will only work with bourne shell users):
 #
-# . @prefix@/bin/torksocks on
+# . @prefix@/bin/torsocks on
 # telnet www.foo.org 
-# . @prefix@/bin/torksocks off
+# . @prefix@/bin/torsocks off
 # 
 # Or
 # 
-# source @prefix@/bin/torksocks on
+# source @prefix@/bin/torsocks on
 # telnet www.foo.org
-# source @prefix@/bin/torksocks off
+# source @prefix@/bin/torsocks off
 #
 # The third form creates a new shell with LD_PRELOAD set and is achieved
 # simply by running the script with no arguments 
 # 
-# @prefix@/bin/torksocks
+# @prefix@/bin/torsocks
 #
 # When finished the user can simply terminate the shell with 'exit'
 # 
-# This script is originally from the debian torksocks package by 
+# This script is originally from the debian torsocks package by
 # Tamas Szerb <toma@rulez.org>
 # Modified by Robert Hogan <robert@roberthogan.net> April 16th 2006
 
@@ -47,14 +47,14 @@ case "$1" in
 	on)
 		if [ -z "$LD_PRELOAD" ]
 			then
-				export LD_PRELOAD="@prefix@/lib/tork/libtorksocks.so"
+				export LD_PRELOAD="@prefix@/lib/torsocks/libtorsocks.so"
 			else
-				echo $LD_PRELOAD | grep -q "@prefix@/lib/tork/libtorksocks\.so" || \
-				export LD_PRELOAD="@prefix@/lib/tork/libtorksocks.so $LD_PRELOAD"
+				echo $LD_PRELOAD | grep -q "@prefix@/lib/torsocks/libtorsocks\.so" || \
+				export LD_PRELOAD="@prefix@/lib/torsocks/libtorsocks.so $LD_PRELOAD"
 		fi
 	;;
 	off)
-		export LD_PRELOAD=`echo -n $LD_PRELOAD | sed 's/\@prefix@\/lib\/tork\/libtorksocks.so \?//'`
+		export LD_PRELOAD=`echo -n $LD_PRELOAD | sed 's/\@prefix@\/lib\/tork\/libtorsocks.so \?//'`
 		if [ -z "$LD_PRELOAD" ]
 			then
 				unset LD_PRELOAD
@@ -64,15 +64,15 @@ case "$1" in
 		echo "LD_PRELOAD=\"$LD_PRELOAD\""
 	;;
 	-h|-?)
-      echo "$0: Please see torksocks(1) or read comment at top of $0"
+      echo "$0: Please see torsocks(1) or read comment at top of $0"
    ;;
 	*)
 		if [ -z "$LD_PRELOAD" ]
 		then
-			export LD_PRELOAD="@prefix@/lib/tork/libtorksocks.so"
+			export LD_PRELOAD="@prefix@/lib/torsocks/libtorsocks.so"
 		else
-			echo $LD_PRELOAD | grep -q "@prefix@/lib/tork/libtorksocks\.so" || \
-			export LD_PRELOAD="@prefix@/lib/tork/libtorksocks.so $LD_PRELOAD"
+			echo $LD_PRELOAD | grep -q "@prefix@/lib/torsocks/libtorsocks\.so" || \
+			export LD_PRELOAD="@prefix@/lib/torsocks/libtorsocks.so $LD_PRELOAD"
 		fi
 
 		if [ $# = 0 ]
