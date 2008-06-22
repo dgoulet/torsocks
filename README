@@ -1,3 +1,6 @@
+Torsocks is not currently a part of the Tor project. The use of the Tor name
+does not imply endorsement by the Tor project.
+
 torsocks is a fork of tsocks.
 
 It is maintained by: Robert Hogan (robert at roberthogan.net)
@@ -14,3 +17,6 @@ https://giig.ugr.es/~rgarcia/tsocks/
 
 The Tor project's list of tsocks patches:
 http://wiki.noreply.org/noreply/TheOnionRouter/TSocksPatches
+
+The Tor project:
+https://www.torproject.org
