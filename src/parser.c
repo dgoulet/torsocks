@@ -70,6 +70,9 @@ int read_config (char *filename, struct parsedfile *config) {
         memset(&(config->defaultserver), 0x0, sizeof(config->defaultserver));
 		check_server(&(config->defaultserver));
 		handle_local(config, 0, "127.0.0.0/255.0.0.0");
+        handle_local(config, 0, "10.0.0.0/255.0.0.0");
+        handle_local(config, 0, "192.168.0.0/255.255.0.0");
+
 /*        handle_local(config, 0, "0.0.0.0/0.0.0.0");*/
 		rc = 1; /* Severe errors reading configuration */
 	}	
@@ -89,6 +92,8 @@ int read_config (char *filename, struct parsedfile *config) {
 
 		/* Always add the 127.0.0.1/255.0.0.0 subnet to local */
 		handle_local(config, 0, "127.0.0.0/255.0.0.0");
+        handle_local(config, 0, "10.0.0.0/255.0.0.0");
+        handle_local(config, 0, "192.168.0.0/255.255.0.0");
 
 		/* Check default server */
 		check_server(&(config->defaultserver));
