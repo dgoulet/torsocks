@@ -7,36 +7,10 @@ Current prioritized items:
 
 * In fact, one could modify tsocks further to play nicely with tor.  For 
   example, you could prevent nonlocal UDP traffic from being sent at all,
-  and so on.
+  and so on. - DONE
 
-  - Addressed in connect()
-  - Need to handle sendto() and sendmsg() as well.
-
-
-  int e,f;
-  socklen_t len=(socklen_t)sizeof(e);
-  struct sockaddr_in orig_dst;
-  socklen_t orig_dst_len = sizeof(orig_dst);
-  char tmpbuf[INET_NTOA_BUF_LEN];
-
-  if (getsockopt(conn->s, SOL_SOCKET, SO_TYPE, (void*)&e, &len) < 0) {
-    return -1;
-  }
-  if (getsockopt(conn->_base.s, SOL_IP, SO_ORIGINAL_DST,
-                 (struct sockaddr*)&orig_dst, &orig_dst_len) < 0) {
-    int e = tor_socket_errno(conn->_base.s);
-    log_warn(LD_NET, "getsockopt() failed: %s", tor_socket_strerror(e));
-    return -1;
-  }
-  tor_inet_ntoa(&orig_dst.sin_addr, tmpbuf, sizeof(tmpbuf));
-  strlcpy(req->address, tmpbuf, sizeof(req->address));
-  req->port = ntohs(orig_dst.sin_port);
-
-  if ((e) && (f)) {
-      /* some sort of error, but maybe just inprogress still */
-      if (e == SOCK_DGRAM) && !(is_internal_IP(ntohl(in.s_addr), 0))
-          blackhole;
-  }
+  - Addressed in connect(), sendto() and sendmsg().
+  - Don't need to handle send(), since that is handled in connect().
 
 
 ------------------------------------------------------------------------

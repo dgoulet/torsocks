@@ -66,6 +66,8 @@ static struct hostent *(*realgethostbyname)(GETHOSTBYNAME_SIGNATURE);
 static struct hostent *(*realgethostbyaddr)(GETHOSTBYADDR_SIGNATURE);
 int (*realgetaddrinfo)(GETADDRINFO_SIGNATURE);
 static struct hostent *(*realgetipnodebyname)(GETIPNODEBYNAME_SIGNATURE);
+static ssize_t *(*realsendto)(SENDTO_SIGNATURE);
+static ssize_t *(*realsendmsg)(SENDMSG_SIGNATURE);
 #endif
 int (*realconnect)(CONNECT_SIGNATURE);
 static int (*realselect)(SELECT_SIGNATURE);
@@ -92,7 +94,9 @@ struct hostent *gethostbyname(GETHOSTBYNAME_SIGNATURE);
 struct hostent *gethostbyaddr(GETHOSTBYADDR_SIGNATURE);
 int getaddrinfo(GETADDRINFO_SIGNATURE);
 struct hostent *getipnodebyname(GETIPNODEBYNAME_SIGNATURE);
-#endif 
+ssize_t sendto(SENDTO_SIGNATURE);
+ssize_t sendmsg(SENDMSG_SIGNATURE);
+#endif
 
 /* Private Function Prototypes */
 static int get_config();
@@ -148,6 +152,8 @@ void tsocks_init(void) {
     realgethostbyaddr = dlsym(RTLD_NEXT, "gethostbyaddr");
     realgetaddrinfo = dlsym(RTLD_NEXT, "getaddrinfo");
     realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
+    realsendto = dlsym(RTLD_NEXT, "sendto");
+    realsendmsg = dlsym(RTLD_NEXT, "sendmsg");
     #endif
 #else
 	lib = dlopen(LIBCONNECT, RTLD_LAZY);
@@ -162,6 +168,8 @@ void tsocks_init(void) {
     realgethostbyaddr = dlsym(lib, "gethostbyaddr");
     realgetaddrinfo = dlsym(lib, "getaddrinfo");
     realgetipnodebyname = dlsym(lib, "getipnodebyname");
+    realsendto = dlsym(lib, "sendto");
+    realsendmsg = dlsym(lib, "sendmsg");
     #endif
     dlclose(lib);	
 	lib = dlopen(LIBC, RTLD_LAZY);
@@ -227,18 +235,18 @@ static int get_config () {
 }
 
 int connect(CONNECT_SIGNATURE) {
-   struct sockaddr_in *connaddr;
-   struct sockaddr_in peer_address;
-   struct sockaddr_in server_address;
-   int gotvalidserver = 0, rc;
-   unsigned int namelen = sizeof(peer_address);
-   int sock_type = -1;
-   unsigned int sock_type_len = sizeof(sock_type);
-   int res = -1;
-   struct serverent *path;
-   struct connreq *newconn;
+    struct sockaddr_in *connaddr;
+    struct sockaddr_in peer_address;
+    struct sockaddr_in server_address;
+    int gotvalidserver = 0, rc;
+    unsigned int namelen = sizeof(peer_address);
+    int sock_type = -1;
+    unsigned int sock_type_len = sizeof(sock_type);
+    int res = -1;
+    struct serverent *path;
+    struct connreq *newconn;
 
-   get_environment();
+    get_environment();
 
 	/* If the real connect doesn't exist, we're stuffed */
 	if (realconnect == NULL) {
@@ -246,9 +254,9 @@ int connect(CONNECT_SIGNATURE) {
 		return(-1);
 	}
 
-   show_msg(MSGDEBUG, "Got connection request\n");
+    show_msg(MSGDEBUG, "Got connection request\n");
 
-	connaddr = (struct sockaddr_in *) __addr;
+    connaddr = (struct sockaddr_in *) __addr;
 
 	/* Get the type of the socket */
 	getsockopt(__fd, SOL_SOCKET, SO_TYPE, 
@@ -265,89 +273,89 @@ int connect(CONNECT_SIGNATURE) {
 #ifdef USE_TOR_DNS
 	/* If this a UDP socket with a non-local destination address  */
 	/* then we refuse it, since it is probably a DNS request      */
-   if (sock_type == SOCK_DGRAM){
-      show_msg(MSGDEBUG, "Connection is a UDP stream.\n");
+    if (sock_type == SOCK_DGRAM){
+        show_msg(MSGDEBUG, "Connection is a UDP stream.\n");
 
-      if (!(is_local(config, &(connaddr->sin_addr))))
-        show_msg(MSGWARN, "Connection is a UDP stream with a non-local "
-                           "destination, may be a DNS request: rejecting.\n");
-        return -1;
-   }
+        if (!(is_local(config, &(connaddr->sin_addr))))
+          show_msg(MSGWARN, "Connection is a UDP stream with a non-local "
+                            "destination, may be a DNS request: rejecting.\n");
+          return -1;
+    }
 #endif
 
-	/* If this isn't an INET socket for a TCP stream we can't  */
-	/* handle it, just call the real connect now               */
-   if ((connaddr->sin_family != AF_INET) ||
-       (sock_type != SOCK_STREAM)) {
-      show_msg(MSGDEBUG, "Connection isn't a TCP stream ignoring\n");
-		return(realconnect(__fd, __addr, __len));
-   }
+      /* If this isn't an INET socket for a TCP stream we can't  */
+      /* handle it, just call the real connect now               */
+    if ((connaddr->sin_family != AF_INET) ||
+        (sock_type != SOCK_STREAM)) {
+        show_msg(MSGDEBUG, "Connection isn't a TCP stream ignoring\n");
+          return(realconnect(__fd, __addr, __len));
+    }
 
-   /* If we haven't initialized yet, do it now */
-   get_config();
+    /* If we haven't initialized yet, do it now */
+    get_config();
 
-   /* Are we already handling this connect? */
-   if ((newconn = find_socks_request(__fd, 1))) {
-      if (memcmp(&newconn->connaddr, connaddr, sizeof(*connaddr))) {
-         /* Ok, they're calling connect on a socket that is in our
-          * queue but this connect() isn't to the same destination, 
-          * they're obviously not trying to check the status of 
-          * they're non blocking connect, they must have close()d 
-          * the other socket and created a new one which happens
-          * to have the same fd as a request we haven't had the chance
-          * to delete yet, so we delete it here. */
-         show_msg(MSGDEBUG, "Call to connect received on old "
-                            "tsocks request for socket %d but to "
-                            "new destination, deleting old request\n",
-                  newconn->sockid);
-         kill_socks_request(newconn);
-      } else {
-         /* Ok, this call to connect() is to check the status of 
-          * a current non blocking connect(). */
-         if (newconn->state == FAILED) {
-            show_msg(MSGDEBUG, "Call to connect received on failed "
-                               "request %d, returning %d\n",
-                     newconn->sockid, newconn->err);
-            errno = newconn->err;
-            rc = -1;
-         } else if (newconn->state == DONE) {
-            show_msg(MSGERR, "Call to connect received on completed "
-                             "request %d\n",
-                     newconn->sockid, newconn->err);
-            rc = 0;
-         } else {
-            show_msg(MSGDEBUG, "Call to connect received on current request %d\n",
-                     newconn->sockid);
-            rc = handle_request(newconn);
-            errno = rc;
-         }
-         if ((newconn->state == FAILED) || (newconn->state == DONE))
-            kill_socks_request(newconn);
-         return((rc ? -1 : 0));
-      }
-   }
+    /* Are we already handling this connect? */
+    if ((newconn = find_socks_request(__fd, 1))) {
+        if (memcmp(&newconn->connaddr, connaddr, sizeof(*connaddr))) {
+          /* Ok, they're calling connect on a socket that is in our
+            * queue but this connect() isn't to the same destination, 
+            * they're obviously not trying to check the status of 
+            * they're non blocking connect, they must have close()d 
+            * the other socket and created a new one which happens
+            * to have the same fd as a request we haven't had the chance
+            * to delete yet, so we delete it here. */
+          show_msg(MSGDEBUG, "Call to connect received on old "
+                              "tsocks request for socket %d but to "
+                              "new destination, deleting old request\n",
+                    newconn->sockid);
+          kill_socks_request(newconn);
+        } else {
+          /* Ok, this call to connect() is to check the status of 
+            * a current non blocking connect(). */
+          if (newconn->state == FAILED) {
+              show_msg(MSGDEBUG, "Call to connect received on failed "
+                                "request %d, returning %d\n",
+                      newconn->sockid, newconn->err);
+              errno = newconn->err;
+              rc = -1;
+          } else if (newconn->state == DONE) {
+              show_msg(MSGERR, "Call to connect received on completed "
+                              "request %d\n",
+                      newconn->sockid, newconn->err);
+              rc = 0;
+          } else {
+              show_msg(MSGDEBUG, "Call to connect received on current request %d\n",
+                      newconn->sockid);
+              rc = handle_request(newconn);
+              errno = rc;
+          }
+          if ((newconn->state == FAILED) || (newconn->state == DONE))
+              kill_socks_request(newconn);
+          return((rc ? -1 : 0));
+        }
+    }
 
-   /* If the socket is already connected, just call connect  */
-   /* and get its standard reply                             */
-   if (!getpeername(__fd, (struct sockaddr *) &peer_address, &namelen)) {
-      show_msg(MSGDEBUG, "Socket is already connected, defering to "
-                         "real connect\n");
-		return(realconnect(__fd, __addr, __len));
-   }
-     
-   show_msg(MSGDEBUG, "Got connection request for socket %d to "
-                      "%s\n", __fd, inet_ntoa(connaddr->sin_addr));
+    /* If the socket is already connected, just call connect  */
+    /* and get its standard reply                             */
+    if (!getpeername(__fd, (struct sockaddr *) &peer_address, &namelen)) {
+        show_msg(MSGDEBUG, "Socket is already connected, defering to "
+                          "real connect\n");
+          return(realconnect(__fd, __addr, __len));
+    }
+      
+    show_msg(MSGDEBUG, "Got connection request for socket %d to "
+                        "%s\n", __fd, inet_ntoa(connaddr->sin_addr));
 
-   /* If the address is local call realconnect */
+    /* If the address is local call realconnect */
 #ifdef USE_TOR_DNS
-   if (!(is_local(config, &(connaddr->sin_addr))) && 
-       !is_dead_address(pool, connaddr->sin_addr.s_addr)) {
+    if (!(is_local(config, &(connaddr->sin_addr))) && 
+        !is_dead_address(pool, connaddr->sin_addr.s_addr)) {
 #else 
-   if (!(is_local(config, &(connaddr->sin_addr)))) {
+    if (!(is_local(config, &(connaddr->sin_addr)))) {
 #endif
       show_msg(MSGDEBUG, "Connection for socket %d is local\n", __fd);
       return(realconnect(__fd, __addr, __len));
-   }
+    }
 
    /* Ok, so its not local, we need a path to the net */
    pick_server(config, &path, &(connaddr->sin_addr), ntohs(connaddr->sin_port));
@@ -1438,6 +1446,90 @@ struct hostent *getipnodebyname(GETIPNODEBYNAME_SIGNATURE)
   } else {
       return realgetipnodebyname(name, af, flags, error_num);
   }
+}
+
+ssize_t sendto(SENDTO_SIGNATURE)
+{
+  struct sockaddr_in *connaddr;
+  int sock_type = -1;
+  unsigned int sock_type_len = sizeof(sock_type);
+
+  /* If the real connect doesn't exist, we're stuffed */
+  if (realsendto == NULL) {
+      show_msg(MSGERR, "Unresolved symbol: sendto\n");
+      return(-1);
+  }
+
+  show_msg(MSGDEBUG, "Got sendto request\n");
+
+  connaddr = (struct sockaddr_in *) to;
+
+  /* Get the type of the socket */
+  getsockopt(s, SOL_SOCKET, SO_TYPE,
+    (void *) &sock_type, &sock_type_len);
+
+  show_msg(MSGDEBUG, "sin_family: %i "
+                      "\n",
+                   connaddr->sin_family);
+
+  show_msg(MSGDEBUG, "sockopt: %i "
+                      "\n",
+                   sock_type);
+
+  /* If this a UDP socket with a non-local destination address  */
+  /* then we refuse it, since it is probably a DNS request      */
+  if (sock_type == SOCK_DGRAM){
+      show_msg(MSGDEBUG, "Sendto is on a UDP stream.\n");
+
+      if (!(is_local(config, &(connaddr->sin_addr))))
+        show_msg(MSGWARN, "Sendto() is on a UDP stream with a non-local "
+                          "destination, may be a DNS request: rejecting.\n");
+        return -1;
+  }
+  return (ssize_t) realsendto(s, buf, len, flags, to, tolen);
+
+}
+
+ssize_t sendmsg(SENDMSG_SIGNATURE)
+{
+  struct sockaddr_in *connaddr;
+  int sock_type = -1;
+  unsigned int sock_type_len = sizeof(sock_type);
+
+  /* If the real connect doesn't exist, we're stuffed */
+  if (realsendmsg == NULL) {
+      show_msg(MSGERR, "Unresolved symbol: sendmsg\n");
+      return(-1);
+  }
+
+  show_msg(MSGDEBUG, "Got sendmsg request\n");
+
+  connaddr = (struct sockaddr_in *) msg->msg_name;
+
+  /* Get the type of the socket */
+  getsockopt(s, SOL_SOCKET, SO_TYPE,
+    (void *) &sock_type, &sock_type_len);
+
+  show_msg(MSGDEBUG, "sin_family: %i "
+                      "\n",
+                   connaddr->sin_family);
+
+  show_msg(MSGDEBUG, "sockopt: %i "
+                      "\n",
+                   sock_type);
+
+  /* If this a UDP socket with a non-local destination address  */
+  /* then we refuse it, since it is probably a DNS request      */
+  if (sock_type == SOCK_DGRAM){
+      show_msg(MSGDEBUG, "sendmsg() is on a UDP stream.\n");
+
+      if (!(is_local(config, &(connaddr->sin_addr))))
+        show_msg(MSGWARN, "sendmsg() is on a UDP stream with a non-local "
+                          "destination, may be a DNS request: rejecting.\n");
+        return -1;
+  }
+  return (ssize_t) realsendmsg(s, msg, flags);
+
 }
 
 #endif 

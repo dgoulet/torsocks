@@ -405,6 +405,13 @@ dnl Emit signature for gethostbyaddr
 PROTO="const void *addr, socklen_t len, int type"
 AC_DEFINE_UNQUOTED(GETHOSTBYADDR_SIGNATURE, [${PROTO}], [Description])
 
+dnl Emit signature for sendto
+PROTO="int s, const void *buf, size_t len, int flags, const struct sockaddr *to, socklen_t tolen"
+AC_DEFINE_UNQUOTED(SENDTO_SIGNATURE, [${PROTO}], [Description])
+
+dnl Emit signature for sendmsg
+PROTO="int s, const struct msghdr *msg, int flags"
+AC_DEFINE_UNQUOTED(SENDMSG_SIGNATURE, [${PROTO}], [Description])
 
 dnl Output the special librarys (libdl etc needed for tsocks)
 SPECIALLIBS=${LIBS}
