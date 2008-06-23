@@ -1,3 +1,18 @@
+2008-06-23 Robert Hogan <robert@roberthogan.net>
+	tsocks.c: UDP blocking in sendto() and sendmsg(). 
+
+2008-06-22 Robert Hogan <robert@roberthogan.net>
+	tsocks.c: Reject UDP requests to non-local addresses on connect() 
+
+2008-06-22 Robert Hogan <robert@roberthogan.net>
+	parser.c: Add more private address ranges. 
+
+2008-06-22 Robert Hogan <robert@roberthogan.net>
+	tsocks.c: realgetipnodebyname was using RTLD_NEXT instead of lib. 
+
+2008-06-22 Robert Hogan <robert@roberthogan.net>
+	Add create-release.sh 
+
 2008-06-22 Robert Hogan <robert@roberthogan.net>
     Port to automake build system.
 
