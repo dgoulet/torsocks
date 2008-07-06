@@ -1,6 +1,6 @@
 /***************************************************************************
  *                                                                         *
- * $Id: dead_pool.h,v 1.3 2008-07-06 15:28:53 hoganrobert Exp $*
+ * $Id: dead_pool.h,v 1.4 2008-07-06 15:29:10 hoganrobert Exp $            *
  *                                                                         *
  *   Copyright (C) 2008 by Robert Hogan                                    *
  *   robert@roberthogan.net                                                *
