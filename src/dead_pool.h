@@ -1,6 +1,6 @@
 /***************************************************************************
  *                                                                         *
- * $Id: dead_pool.h,v 1.2 2008-07-06 15:17:35 hoganrobert Exp $                            *
+ * $Id: dead_pool.h,v 1.3 2008-07-06 15:28:53 hoganrobert Exp $*
  *                                                                         *
  *   Copyright (C) 2008 by Robert Hogan                                    *
  *   robert@roberthogan.net                                                *
@@ -21,7 +21,8 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************
  *                                                                         *
- *   This is a modified version of a source file from the tsocks project.  *
+ *   This is a modified version of a source file from the TIA tor-dns   .  *
+ *   patch for tsocks. (See the patches directory for more info.)          *
  *   The original source file contained no copyright notice.               *
  *                                                                         *
  ***************************************************************************/
