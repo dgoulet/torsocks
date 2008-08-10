@@ -4,7 +4,7 @@
 export CVS_RSH=ssh
 export VN=1.0-alpha
 export VER=torsocks-$VN
-export TAG=v1_0-alpha
+export TAG=v1_0_alpha
 cd ..
 TOPDIR=$PWD
 mkdir TorsocksReleases

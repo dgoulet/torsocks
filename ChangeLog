@@ -1,43 +1,26 @@
+Torsocks 1.0-alpha
 2008-07-06 Robert Hogan <robert@roberthogan.net>
-	Update copyright notices. 
+  Functionality Changes:
+    o tsocks.c: UDP blocking in sendto() and sendmsg().
+    o tsocks.c: Reject UDP requests to non-local addresses on connect()
+    o parser.c: Add more private address ranges.
+    o tsocks.c: realgetipnodebyname was using RTLD_NEXT instead of lib.
+    o Add support for gethostbyaddr().
+    o parser.c: Fix compilation warnings. Use defaults sensible for Tor.
+    o Generate the torsocks and torify scripts from torsocks.in and torify.in
+      at compilation time.
+  Housekeeping changes:
+    o dead_pool.c/h, inspectsocks.c, common.c, tsocks.c, validateconf.c:
+      Fix compilation warnings.
+    o Add 'patches' directory and store a copy of all prior changes to tsocks.
+    o Add create-release.sh
+    o Port to automake build system.
+    o Update copyright notices.
 
-2008-06-23 Robert Hogan <robert@roberthogan.net>
-	tsocks.c: UDP blocking in sendto() and sendmsg(). 
 
-2008-06-22 Robert Hogan <robert@roberthogan.net>
-	tsocks.c: Reject UDP requests to non-local addresses on connect() 
 
-2008-06-22 Robert Hogan <robert@roberthogan.net>
-	parser.c: Add more private address ranges. 
-
-2008-06-22 Robert Hogan <robert@roberthogan.net>
-	tsocks.c: realgetipnodebyname was using RTLD_NEXT instead of lib. 
-
-2008-06-22 Robert Hogan <robert@roberthogan.net>
-	Add create-release.sh 
-
-2008-06-22 Robert Hogan <robert@roberthogan.net>
-    Port to automake build system.
-
-2008-06-18 Robert Hogan <robert@roberthogan.net>
-	Add support for gethostbyaddr().
-
-2008-06-15 Robert Hogan <robert@roberthogan.net>
-	Add 'patches' directory and store a copy of all prior changes to tsocks.
-
-2008-06-15 Robert Hogan <robert@roberthogan.net>
-	Update TODO 
-
-2008-06-15 Robert Hogan <robert@roberthogan.net>
-	parser.c: Fix compilation warnings. Use defaults sensible for Tor. 
-
-2008-06-15 Robert Hogan <robert@roberthogan.net>
-	dead_pool.c/h, inspectsocks.c, common.c, tsocks.c, validateconf.c:
-    Fix compilation warnings.
-
-  o Generate the torsocks and torify scripts from torsocks.in and torify.in
-    at compilation time.
-
+******************************************************************************
+-------------------------
 Original tsocks Changelog
 -------------------------
 
