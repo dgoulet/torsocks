@@ -1,5 +1,15 @@
-Quick Installation Instructions
--------------------------------
+To Compile from CVS/SVN
+-----------------------
+
+  make -f Makefile.cvs
+  ./configure
+  make
+  make install
+
+
+==============================================================================
+Original Installation Instructions For Tsocks
+---------------------------------------------
 
 1. Explenations of the ./configure options which might be of interest (and that are 
    specific to tsocks include):

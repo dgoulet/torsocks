@@ -21,10 +21,10 @@
   <kdevautoproject>
     <general>
       <activetarget>src/torsocks</activetarget>
-      <useconfiguration>default</useconfiguration>
+      <useconfiguration>debug</useconfiguration>
     </general>
     <run>
-      <mainprogram>/backup/robert/Development/torsocks/test/gethostbyaddr</mainprogram>
+      <mainprogram>/backup/robert/Development/torsocks/test/udp</mainprogram>
       <terminal>true</terminal>
       <programargs/>
       <globaldebugarguments/>
@@ -34,7 +34,8 @@
       <autoinstall>false</autoinstall>
       <autokdesu>false</autokdesu>
       <envvars>
-        <envvar value="src/.libs/libtorsocks.so" name="LD_PRELOAD" />
+        <envvar value="debug/src/.libs/libtorsocks.so" name="LD_PRELOAD" />
+        <envvar value="2" name="TSOCKS_DEBUG" />
       </envvars>
     </run>
     <configurations>

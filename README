@@ -1,13 +1,56 @@
-Torsocks is not currently a part of the Tor project. The use of the Tor name
-does not imply endorsement by the Tor project.
+What is torsocks?
+-----------------
+This is a fork of the tsocks project (http://sourceforge.net/project/
+showfiles.php?group_id=17338). The purpose of this fork is to maintain a
+working implementation of tsocks that is primarily useful for Tor.
 
-torsocks is a fork of tsocks.
 
-It is maintained by: Robert Hogan (robert at roberthogan.net)
-                     Ruben Garcia (ruben at ugr.es)
+Differences between torksocks and tsocks
+----------------------------------------
+A complete history of changes is maintained in the Changelog. The initial
+working copy of torsocks was obtained through the following steps in June
+2008:
 
-The purpose of this fork is to maintain a working implementation of tsocks
-that is primarily useful for Tor.
+  - Tsocks was downloaded from the project's sourceforge repository.
+    (http://sourceforge.net/project/showfiles.php?group_id=17338)
+  - All patches listed at http://wiki.noreply.org/noreply/TheOnionRouter/
+    TSocksPatches in March 2008 were applied. In particular, the patch
+    from Total Information Security that hooks DNS requests and passes
+    them to Tor. The original link for this patch is now dead and the
+    authors are no longer available at the email addresses supplied in
+    the patch's source.
+  - Weasel's getpeername() patch and some build-related patches from
+    https://giig.ugr.es/~rgarcia/tsocks/ were applied.
+  - All references to tsocks in the project source files were renamed
+    to torsocks.
+  - The project was then migrated to an automake/autoconf build system.
+
+To help with reconstructing the above steps a list of applied patches is
+available in the patches/ subdirectory of the torsocks source tree.
+
+Enhancements unique to torsocks
+-------------------------------
+The first release of torsocks contained the following enhancements:
+
+  - Torifying reverse dns requests through gethostbyaddr()
+  - Blocking of UDP traffic from sendto() and its variants.
+  - Use of Tor-friendly defaults if no configuration file available.
+  - The addition of all RFC defined private address ranges to the
+    default configuration.
+
+Maintainers of Torsocks
+-----------------------
+Torsocks is maintained by: Robert Hogan (robert at roberthogan.net)
+                           Ruben Garcia (ruben at ugr.es)
+
+
+List of Applications Torsocks Supports
+--------------------------------------
+ - ssh
+ - telnet
+
+Links
+-----
 
 Original tsocks project (apparently abandoned):
 http://sourceforge.net/project/showfiles.php?group_id=17338

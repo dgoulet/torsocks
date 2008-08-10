@@ -1,3 +1,6 @@
+2008-07-06 Robert Hogan <robert@roberthogan.net>
+	Update copyright notices. 
+
 2008-06-23 Robert Hogan <robert@roberthogan.net>
 	tsocks.c: UDP blocking in sendto() and sendmsg(). 
 
@@ -17,7 +20,7 @@
     Port to automake build system.
 
 2008-06-18 Robert Hogan <robert@roberthogan.net>
-	Add support for getaddrbyhost. 
+	Add support for gethostbyaddr().
 
 2008-06-15 Robert Hogan <robert@roberthogan.net>
 	Add 'patches' directory and store a copy of all prior changes to tsocks.
@@ -32,6 +35,11 @@
 	dead_pool.c/h, inspectsocks.c, common.c, tsocks.c, validateconf.c:
     Fix compilation warnings.
 
+  o Generate the torsocks and torify scripts from torsocks.in and torify.in
+    at compilation time.
+
+Original tsocks Changelog
+-------------------------
 
 version 1.80tordns - 2005.10.4 bls@totalinfosecurity.com
    Intercept gethostbyname() and friends, added --tordns

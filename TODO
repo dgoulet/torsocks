@@ -5,6 +5,11 @@ Current prioritized items:
 
 * It should be possible to make this thread-safe with --enable-threads.
 
+* Add stdout and stderr messages that enable a parent program (such as TorK)
+  to monitor torsocks for errors.
+
+DONE:
+
 * In fact, one could modify tsocks further to play nicely with tor.  For 
   example, you could prevent nonlocal UDP traffic from being sent at all,
   and so on. - DONE

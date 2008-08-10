@@ -1,3 +1,6 @@
+#cvs -z3 -d:ext:hoganrobert@tork.cvs.sourceforge.net:/cvsroot/tork
+# import -m "Initial Load" torsocks hoganrobert initial
+
 export CVS_RSH=ssh
 export VN=1.0-alpha
 export VER=torsocks-$VN

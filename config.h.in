@@ -135,6 +135,12 @@
 /* Description */
 #undef SELECT_SIGNATURE
 
+/* Description */
+#undef SENDMSG_SIGNATURE
+
+/* Description */
+#undef SENDTO_SIGNATURE
+
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
