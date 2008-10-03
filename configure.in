@@ -418,7 +418,16 @@ SPECIALLIBS=${LIBS}
 AC_SUBST(SPECIALLIBS)
 LIBS=${SIMPLELIBS}
 
-AC_CONFIG_FILES([src/torify src/torsocks])
+if test "x$prefix" = "xNONE"; then
+  prefix=$ac_default_prefix
+fi
+
+if test "x$CONFDIR" = "x"; then
+  CONFDIR=`eval echo $sysconfdir`
+fi
+AC_SUBST(CONFDIR)
+AH_TEMPLATE([CONFDIR],[torsock's configuration directory])
+AC_DEFINE_UNQUOTED(CONFDIR,"$CONFDIR")
 
 AC_LANG_C
 AC_PROG_CC
@@ -428,6 +437,8 @@ AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 AC_ENABLE_SHARED
 AC_ENABLE_STATIC
+
+AC_CONFIG_FILES([src/torify src/torsocks])
 
 AC_OUTPUT(Makefile src/Makefile)
 

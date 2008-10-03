@@ -9,6 +9,9 @@
 /* Description */
 #undef CLOSE_SIGNATURE
 
+/* torsock's configuration directory */
+#undef CONFDIR
+
 /* Description */
 #undef CONF_FILE
 

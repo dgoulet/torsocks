@@ -8,6 +8,8 @@ Current prioritized items:
 * Add stdout and stderr messages that enable a parent program (such as TorK)
   to monitor torsocks for errors.
 
+* Merge dsocks so we support BSD (http://monkey.org/~dugsong/dsocks/)
+
 DONE:
 
 * In fact, one could modify tsocks further to play nicely with tor.  For 

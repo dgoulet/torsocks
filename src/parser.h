@@ -1,6 +1,6 @@
 /***************************************************************************
  *                                                                         *
- * $Id: parser.h,v 1.2 2008-07-06 15:17:35 hoganrobert Exp $                            *
+ * $Id: parser.h,v 1.3 2008-10-03 19:37:29 hoganrobert Exp $                            *
  *                                                                         *
  *   Copyright (C) 2008 by Robert Hogan                                    *
  *   robert@roberthogan.net                                                *
@@ -25,10 +25,9 @@
  *   Original copyright notice from tsocks source file follows:            *
  *   (Source file contained no copyright information.)                     *
  ***************************************************************************/
-/*
 
-/* parser.h - Structures, functions and global variables for the */
-/* tsocks parsing routines                                       */
+/* parser.h - Structures, functions and global variables for the 
+   tsocks parsing routines                                       */
 
 #ifndef _PARSER_H
 
