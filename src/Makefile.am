@@ -15,11 +15,11 @@ libdir = @prefix@/lib/torsocks
 #saveme_CFLAGS = $(AM_CFLAGS)
 
 # Install configuration file
-torifyconfdir = $(CONFDIR)/
-torifyconf_DATA = torsocks.conf
+usewithtorconfdir = $(CONFDIR)/
+usewithtorconf_DATA = torsocks.conf
 
 # Install invocation scripts
-bin_SCRIPTS = torsocks torify
+bin_SCRIPTS = torsocks usewithtor
 INSTALL_SCRIPT = $(install_sh) -c -m 755
 
 # Install man pages
@@ -29,8 +29,8 @@ torsocksmanpage_DATA = torsocks.1
 torsocks8manpagedir = $(mandir)/man8
 torsocks8manpage_DATA = torsocks.8
 
-torifymanpagedir = $(mandir)/man1
-torifymanpage_DATA = torify.1
+usewithtormanpagedir = $(mandir)/man1
+usewithtormanpage_DATA = usewithtor.1
 
 torsocksconfmanpagedir = $(mandir)/man5
 torsocksconfmanpage_DATA = torsocks.conf.5
@@ -43,5 +43,5 @@ libtorsocks_la_LDFLAGS = -version-info 1:0:0
 
 DISTCLEANFILES=parser.lo dead_pool.lo common.lo libtorsocks.lo tsocks.lo \
 			   config.cache config.log config.h Makefile \
-			   aclocal.m4 config.status torify torsocks \
+			   aclocal.m4 config.status usewithtor torsocks \
 			   autom4te.cache .libs .deps 
