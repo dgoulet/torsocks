@@ -1,30 +1,30 @@
 .TH TORIFY 1 "" "TORIFY"
 
 .SH NAME
-.BR torify
+.BR usewithtor
 \- Shell wrapper to simplify the use of the torsocks(8) library to
 transparently allow an application to use a SOCKS proxy. 
 .SH SYNOPSIS
-.B torify
+.B usewithtor
 .RB [application\ [application's\ arguments]]
 .br
 or
-.B torify
+.B usewithtor
 .RB [on|off]
 .br
 or
-.B torify
+.B usewithtor
 .SH DESCRIPTION
-.B torify
+.B usewithtor
 is a wrapper between the torsocks library and the application what you
 would like to run socksified.
 .SH OPTIONS
 .IP \fB[application\ \fB[application's\ arguments]]
 run the application as specified with the environment (LD_PRELOAD) set
-such that torify(8) will transparently proxy SOCKS connections in
+such that usewithtor(8) will transparently proxy SOCKS connections in
 that program
 .SH AUTHOR
 This script was created by Tamas SZERB <toma@rulez.org> for the debian
-package of torify. It (along with this manual page) have since been 
+package of usewithtor. It (along with this manual page) have since been
 adapted into the main torsocks project and modified. Torify is a modified
 copy for the Tor project.

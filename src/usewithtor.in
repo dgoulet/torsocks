@@ -1,6 +1,7 @@
 # ***************************************************************************
 # *                                                                         *
-# * $Id: torify.in,v 1.3 2008-07-06 15:17:35 hoganrobert Exp $                            *
+# * $Id: usewithtor.in,v 1.3 2008-07-06 15:17:35 hoganrobert Exp $             
+              *
 # *                                                                         *
 # *   Copyright (C) 2008 by Robert Hogan                                    *
 # *   robert@roberthogan.net                                                *
@@ -29,7 +30,7 @@
 #! /bin/sh
 
 # Wrapper script for use of the torsocks(8) transparent socksification library
-# See the torsocks(1) and torify(1) manpages.
+# See the torsocks(1) and usewithtor(1) manpages.
 
 # Copyright (c) 2004, 2006 Peter Palfrader
 # Modified by Jacob Appelbaum <jacob@appelbaum.net> April 16th 2006
