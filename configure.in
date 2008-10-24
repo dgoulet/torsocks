@@ -438,7 +438,7 @@ AC_SUBST(LIBTOOL_DEPS)
 AC_ENABLE_SHARED
 AC_ENABLE_STATIC
 
-AC_CONFIG_FILES([src/torify src/torsocks])
+AC_CONFIG_FILES([src/usewithtor src/torsocks])
 
 AC_OUTPUT(Makefile src/Makefile)
 
