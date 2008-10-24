@@ -1,23 +1,22 @@
 #cvs -z3 -d:ext:hoganrobert@tork.cvs.sourceforge.net:/cvsroot/tork
 # import -m "Initial Load" torsocks hoganrobert initial
 
-export CVS_RSH=ssh
-export VN=1.0-alpha
+export VN=1.0-beta
 export VER=torsocks-$VN
-export TAG=v1_0_alpha
+export TAG=v1_0_beta
 cd ..
 TOPDIR=$PWD
 mkdir TorsocksReleases
 cd TorsocksReleases
-INSTALLDIR=$PWD
 
 #create source package
-cvs -z3 -d:ext:hoganrobert@tork.cvs.sourceforge.net:/cvsroot/tork export -r $TAG torsocks
-cd torsocks
+svn checkout https://torsocks.googlecode.com/svn/tags/$TAG --username \
+robert@roberthogan.net
+cd $TAG
 make -f Makefile.cvs
 rm -rf autom4te.cache
 cd ..
-mv torsocks $VER
+mv $TAG $VER
 tar jcvf $VER.tar.bz2 $VER
 tar zcvf $VER.tar.gz $VER
 gpg -sba $VER.tar.bz2
