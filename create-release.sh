@@ -10,8 +10,7 @@ mkdir TorsocksReleases
 cd TorsocksReleases
 
 #create source package
-svn checkout https://torsocks.googlecode.com/svn/tags/$TAG --username \
-robert@roberthogan.net
+svn export http://torsocks.googlecode.com/svn/tags/$TAG $TAG
 cd $TAG
 make -f Makefile.cvs
 rm -rf autom4te.cache
