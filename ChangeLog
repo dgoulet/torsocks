@@ -1,3 +1,8 @@
+Torsocks 1.0-beta
+2008-10-26 Robert Hogan <robert@roberthogan.net>
+  Housekeeping changes:
+    o replace torify command with usewithtor command.
+
 Torsocks 1.0-alpha
 2008-07-06 Robert Hogan <robert@roberthogan.net>
   Functionality Changes:
