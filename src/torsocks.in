@@ -80,6 +80,7 @@ case "$1" in
 		fi
 	;;
 	off)
+        #BUG: backslashes in 'prefix' below will not get escaped
 		export LD_PRELOAD=`echo -n $LD_PRELOAD | sed 's/\@prefix@\/lib\/torsocks\/libtorsocks.so \?//'`
 		if [ -z "$LD_PRELOAD" ]
 			then
