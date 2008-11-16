@@ -80,7 +80,7 @@ case "$1" in
 		fi
 	;;
 	off)
-		export LD_PRELOAD=`echo -n $LD_PRELOAD | sed 's/\@prefix@\/lib\/tork\/libtorsocks.so \?//'`
+		export LD_PRELOAD=`echo -n $LD_PRELOAD | sed 's/\@prefix@\/lib\/torsocks\/libtorsocks.so \?//'`
 		if [ -z "$LD_PRELOAD" ]
 			then
 				unset LD_PRELOAD
