@@ -133,13 +133,11 @@ LIBS=
 dnl Checks for libraries.
 dnl Replace `main' with a function in -ldl:
 
-dnl AC_CHECK_LIB(dl, dlsym, [ tempdso="yes" ],tempdso="no")
-dnl if test "$tempdso" = "no"; then
-dnl   AC_CHECK_LIB(c, dlsym,,AC_MSG_ERROR("dlsym() not found in libc or libdl." \
-dnl                "Check your system for libc.so and/or libdl.so."))
-dnl fi
-
-AC_CHECK_LIB(dl, dlsym,,AC_MSG_ERROR("libdl is required"))
+AC_CHECK_LIB(dl, dlsym, [ tempdso="yes" ],tempdso="no")
+if test "$tempdso" = "no"; then
+  AC_CHECK_LIB(c, dlsym,,AC_MSG_ERROR("dlsym() not found in libc or libdl." \
+               "Check your system for libc.so and/or libdl.so."))
+fi
 
 dnl If we're using gcc here define _GNU_SOURCE
 AC_MSG_CHECKING(for RTLD_NEXT from dlfcn.h)
