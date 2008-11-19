@@ -70,49 +70,49 @@ if [ $# = 0 ] ; then
 fi
 
 case "$1" in
-	on)
-		if [ -z "$LD_PRELOAD" ]
-			then
-				export LD_PRELOAD="@prefix@/lib/torsocks/libtorsocks.so"
-			else
-				echo $LD_PRELOAD | grep -q "@prefix@/lib/torsocks/libtorsocks\.so" || \
-				export LD_PRELOAD="@prefix@/lib/torsocks/libtorsocks.so $LD_PRELOAD"
-		fi
-	;;
-	off)
+  on)
+    if [ -z "$LD_PRELOAD" ]
+      then
+        export LD_PRELOAD="@prefix@/lib/torsocks/libtorsocks.so"
+      else
+        echo $LD_PRELOAD | grep -q "@prefix@/lib/torsocks/libtorsocks\.so" || \
+        export LD_PRELOAD="@prefix@/lib/torsocks/libtorsocks.so $LD_PRELOAD"
+    fi
+  ;;
+  off)
         #replace '/' with '\/' in @prefix@
         escprefix=`echo '@prefix@' |sed 's/\\//\\\\\//g'`
-		export LD_PRELOAD=`echo -n $LD_PRELOAD | sed "s/$escprefix\/lib\/torsocks\/libtorsocks.so \?//"`
-		if [ -z "$LD_PRELOAD" ]
-			then
-				unset LD_PRELOAD
-		fi
-	;;
-	show|sh)
-		echo "LD_PRELOAD=\"$LD_PRELOAD\""
-	;;
-	-h|-?)
+    export LD_PRELOAD=`echo -n $LD_PRELOAD | sed "s/$escprefix\/lib\/torsocks\/libtorsocks.so \?//"`
+    if [ -z "$LD_PRELOAD" ]
+      then
+        unset LD_PRELOAD
+    fi
+  ;;
+  show|sh)
+    echo "LD_PRELOAD=\"$LD_PRELOAD\""
+  ;;
+  -h|-?)
       echo "$0: Please see torsocks(1) or read comment at top of $0"
    ;;
-	*)
-		if [ -z "$LD_PRELOAD" ]
-		then
-			export LD_PRELOAD="@prefix@/lib/torsocks/libtorsocks.so"
-		else
-			echo $LD_PRELOAD | grep -q "@prefix@/lib/torsocks/libtorsocks\.so" || \
-			export LD_PRELOAD="@prefix@/lib/torsocks/libtorsocks.so $LD_PRELOAD"
-		fi
+  *)
+    if [ -z "$LD_PRELOAD" ]
+    then
+      export LD_PRELOAD="@prefix@/lib/torsocks/libtorsocks.so"
+    else
+      echo $LD_PRELOAD | grep -q "@prefix@/lib/torsocks/libtorsocks\.so" || \
+      export LD_PRELOAD="@prefix@/lib/torsocks/libtorsocks.so $LD_PRELOAD"
+    fi
 
-		if [ $# = 0 ]
-		then
-			${SHELL:-/bin/sh}
-		fi
+    if [ $# = 0 ]
+    then
+      ${SHELL:-/bin/sh}
+    fi
 
-		if [ $# -gt 0 ]
-		then
-			exec "$@"
-		fi
-	;;
+    if [ $# -gt 0 ]
+    then
+      exec "$@"
+    fi
+  ;;
 esac
 
 #EOF
