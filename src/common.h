@@ -27,6 +27,7 @@
  ***************************************************************************/
 /* Common functions provided in common.c */
 /* GCC has several useful attributes. */
+#include <sys/types.h>
 
 #if defined(__GNUC__) && __GNUC__ >= 3
 #define ATTR_NORETURN __attribute__((noreturn))
