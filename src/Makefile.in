@@ -38,14 +38,14 @@ build_triplet = @build@
 host_triplet = @host@
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
-	$(srcdir)/torify.in $(srcdir)/torsocks.in
+	$(srcdir)/torsocks.in $(srcdir)/usewithtor.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/config.h
-CONFIG_CLEAN_FILES = torify torsocks
+CONFIG_CLEAN_FILES = usewithtor torsocks
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -53,10 +53,11 @@ am__vpath_adj = case $$p in \
   esac;
 am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
-	"$(DESTDIR)$(torifyconfdir)" "$(DESTDIR)$(torifymanpagedir)" \
 	"$(DESTDIR)$(torsocks8manpagedir)" \
 	"$(DESTDIR)$(torsocksconfmanpagedir)" \
-	"$(DESTDIR)$(torsocksmanpagedir)"
+	"$(DESTDIR)$(torsocksmanpagedir)" \
+	"$(DESTDIR)$(usewithtorconfdir)" \
+	"$(DESTDIR)$(usewithtormanpagedir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libtorsocks_la_LIBADD =
@@ -81,14 +82,14 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(libtorsocks_la_SOURCES)
 DIST_SOURCES = $(libtorsocks_la_SOURCES)
-torifyconfDATA_INSTALL = $(INSTALL_DATA)
-torifymanpageDATA_INSTALL = $(INSTALL_DATA)
 torsocks8manpageDATA_INSTALL = $(INSTALL_DATA)
 torsocksconfmanpageDATA_INSTALL = $(INSTALL_DATA)
 torsocksmanpageDATA_INSTALL = $(INSTALL_DATA)
-DATA = $(torifyconf_DATA) $(torifymanpage_DATA) \
-	$(torsocks8manpage_DATA) $(torsocksconfmanpage_DATA) \
-	$(torsocksmanpage_DATA)
+usewithtorconfDATA_INSTALL = $(INSTALL_DATA)
+usewithtormanpageDATA_INSTALL = $(INSTALL_DATA)
+DATA = $(torsocks8manpage_DATA) $(torsocksconfmanpage_DATA) \
+	$(torsocksmanpage_DATA) $(usewithtorconf_DATA) \
+	$(usewithtormanpage_DATA)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -219,19 +220,19 @@ top_srcdir = @top_srcdir@
 #saveme_CFLAGS = $(AM_CFLAGS)
 
 # Install configuration file
-torifyconfdir = $(CONFDIR)/
-torifyconf_DATA = torsocks.conf
+usewithtorconfdir = $(CONFDIR)/
+usewithtorconf_DATA = torsocks.conf
 
 # Install invocation scripts
-bin_SCRIPTS = torsocks torify
+bin_SCRIPTS = torsocks usewithtor
 
 # Install man pages
 torsocksmanpagedir = $(mandir)/man1
 torsocksmanpage_DATA = torsocks.1
 torsocks8manpagedir = $(mandir)/man8
 torsocks8manpage_DATA = torsocks.8
-torifymanpagedir = $(mandir)/man1
-torifymanpage_DATA = torify.1
+usewithtormanpagedir = $(mandir)/man1
+usewithtormanpage_DATA = usewithtor.1
 torsocksconfmanpagedir = $(mandir)/man5
 torsocksconfmanpage_DATA = torsocks.conf.5
 
@@ -242,7 +243,7 @@ libtorsocks_la_LDFLAGS = -version-info 1:0:0
 #libtorsocks_la_CFLAGS = -nostartfiles
 DISTCLEANFILES = parser.lo dead_pool.lo common.lo libtorsocks.lo tsocks.lo \
 			   config.cache config.log config.h Makefile \
-			   aclocal.m4 config.status torify torsocks \
+			   aclocal.m4 config.status usewithtor torsocks \
 			   autom4te.cache .libs .deps 
 
 all: all-am
@@ -278,7 +279,7 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-torify: $(top_builddir)/config.status $(srcdir)/torify.in
+usewithtor: $(top_builddir)/config.status $(srcdir)/usewithtor.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 torsocks: $(top_builddir)/config.status $(srcdir)/torsocks.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
@@ -368,40 +369,6 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
-install-torifyconfDATA: $(torifyconf_DATA)
-	@$(NORMAL_INSTALL)
-	test -z "$(torifyconfdir)" || $(MKDIR_P) "$(DESTDIR)$(torifyconfdir)"
-	@list='$(torifyconf_DATA)'; for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  f=$(am__strip_dir) \
-	  echo " $(torifyconfDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(torifyconfdir)/$$f'"; \
-	  $(torifyconfDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(torifyconfdir)/$$f"; \
-	done
-
-uninstall-torifyconfDATA:
-	@$(NORMAL_UNINSTALL)
-	@list='$(torifyconf_DATA)'; for p in $$list; do \
-	  f=$(am__strip_dir) \
-	  echo " rm -f '$(DESTDIR)$(torifyconfdir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(torifyconfdir)/$$f"; \
-	done
-install-torifymanpageDATA: $(torifymanpage_DATA)
-	@$(NORMAL_INSTALL)
-	test -z "$(torifymanpagedir)" || $(MKDIR_P) "$(DESTDIR)$(torifymanpagedir)"
-	@list='$(torifymanpage_DATA)'; for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  f=$(am__strip_dir) \
-	  echo " $(torifymanpageDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(torifymanpagedir)/$$f'"; \
-	  $(torifymanpageDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(torifymanpagedir)/$$f"; \
-	done
-
-uninstall-torifymanpageDATA:
-	@$(NORMAL_UNINSTALL)
-	@list='$(torifymanpage_DATA)'; for p in $$list; do \
-	  f=$(am__strip_dir) \
-	  echo " rm -f '$(DESTDIR)$(torifymanpagedir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(torifymanpagedir)/$$f"; \
-	done
 install-torsocks8manpageDATA: $(torsocks8manpage_DATA)
 	@$(NORMAL_INSTALL)
 	test -z "$(torsocks8manpagedir)" || $(MKDIR_P) "$(DESTDIR)$(torsocks8manpagedir)"
@@ -452,6 +419,40 @@ uninstall-torsocksmanpageDATA:
 	  f=$(am__strip_dir) \
 	  echo " rm -f '$(DESTDIR)$(torsocksmanpagedir)/$$f'"; \
 	  rm -f "$(DESTDIR)$(torsocksmanpagedir)/$$f"; \
+	done
+install-usewithtorconfDATA: $(usewithtorconf_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(usewithtorconfdir)" || $(MKDIR_P) "$(DESTDIR)$(usewithtorconfdir)"
+	@list='$(usewithtorconf_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(am__strip_dir) \
+	  echo " $(usewithtorconfDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(usewithtorconfdir)/$$f'"; \
+	  $(usewithtorconfDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(usewithtorconfdir)/$$f"; \
+	done
+
+uninstall-usewithtorconfDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(usewithtorconf_DATA)'; for p in $$list; do \
+	  f=$(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(usewithtorconfdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(usewithtorconfdir)/$$f"; \
+	done
+install-usewithtormanpageDATA: $(usewithtormanpage_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(usewithtormanpagedir)" || $(MKDIR_P) "$(DESTDIR)$(usewithtormanpagedir)"
+	@list='$(usewithtormanpage_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(am__strip_dir) \
+	  echo " $(usewithtormanpageDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(usewithtormanpagedir)/$$f'"; \
+	  $(usewithtormanpageDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(usewithtormanpagedir)/$$f"; \
+	done
+
+uninstall-usewithtormanpageDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(usewithtormanpage_DATA)'; for p in $$list; do \
+	  f=$(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(usewithtormanpagedir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(usewithtormanpagedir)/$$f"; \
 	done
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
@@ -531,7 +532,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(LTLIBRARIES) $(SCRIPTS) $(DATA)
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(torifyconfdir)" "$(DESTDIR)$(torifymanpagedir)" "$(DESTDIR)$(torsocks8manpagedir)" "$(DESTDIR)$(torsocksconfmanpagedir)" "$(DESTDIR)$(torsocksmanpagedir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(torsocks8manpagedir)" "$(DESTDIR)$(torsocksconfmanpagedir)" "$(DESTDIR)$(torsocksmanpagedir)" "$(DESTDIR)$(usewithtorconfdir)" "$(DESTDIR)$(usewithtormanpagedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -580,9 +581,9 @@ info: info-am
 
 info-am:
 
-install-data-am: install-torifyconfDATA install-torifymanpageDATA \
-	install-torsocks8manpageDATA install-torsocksconfmanpageDATA \
-	install-torsocksmanpageDATA
+install-data-am: install-torsocks8manpageDATA \
+	install-torsocksconfmanpageDATA install-torsocksmanpageDATA \
+	install-usewithtorconfDATA install-usewithtormanpageDATA
 
 install-dvi: install-dvi-am
 
@@ -619,10 +620,10 @@ ps: ps-am
 ps-am:
 
 uninstall-am: uninstall-binSCRIPTS uninstall-libLTLIBRARIES \
-	uninstall-torifyconfDATA uninstall-torifymanpageDATA \
 	uninstall-torsocks8manpageDATA \
 	uninstall-torsocksconfmanpageDATA \
-	uninstall-torsocksmanpageDATA
+	uninstall-torsocksmanpageDATA uninstall-usewithtorconfDATA \
+	uninstall-usewithtormanpageDATA
 
 .MAKE: install-am install-strip
 
@@ -635,17 +636,17 @@ uninstall-am: uninstall-binSCRIPTS uninstall-libLTLIBRARIES \
 	install-exec-am install-html install-html-am install-info \
 	install-info-am install-libLTLIBRARIES install-man install-pdf \
 	install-pdf-am install-ps install-ps-am install-strip \
-	install-torifyconfDATA install-torifymanpageDATA \
 	install-torsocks8manpageDATA install-torsocksconfmanpageDATA \
-	install-torsocksmanpageDATA installcheck installcheck-am \
+	install-torsocksmanpageDATA install-usewithtorconfDATA \
+	install-usewithtormanpageDATA installcheck installcheck-am \
 	installdirs maintainer-clean maintainer-clean-generic \
 	mostlyclean mostlyclean-compile mostlyclean-generic \
 	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
 	uninstall-am uninstall-binSCRIPTS uninstall-libLTLIBRARIES \
-	uninstall-torifyconfDATA uninstall-torifymanpageDATA \
 	uninstall-torsocks8manpageDATA \
 	uninstall-torsocksconfmanpageDATA \
-	uninstall-torsocksmanpageDATA
+	uninstall-torsocksmanpageDATA uninstall-usewithtorconfDATA \
+	uninstall-usewithtormanpageDATA
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
