@@ -4,6 +4,9 @@ This is a fork of the tsocks project (http://sourceforge.net/project/
 showfiles.php?group_id=17338). The purpose of this fork is to maintain a
 working implementation of tsocks that is primarily useful for Tor.
 
+The project homepage is:
+
+http://code.google.com/p/torsocks
 
 Differences between torksocks and tsocks
 ----------------------------------------
