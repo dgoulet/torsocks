@@ -726,7 +726,7 @@ int poll(POLL_SIGNATURE) {
             ufds[i].revents &= ~POLLOUT;
             nevents--;
          }
-         if (setevents & (POLLERR | POLLNVAL | POLLHUP)) 
+         if (setevents & (POLLERR | POLLNVAL | POLLHUP))
             show_msg(MSGDEBUG, "Socket had error event\n");
 
          /* Now handle this event */
@@ -761,7 +761,7 @@ int poll(POLL_SIGNATURE) {
              * be ready for writing), otherwise we'll just let the select loop
              * come around again (since we can't flag it for read, we don't know
              * if there is any data to be read and can't be bothered checking) */
-            if (conn->selectevents & WRITE) {
+            if (conn->selectevents & POLLOUT) {
                setevents |= POLLOUT; 
                nevents++;
             }
