@@ -185,42 +185,30 @@ void tsocks_init(void) {
 	suid = (getuid() != geteuid());
 
 #ifndef USE_OLD_DLSYM
-    if ((realconnect = dlsym(RTLD_NEXT, "connect")) == NULL)
-      show_msg(MSGERR, "connect() could not be loaded: %s!\n", dlerror());
-    if ((realselect = dlsym(RTLD_NEXT, "select")) == NULL)
-      show_msg(MSGERR, "select() could not be loaded: %s!\n", dlerror());
-    if ((realpoll = dlsym(RTLD_NEXT, "poll")) == NULL)
-      show_msg(MSGERR, "poll() could not be loaded: %s!\n", dlerror());
-    if ((realclose = dlsym(RTLD_NEXT, "close")) == NULL)
-      show_msg(MSGERR, "close() could not be loaded: %s!\n", dlerror());
-    if ((realgetpeername = dlsym(RTLD_NEXT, "getpeername")) == NULL)
-      show_msg(MSGERR, "getpeername() could not be loaded: %s!\n", dlerror());
+    realconnect = dlsym(RTLD_NEXT, "connect");
+    realselect = dlsym(RTLD_NEXT, "select");
+    realpoll = dlsym(RTLD_NEXT, "poll");
+    realclose = NULL;
+    realgetpeername = dlsym(RTLD_NEXT, "getpeername");
     #ifdef USE_SOCKS_DNS
-    if ((realresinit = dlsym(RTLD_NEXT, "res_init")) == NULL)
-      show_msg(MSGERR, "resinit() could not be loaded: %s!\n", dlerror());
+    realresinit = dlsym(RTLD_NEXT, "res_init");
     #endif
     #ifdef USE_TOR_DNS
-    if ((realgethostbyname = dlsym(RTLD_NEXT, "gethostbyname")) == NULL)
-      show_msg(MSGERR, "gethostbyname() could not be loaded: %s!\n", dlerror());
-    if ((realgethostbyaddr = dlsym(RTLD_NEXT, "gethostbyaddr")) == NULL)
-      show_msg(MSGERR, "gethostbyaddr() could not be loaded: %s!\n", dlerror());
-    if ((realgetaddrinfo = dlsym(RTLD_NEXT, "getaddrinfo")) == NULL)
-      show_msg(MSGERR, "getaddrinfo() could not be loaded: %s!\n", dlerror());
-    if ((realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname")) == NULL)
-      show_msg(MSGERR, "getipnodebyname() could not be loaded: %s!\n", dlerror());
-    if ((realsendto = dlsym(RTLD_NEXT, "sendto")) == NULL)
-      show_msg(MSGERR, "sendto() could not be loaded: %s!\n", dlerror());
-    if ((realsendmsg = dlsym(RTLD_NEXT, "sendmsg")) == NULL)
-      show_msg(MSGERR, "sendmsg() could not be loaded: %s!\n", dlerror());
+    realgethostbyname = dlsym(RTLD_NEXT, "gethostbyname");
+    realgethostbyaddr = dlsym(RTLD_NEXT, "gethostbyaddr");
+    realgetaddrinfo = dlsym(RTLD_NEXT, "getaddrinfo");
+    realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
+    realsendto = dlsym(RTLD_NEXT, "sendto");
+    realsendmsg = dlsym(RTLD_NEXT, "sendmsg");
     #endif
 #else
-    lib = dlopen(LIBCONNECT, RTLD_LAZY);
-    realconnect = dlsym(lib, "connect");
-    realselect = dlsym(lib, "select");
-    realpoll = dlsym(lib, "poll");
-    #ifdef USE_SOCKS_DNS
-    realresinit = dlsym(lib, "res_init");
-    #endif
+	lib = dlopen(LIBCONNECT, RTLD_LAZY);
+	realconnect = dlsym(lib, "connect");
+	realselect = dlsym(lib, "select");
+	realpoll = dlsym(lib, "poll");
+	#ifdef USE_SOCKS_DNS
+	realresinit = dlsym(lib, "res_init");
+	#endif
     #ifdef USE_TOR_DNS
     realgethostbyname = dlsym(lib, "gethostbyname");
     realgethostbyaddr = dlsym(lib, "gethostbyaddr");
@@ -230,9 +218,9 @@ void tsocks_init(void) {
     realsendmsg = dlsym(lib, "sendmsg");
     #endif
     dlclose(lib);	
-    lib = dlopen(LIBC, RTLD_LAZY);
-    realclose = dlsym(lib, "close");
-    dlclose(lib);
+	lib = dlopen(LIBC, RTLD_LAZY);
+	realclose = dlsym(lib, "close");
+	dlclose(lib);	
 #endif
 #ifdef USE_TOR_DNS
     /* Unfortunately, we can't do this lazily because otherwise our mmap'd
@@ -818,7 +806,7 @@ int close(CLOSE_SIGNATURE) {
    struct connreq *conn;
 
 	if (realclose == NULL) {
-	
+
 /*	
       #ifndef USE_OLD_DLSYM
       if ((realclose = dlsym(RTLD_NEXT, "close")) == NULL) {
