@@ -151,7 +151,26 @@ static int read_socksv5_auth(struct connreq *conn);
 static int deadpool_init(void);
 static int send_socksv4a_request(struct connreq *conn, const char *onion_host);
 #endif
-
+/*
+static int *tsocks_ad_hoc_init(int (*symbol), const char *string) {
+#ifdef USE_OLD_DLSYM
+	void *lib;
+#endif
+#ifndef USE_OLD_DLSYM
+    if ((symbol = dlsym(RTLD_NEXT, string)) == NULL)
+      show_msg(MSGERR, "%s could not be loaded: %s!\n", string, dlerror());
+#else
+    if strncmp(string, "close", strlen(string))
+      lib = dlopen(LIBC, RTLD_LAZY);
+    else
+      lib = dlopen(LIBCONNECT, RTLD_LAZY);
+    if ((symbol = dlsym(lib, string)) == NULL)
+      show_msg(MSGERR, "%s could not be loaded: %s!\n", string, dlerror());
+    dlclose(lib);
+#endif
+  return &symbol;
+}
+*/
 void tsocks_init(void) {
 #ifdef USE_OLD_DLSYM
 	void *lib;
@@ -166,30 +185,42 @@ void tsocks_init(void) {
 	suid = (getuid() != geteuid());
 
 #ifndef USE_OLD_DLSYM
-	realconnect = dlsym(RTLD_NEXT, "connect");
-	realselect = dlsym(RTLD_NEXT, "select");
-	realpoll = dlsym(RTLD_NEXT, "poll");
-	realclose = dlsym(RTLD_NEXT, "close");
-	realgetpeername = dlsym(RTLD_NEXT, "getpeername");
-	#ifdef USE_SOCKS_DNS
-	realresinit = dlsym(RTLD_NEXT, "res_init");
-	#endif
+    if ((realconnect = dlsym(RTLD_NEXT, "connect")) == NULL)
+      show_msg(MSGERR, "connect() could not be loaded: %s!\n", dlerror());
+    if ((realselect = dlsym(RTLD_NEXT, "select")) == NULL)
+      show_msg(MSGERR, "select() could not be loaded: %s!\n", dlerror());
+    if ((realpoll = dlsym(RTLD_NEXT, "poll")) == NULL)
+      show_msg(MSGERR, "poll() could not be loaded: %s!\n", dlerror());
+    if ((realclose = dlsym(RTLD_NEXT, "close")) == NULL)
+      show_msg(MSGERR, "close() could not be loaded: %s!\n", dlerror());
+    if ((realgetpeername = dlsym(RTLD_NEXT, "getpeername")) == NULL)
+      show_msg(MSGERR, "getpeername() could not be loaded: %s!\n", dlerror());
+    #ifdef USE_SOCKS_DNS
+    if ((realresinit = dlsym(RTLD_NEXT, "res_init")) == NULL)
+      show_msg(MSGERR, "resinit() could not be loaded: %s!\n", dlerror());
+    #endif
     #ifdef USE_TOR_DNS
-    realgethostbyname = dlsym(RTLD_NEXT, "gethostbyname");
-    realgethostbyaddr = dlsym(RTLD_NEXT, "gethostbyaddr");
-    realgetaddrinfo = dlsym(RTLD_NEXT, "getaddrinfo");
-    realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
-    realsendto = dlsym(RTLD_NEXT, "sendto");
-    realsendmsg = dlsym(RTLD_NEXT, "sendmsg");
+    if ((realgethostbyname = dlsym(RTLD_NEXT, "gethostbyname")) == NULL)
+      show_msg(MSGERR, "gethostbyname() could not be loaded: %s!\n", dlerror());
+    if ((realgethostbyaddr = dlsym(RTLD_NEXT, "gethostbyaddr")) == NULL)
+      show_msg(MSGERR, "gethostbyaddr() could not be loaded: %s!\n", dlerror());
+    if ((realgetaddrinfo = dlsym(RTLD_NEXT, "getaddrinfo")) == NULL)
+      show_msg(MSGERR, "getaddrinfo() could not be loaded: %s!\n", dlerror());
+    if ((realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname")) == NULL)
+      show_msg(MSGERR, "getipnodebyname() could not be loaded: %s!\n", dlerror());
+    if ((realsendto = dlsym(RTLD_NEXT, "sendto")) == NULL)
+      show_msg(MSGERR, "sendto() could not be loaded: %s!\n", dlerror());
+    if ((realsendmsg = dlsym(RTLD_NEXT, "sendmsg")) == NULL)
+      show_msg(MSGERR, "sendmsg() could not be loaded: %s!\n", dlerror());
     #endif
 #else
-	lib = dlopen(LIBCONNECT, RTLD_LAZY);
-	realconnect = dlsym(lib, "connect");
-	realselect = dlsym(lib, "select");
-	realpoll = dlsym(lib, "poll");
-	#ifdef USE_SOCKS_DNS
-	realresinit = dlsym(lib, "res_init");
-	#endif
+    lib = dlopen(LIBCONNECT, RTLD_LAZY);
+    realconnect = dlsym(lib, "connect");
+    realselect = dlsym(lib, "select");
+    realpoll = dlsym(lib, "poll");
+    #ifdef USE_SOCKS_DNS
+    realresinit = dlsym(lib, "res_init");
+    #endif
     #ifdef USE_TOR_DNS
     realgethostbyname = dlsym(lib, "gethostbyname");
     realgethostbyaddr = dlsym(lib, "gethostbyaddr");
@@ -199,9 +230,9 @@ void tsocks_init(void) {
     realsendmsg = dlsym(lib, "sendmsg");
     #endif
     dlclose(lib);	
-	lib = dlopen(LIBC, RTLD_LAZY);
-	realclose = dlsym(lib, "close");
-	dlclose(lib);	
+    lib = dlopen(LIBC, RTLD_LAZY);
+    realclose = dlsym(lib, "close");
+    dlclose(lib);
 #endif
 #ifdef USE_TOR_DNS
     /* Unfortunately, we can't do this lazily because otherwise our mmap'd
@@ -787,8 +818,23 @@ int close(CLOSE_SIGNATURE) {
    struct connreq *conn;
 
 	if (realclose == NULL) {
-		show_msg(MSGERR, "Unresolved symbol: close\n");
-		return(-1);
+      /* Maybe we were called before tsocks_init was called. If so,
+         add dynamically */
+      #ifndef USE_OLD_DLSYM
+      if ((realclose = dlsym(RTLD_NEXT, "close")) == NULL) {
+        show_msg(MSGERR, "close could not be loaded: %s!\n", dlerror());
+      }
+      #else
+      lib = dlopen(LIBC, RTLD_LAZY);
+      if ((realclose = dlsym(lib, "close")) == NULL) {
+        show_msg(MSGERR, "close could not be loaded: %s!\n", dlerror());
+      }
+      dlclose(lib);
+      #endif
+
+      if (realclose == NULL) {
+          return(-1);
+      }
 	}
 
    show_msg(MSGDEBUG, "Call to close(%d)\n", fd);
