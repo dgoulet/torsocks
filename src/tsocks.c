@@ -151,8 +151,8 @@ static int read_socksv5_auth(struct connreq *conn);
 static int deadpool_init(void);
 static int send_socksv4a_request(struct connreq *conn, const char *onion_host);
 #endif
-/*
-static int *tsocks_ad_hoc_init(int (*symbol), const char *string) {
+
+static int tsocks_ad_hoc_init(int(*symbol), const char *string) {
 #ifdef USE_OLD_DLSYM
 	void *lib;
 #endif
@@ -168,9 +168,9 @@ static int *tsocks_ad_hoc_init(int (*symbol), const char *string) {
       show_msg(MSGERR, "%s could not be loaded: %s!\n", string, dlerror());
     dlclose(lib);
 #endif
-  return &symbol;
+  return (symbol) ? 1:0;
 }
-*/
+
 void tsocks_init(void) {
 #ifdef USE_OLD_DLSYM
 	void *lib;
@@ -818,8 +818,8 @@ int close(CLOSE_SIGNATURE) {
    struct connreq *conn;
 
 	if (realclose == NULL) {
-      /* Maybe we were called before tsocks_init was called. If so,
-         add dynamically */
+	
+/*	
       #ifndef USE_OLD_DLSYM
       if ((realclose = dlsym(RTLD_NEXT, "close")) == NULL) {
         show_msg(MSGERR, "close could not be loaded: %s!\n", dlerror());
@@ -830,9 +830,9 @@ int close(CLOSE_SIGNATURE) {
         show_msg(MSGERR, "close could not be loaded: %s!\n", dlerror());
       }
       dlclose(lib);
-      #endif
+      #endif*/
 
-      if (realclose == NULL) {
+      if (tsocks_ad_hoc_init(&realclose, "close")) {
           return(-1);
       }
 	}
