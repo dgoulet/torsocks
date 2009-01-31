@@ -1247,60 +1247,60 @@ static int read_socksv5_method(struct connreq *conn) {
 	struct passwd *nixuser;
 	char *uname, *upass;
 
-	/* See if we offered an acceptable method */
-	if (conn->buffer[1] == '\xff') {
-		show_msg(MSGERR, "SOCKS V5 server refused authentication methods\n");
+    /* See if we offered an acceptable method */
+    if (conn->buffer[1] == '\xff') {
+        show_msg(MSGERR, "SOCKS V5 server refused authentication methods\n");
       conn->state = FAILED;
-		return(ECONNREFUSED);
-	}
+        return(ECONNREFUSED);
+    }
 
-	/* If the socks server chose username/password authentication */
-	/* (method 2) then do that                                    */
-	if ((unsigned short int) conn->buffer[1] == 2) {
-		show_msg(MSGDEBUG, "SOCKS V5 server chose username/password authentication\n");
+  /* If the socks server chose username/password authentication */
+  /* (method 2) then do that                                    */
+  if ((unsigned short int) conn->buffer[1] == 2) {
+      show_msg(MSGDEBUG, "SOCKS V5 server chose username/password authentication\n");
 
-		/* Determine the current *nix username */
-		nixuser = getpwuid(getuid());	
+      /* Determine the current *nix username */
+      nixuser = getpwuid(getuid());
 
-		if (((uname = conn->path->defuser) == NULL) &&
-          ((uname = getenv("TSOCKS_USERNAME")) == NULL) &&
-		    ((uname = (nixuser == NULL ? NULL : nixuser->pw_name)) == NULL)) {
-			show_msg(MSGERR, "Could not get SOCKS username from "
-				   "local passwd file, tsocks.conf "
-				   "or $TSOCKS_USERNAME to authenticate "
-				   "with"); 
-         conn->state = FAILED;
-			return(ECONNREFUSED);
-		} 
+      if (((uname = conn->path->defuser) == NULL) &&
+        ((uname = getenv("TSOCKS_USERNAME")) == NULL) &&
+          ((uname = (nixuser == NULL ? NULL : nixuser->pw_name)) == NULL)) {
+          show_msg(MSGERR, "Could not get SOCKS username from "
+                  "local passwd file, tsocks.conf "
+                  "or $TSOCKS_USERNAME to authenticate "
+                  "with");
+        conn->state = FAILED;
+          return(ECONNREFUSED);
+      }
 
-		if (((upass = getenv("TSOCKS_PASSWORD")) == NULL) &&
-          ((upass = conn->path->defpass) == NULL)) {
-			show_msg(MSGERR, "Need a password in tsocks.conf or "
-				   "$TSOCKS_PASSWORD to authenticate with");
-         conn->state = FAILED;
-			return(ECONNREFUSED);
-		} 
+      if (((upass = getenv("TSOCKS_PASSWORD")) == NULL) &&
+        ((upass = conn->path->defpass) == NULL)) {
+          show_msg(MSGERR, "Need a password in tsocks.conf or "
+                  "$TSOCKS_PASSWORD to authenticate with");
+        conn->state = FAILED;
+          return(ECONNREFUSED);
+      }
 
-		/* Check that the username / pass specified will */
-		/* fit into the buffer				                */
-		if ((3 + strlen(uname) + strlen(upass)) >= sizeof(conn->buffer)) {
-			show_msg(MSGERR, "The supplied socks username or "
-				   "password is too long");
-         conn->state = FAILED;
-			return(ECONNREFUSED);
-		}
-		
-		conn->datalen = 0;
-		conn->buffer[conn->datalen] = '\x01';
-		conn->datalen++;
-		conn->buffer[conn->datalen] = (int8_t) strlen(uname);
-		conn->datalen++;
-		memcpy(&(conn->buffer[conn->datalen]), uname, strlen(uname));
-		conn->datalen = conn->datalen + strlen(uname);
-		conn->buffer[conn->datalen] = (int8_t) strlen(upass);
-		conn->datalen++;
-		memcpy(&(conn->buffer[conn->datalen]), upass, strlen(upass));
-		conn->datalen = conn->datalen + strlen(upass);
+      /* Check that the username / pass specified will */
+      /* fit into the buffer				                */
+      if ((3 + strlen(uname) + strlen(upass)) >= sizeof(conn->buffer)) {
+          show_msg(MSGERR, "The supplied socks username or "
+                  "password is too long");
+        conn->state = FAILED;
+          return(ECONNREFUSED);
+      }
+      
+      conn->datalen = 0;
+      conn->buffer[conn->datalen] = '\x01';
+      conn->datalen++;
+      conn->buffer[conn->datalen] = (int8_t) strlen(uname);
+      conn->datalen++;
+      memcpy(&(conn->buffer[conn->datalen]), uname, strlen(uname));
+      conn->datalen = conn->datalen + strlen(uname);
+      conn->buffer[conn->datalen] = (int8_t) strlen(upass);
+      conn->datalen++;
+      memcpy(&(conn->buffer[conn->datalen]), upass, strlen(upass));
+      conn->datalen = conn->datalen + strlen(upass);
 
       conn->state = SENDING;
       conn->nextstate = SENTV5AUTH;
@@ -1325,44 +1325,44 @@ static int read_socksv5_auth(struct connreq *conn) {
 
 static int read_socksv5_connect(struct connreq *conn) {
 
-	/* See if the connection succeeded */
-	if (conn->buffer[1] != '\x00') {
-		show_msg(MSGERR, "SOCKS V5 connect failed: ");
-      conn->state = FAILED;
-		switch ((int8_t) conn->buffer[1]) {
-			case 1:
-				show_msg(MSGERR, "General SOCKS server failure\n");
-				return(ECONNABORTED);
-			case 2:
-				show_msg(MSGERR, "Connection denied by rule\n");
-				return(ECONNABORTED);
-			case 3:
-				show_msg(MSGERR, "Network unreachable\n");
-				return(ENETUNREACH);
-			case 4:
-				show_msg(MSGERR, "Host unreachable\n");
-				return(EHOSTUNREACH);
-			case 5:
-				show_msg(MSGERR, "Connection refused\n");
-				return(ECONNREFUSED);
-			case 6: 
-				show_msg(MSGERR, "TTL Expired\n");
-				return(ETIMEDOUT);
-			case 7:
-				show_msg(MSGERR, "Command not supported\n");
-				return(ECONNABORTED);
-			case 8:
-				show_msg(MSGERR, "Address type not supported\n");
-				return(ECONNABORTED);
-			default:
-				show_msg(MSGERR, "Unknown error\n");
-				return(ECONNABORTED);
-		}	
-	} 
+  /* See if the connection succeeded */
+  if (conn->buffer[1] != '\x00') {
+      show_msg(MSGERR, "SOCKS V5 connect failed: ");
+    conn->state = FAILED;
+      switch ((int8_t) conn->buffer[1]) {
+          case 1:
+              show_msg(MSGERR, "General SOCKS server failure\n");
+              return(ECONNABORTED);
+          case 2:
+              show_msg(MSGERR, "Connection denied by rule\n");
+              return(ECONNABORTED);
+          case 3:
+              show_msg(MSGERR, "Network unreachable\n");
+              return(ENETUNREACH);
+          case 4:
+              show_msg(MSGERR, "Host unreachable\n");
+              return(EHOSTUNREACH);
+          case 5:
+              show_msg(MSGERR, "Connection refused\n");
+              return(ECONNREFUSED);
+          case 6:
+              show_msg(MSGERR, "TTL Expired\n");
+              return(ETIMEDOUT);
+          case 7:
+              show_msg(MSGERR, "Command not supported\n");
+              return(ECONNABORTED);
+          case 8:
+              show_msg(MSGERR, "Address type not supported\n");
+              return(ECONNABORTED);
+          default:
+              show_msg(MSGERR, "Unknown error\n");
+              return(ECONNABORTED);
+      }
+  }
 
-   conn->state = DONE;
+  conn->state = DONE;
 
-   return(0);
+  return(0);
 }
 
 static int read_socksv4_req(struct connreq *conn) {
