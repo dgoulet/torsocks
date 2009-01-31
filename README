@@ -8,7 +8,35 @@ The project homepage is:
 
 http://code.google.com/p/torsocks
 
-Differences between torksocks and tsocks
+
+Using torsocks
+--------------
+Torsocks allows you to use most socks-friendly applications in a safe way with Tor.
+Once you have installed torsocks, just launch it like so:
+
+  usewithtor [application]
+
+So, for example you can use ssh to a some.ssh.com by doing:
+
+  usewithtor ssh username@some.ssh.com 
+
+or launch pidgin by doing:
+
+  usewithtor pidgin 
+
+The following applications are known to be compatible with usewithtor:
+
+Application   Comments 
+ssh
+telnet        (plaintext passwords are not recommended with Tor)
+pidgin
+kopete
+konversation
+claws-mail
+svn
+
+
+Differences between torsocks and tsocks
 ----------------------------------------
 A complete history of changes is maintained in the Changelog. The initial
 working copy of torsocks was obtained through the following steps in June
@@ -46,11 +74,6 @@ Maintainers of Torsocks
 Torsocks is maintained by: Robert Hogan (robert at roberthogan.net)
                            Ruben Garcia (ruben at ugr.es)
 
-
-List of Applications Torsocks Supports
---------------------------------------
- - ssh
- - telnet
 
 Links
 -----
