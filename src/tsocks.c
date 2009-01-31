@@ -105,6 +105,7 @@ static struct parsedfile *config;
 static struct connreq *requests = NULL;
 static int suid = 0;
 static char *conffile = NULL;
+static int tsocks_init_complete = 0;
 
 /* Exported Function Prototypes */
 void __attribute__ ((constructor)) tsocks_init(void);
@@ -207,7 +208,8 @@ void tsocks_init(void) {
     /* Unfortunately, we can't do this lazily because otherwise our mmap'd
        area won't be shared across fork()s. */
     deadpool_init();
-#endif 
+#endif
+    tsocks_init_complete=1;
 }
 
 static int get_environment() {
@@ -783,24 +785,33 @@ int poll(POLL_SIGNATURE) {
 }
 
 int close(CLOSE_SIGNATURE) {
-   int rc;
-   struct connreq *conn;
+  int rc;
+  struct connreq *conn;
 
-    if (realclose == NULL) {
-        #ifndef USE_OLD_DLSYM
-            realclose = dlsym(RTLD_NEXT, "close");
-        #else
-            void *lib;
-            lib = dlopen(LIBC, RTLD_LAZY);
-            realclose = dlsym(lib, "close");
-            dlclose(lib);
-        #endif
-        if (realclose == NULL) {
-          show_msg(MSGERR, "Unresolved symbol: close\n");
-          return(-1);
-        }
-    }
+  if (!tsocks_init_complete) {
+    tsocks_init();
+  }
 
+  if (realclose == NULL) {
+    show_msg(MSGERR, "Unresolved symbol: close\n");
+    return(-1);
+  }
+/*
+  if (realclose == NULL) {
+      #ifndef USE_OLD_DLSYM
+          realclose = dlsym(RTLD_NEXT, "close");
+      #else
+          void *lib;
+          lib = dlopen(LIBC, RTLD_LAZY);
+          realclose = dlsym(lib, "close");
+          dlclose(lib);
+      #endif
+      if (realclose == NULL) {
+        show_msg(MSGERR, "Unresolved symbol: close\n");
+        return(-1);
+      }
+  }
+*/
    show_msg(MSGDEBUG, "Call to close(%d)\n", fd);
 
    rc = realclose(fd);
