@@ -152,43 +152,24 @@ static int deadpool_init(void);
 static int send_socksv4a_request(struct connreq *conn, const char *onion_host);
 #endif
 
-static int tsocks_ad_hoc_init(int(*symbol), const char *string) {
-#ifdef USE_OLD_DLSYM
-	void *lib;
-#endif
-#ifndef USE_OLD_DLSYM
-    if ((symbol = dlsym(RTLD_NEXT, string)) == NULL)
-      show_msg(MSGERR, "%s could not be loaded: %s!\n", string, dlerror());
-#else
-    if strncmp(string, "close", strlen(string))
-      lib = dlopen(LIBC, RTLD_LAZY);
-    else
-      lib = dlopen(LIBCONNECT, RTLD_LAZY);
-    if ((symbol = dlsym(lib, string)) == NULL)
-      show_msg(MSGERR, "%s could not be loaded: %s!\n", string, dlerror());
-    dlclose(lib);
-#endif
-  return (symbol) ? 1:0;
-}
-
 void tsocks_init(void) {
 #ifdef USE_OLD_DLSYM
 	void *lib;
 #endif
 
     show_msg(MSGWARN, "In tsocks_init \n");
-	/* We could do all our initialization here, but to be honest */
-	/* most programs that are run won't use our services, so     */
-	/* we do our general initialization on first call            */
+    /* We could do all our initialization here, but to be honest */
+    /* most programs that are run won't use our services, so     */
+    /* we do our general initialization on first call            */
 
-	/* Determine the logging level */
-	suid = (getuid() != geteuid());
+    /* Determine the logging level */
+    suid = (getuid() != geteuid());
 
 #ifndef USE_OLD_DLSYM
     realconnect = dlsym(RTLD_NEXT, "connect");
     realselect = dlsym(RTLD_NEXT, "select");
     realpoll = dlsym(RTLD_NEXT, "poll");
-    realclose = NULL;
+    realclose = dlsym(RTLD_NEXT, "close");
     realgetpeername = dlsym(RTLD_NEXT, "getpeername");
     #ifdef USE_SOCKS_DNS
     realresinit = dlsym(RTLD_NEXT, "res_init");
@@ -202,13 +183,13 @@ void tsocks_init(void) {
     realsendmsg = dlsym(RTLD_NEXT, "sendmsg");
     #endif
 #else
-	lib = dlopen(LIBCONNECT, RTLD_LAZY);
-	realconnect = dlsym(lib, "connect");
-	realselect = dlsym(lib, "select");
-	realpoll = dlsym(lib, "poll");
-	#ifdef USE_SOCKS_DNS
-	realresinit = dlsym(lib, "res_init");
-	#endif
+    lib = dlopen(LIBCONNECT, RTLD_LAZY);
+    realconnect = dlsym(lib, "connect");
+    realselect = dlsym(lib, "select");
+    realpoll = dlsym(lib, "poll");
+    #ifdef USE_SOCKS_DNS
+    realresinit = dlsym(lib, "res_init");
+    #endif
     #ifdef USE_TOR_DNS
     realgethostbyname = dlsym(lib, "gethostbyname");
     realgethostbyaddr = dlsym(lib, "gethostbyaddr");
@@ -218,9 +199,9 @@ void tsocks_init(void) {
     realsendmsg = dlsym(lib, "sendmsg");
     #endif
     dlclose(lib);	
-	lib = dlopen(LIBC, RTLD_LAZY);
-	realclose = dlsym(lib, "close");
-	dlclose(lib);	
+    lib = dlopen(LIBC, RTLD_LAZY);
+    realclose = dlsym(lib, "close");
+    dlclose(lib);
 #endif
 #ifdef USE_TOR_DNS
     /* Unfortunately, we can't do this lazily because otherwise our mmap'd
@@ -294,19 +275,19 @@ int connect(CONNECT_SIGNATURE) {
 
     get_environment();
 
-	/* If the real connect doesn't exist, we're stuffed */
-	if (realconnect == NULL) {
-		show_msg(MSGERR, "Unresolved symbol: connect\n");
-		return(-1);
-	}
+    /* If the real connect doesn't exist, we're stuffed */
+    if (realconnect == NULL) {
+        show_msg(MSGERR, "Unresolved symbol: connect\n");
+        return(-1);
+    }
 
     show_msg(MSGDEBUG, "Got connection request\n");
 
     connaddr = (struct sockaddr_in *) __addr;
 
-	/* Get the type of the socket */
-	getsockopt(__fd, SOL_SOCKET, SO_TYPE, 
-		   (void *) &sock_type, &sock_type_len);
+    /* Get the type of the socket */
+    getsockopt(__fd, SOL_SOCKET, SO_TYPE,
+            (void *) &sock_type, &sock_type_len);
 
     show_msg(MSGDEBUG, "sin_family: %i "
                         "\n",
@@ -317,8 +298,8 @@ int connect(CONNECT_SIGNATURE) {
                      sock_type);
 
 #ifdef USE_TOR_DNS
-	/* If this a UDP socket with a non-local destination address  */
-	/* then we refuse it, since it is probably a DNS request      */
+    /* If this a UDP socket with a non-local destination address  */
+    /* then we refuse it, since it is probably a DNS request      */
     if (sock_type == SOCK_DGRAM){
         show_msg(MSGDEBUG, "Connection is a UDP stream.\n");
 
@@ -805,25 +786,10 @@ int close(CLOSE_SIGNATURE) {
    int rc;
    struct connreq *conn;
 
-	if (realclose == NULL) {
-
-/*	
-      #ifndef USE_OLD_DLSYM
-      if ((realclose = dlsym(RTLD_NEXT, "close")) == NULL) {
-        show_msg(MSGERR, "close could not be loaded: %s!\n", dlerror());
-      }
-      #else
-      lib = dlopen(LIBC, RTLD_LAZY);
-      if ((realclose = dlsym(lib, "close")) == NULL) {
-        show_msg(MSGERR, "close could not be loaded: %s!\n", dlerror());
-      }
-      dlclose(lib);
-      #endif*/
-
-      if (tsocks_ad_hoc_init(&realclose, "close")) {
-          return(-1);
-      }
-	}
+    if (realclose == NULL) {
+        show_msg(MSGERR, "Unresolved symbol: close\n");
+        return(-1);
+    }
 
    show_msg(MSGDEBUG, "Call to close(%d)\n", fd);
 
