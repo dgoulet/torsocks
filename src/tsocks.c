@@ -155,6 +155,15 @@ static int send_socksv4a_request(struct connreq *conn, const char *onion_host);
 
 void tsocks_init(void) {
 
+#define LOAD_ERROR(s,l) { \
+    char *error; \
+    error = dlerror(); \
+    show_msg(l, "The symbol %s() was not found in any shared " \
+                     "library. The error reported was: %s!\n", s, \
+                     (error)?error:"not found"); \
+    dlerror(); \
+    }
+
     /* We only need to be called once */
     if (tsocks_init_complete) {
       return;
@@ -172,22 +181,37 @@ void tsocks_init(void) {
     /* Determine the logging level */
     suid = (getuid() != geteuid());
 
+    dlerror();
 #ifndef USE_OLD_DLSYM
-    realconnect = dlsym(RTLD_NEXT, "connect");
-    realselect = dlsym(RTLD_NEXT, "select");
-    realpoll = dlsym(RTLD_NEXT, "poll");
-    realclose = dlsym(RTLD_NEXT, "close");
-    realgetpeername = dlsym(RTLD_NEXT, "getpeername");
+    if ((realconnect = dlsym(RTLD_NEXT, "connect")) == NULL)
+      LOAD_ERROR("connect", MSGERR);
+    if ((realselect = dlsym(RTLD_NEXT, "select")) == NULL)
+      LOAD_ERROR("select", MSGERR);
+    if ((realpoll = dlsym(RTLD_NEXT, "poll")) == NULL)
+      LOAD_ERROR("poll", MSGERR);
+    if ((realclose = dlsym(RTLD_NEXT, "close")) == NULL)
+      LOAD_ERROR("close", MSGERR);
+    if ((realgetpeername = dlsym(RTLD_NEXT, "getpeername")) == NULL)
+      LOAD_ERROR("getpeername", MSGERR);
     #ifdef USE_SOCKS_DNS
-    realresinit = dlsym(RTLD_NEXT, "res_init");
+    if ((realresinit = dlsym(RTLD_NEXT, "res_init")) == NULL)
+      LOAD_ERROR("resinit", MSGERR);
     #endif
     #ifdef USE_TOR_DNS
-    realgethostbyname = dlsym(RTLD_NEXT, "gethostbyname");
-    realgethostbyaddr = dlsym(RTLD_NEXT, "gethostbyaddr");
-    realgetaddrinfo = dlsym(RTLD_NEXT, "getaddrinfo");
-    realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname");
-    realsendto = dlsym(RTLD_NEXT, "sendto");
-    realsendmsg = dlsym(RTLD_NEXT, "sendmsg");
+    if ((realgethostbyname = dlsym(RTLD_NEXT, "gethostbyname")) == NULL)
+      LOAD_ERROR("gethostbyname", MSGERR);
+    if ((realgethostbyaddr = dlsym(RTLD_NEXT, "gethostbyaddr")) == NULL)
+      LOAD_ERROR("gethostbyaddr", MSGERR);
+    if ((realgetaddrinfo = dlsym(RTLD_NEXT, "getaddrinfo")) == NULL)
+      LOAD_ERROR("getaddrinfo", MSGERR);
+    /* getipnodebyname is deprecated so do not report an error if it is not
+       available.*/
+    if ((realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname")) == NULL)
+      LOAD_ERROR("getipnodebyname", MSGWARN);
+    if ((realsendto = dlsym(RTLD_NEXT, "sendto")) == NULL)
+      LOAD_ERROR("sendto", MSGERR);
+    if ((realsendmsg = dlsym(RTLD_NEXT, "sendmsg")) == NULL)
+      LOAD_ERROR("sendmsg", MSGERR);
     #endif
 #else
     lib = dlopen(LIBCONNECT, RTLD_LAZY);
