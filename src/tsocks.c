@@ -55,7 +55,7 @@
 #endif
 
 /* Global configuration variables */
-const char *progname = "libtorsocks";         	   /* Name used in err msgs    */
+const char *progname = "libtorsocks";         /* Name used in err msgs    */
 
 /* Header Files */
 #include <stdio.h>
@@ -161,7 +161,7 @@ void tsocks_init(void) {
     }
 
 #ifdef USE_OLD_DLSYM
-	void *lib;
+    void *lib;
 #endif
 
     show_msg(MSGWARN, "In tsocks_init \n");
@@ -205,7 +205,7 @@ void tsocks_init(void) {
     realsendto = dlsym(lib, "sendto");
     realsendmsg = dlsym(lib, "sendmsg");
     #endif
-    dlclose(lib);	
+    dlclose(lib);
     lib = dlopen(LIBC, RTLD_LAZY);
     realclose = dlsym(lib, "close");
     dlclose(lib);
@@ -245,28 +245,28 @@ static int get_environment() {
 }
 
 static int get_config () {
-   static int done = 0;
+    static int done = 0;
 
-   if (done)
-      return(0);
+    if (done)
+        return(0);
 
-   /* Determine the location of the config file */
-#ifdef ALLOW_ENV_CONFIG
-   if (!suid) 
-      conffile = getenv("TSOCKS_CONF_FILE");
-#endif
-   
-	/* Read in the config file */
-   config = malloc(sizeof(*config));
-   if (!config)
-      return(0);
-   read_config(conffile, config);
-   if (config->paths)
-      show_msg(MSGDEBUG, "First lineno for first path is %d\n", config->paths->lineno);
+    /* Determine the location of the config file */
+  #ifdef ALLOW_ENV_CONFIG
+    if (!suid) 
+        conffile = getenv("TSOCKS_CONF_FILE");
+  #endif
+    
+    /* Read in the config file */
+    config = malloc(sizeof(*config));
+    if (!config)
+        return(0);
+    read_config(conffile, config);
+    if (config->paths)
+        show_msg(MSGDEBUG, "First lineno for first path is %d\n", config->paths->lineno);
 
-   done = 1;
+    done = 1;
 
-   return(0);
+    return(0);
 }
 
 int connect(CONNECT_SIGNATURE) {
@@ -419,7 +419,7 @@ int connect(CONNECT_SIGNATURE) {
       show_msg(MSGERR, "The SOCKS server (%s) listed in the configuration "
                        "file which needs to be used for this connection "
                        "is invalid\n", path->address);
-   } else {	
+   } else {
       /* Construct the addr for the socks server */
       server_address.sin_family = AF_INET; /* host byte order */
       server_address.sin_addr.s_addr = res;
@@ -1018,33 +1018,33 @@ static int handle_request(struct connreq *conn) {
 static int connect_server(struct connreq *conn) {
    int rc;
 
-	/* Connect this socket to the socks server */
-   show_msg(MSGDEBUG, "Connecting to %s port %d\n", 
-            inet_ntoa(conn->serveraddr.sin_addr), ntohs(conn->serveraddr.sin_port));
+    /* Connect this socket to the socks server */
+    show_msg(MSGDEBUG, "Connecting to %s port %d\n", 
+              inet_ntoa(conn->serveraddr.sin_addr), ntohs(conn->serveraddr.sin_port));
 
-   rc = realconnect(conn->sockid, (CONNECT_SOCKARG) &(conn->serveraddr),
-                    sizeof(conn->serveraddr));
+    rc = realconnect(conn->sockid, (CONNECT_SOCKARG) &(conn->serveraddr),
+                      sizeof(conn->serveraddr));
 
-   show_msg(MSGDEBUG, "Connect returned %d, errno is %d\n", rc, errno); 
-   if (rc) {
-      if (errno != EINPROGRESS) {
-         show_msg(MSGERR, "Error %d attempting to connect to SOCKS "
-                  "server (%s)\n", errno, strerror(errno));
-         conn->state = FAILED;
-      } else {
-         show_msg(MSGDEBUG, "Connection in progress\n");
-         conn->state = CONNECTING;
-      }
-   } else {
-      show_msg(MSGDEBUG, "Socket %d connected to SOCKS server\n", conn->sockid);
-      conn->state = CONNECTED;
-   }
+    show_msg(MSGDEBUG, "Connect returned %d, errno is %d\n", rc, errno); 
+    if (rc) {
+        if (errno != EINPROGRESS) {
+          show_msg(MSGERR, "Error %d attempting to connect to SOCKS "
+                    "server (%s)\n", errno, strerror(errno));
+          conn->state = FAILED;
+        } else {
+          show_msg(MSGDEBUG, "Connection in progress\n");
+          conn->state = CONNECTING;
+        }
+    } else {
+        show_msg(MSGDEBUG, "Socket %d connected to SOCKS server\n", conn->sockid);
+        conn->state = CONNECTED;
+    }
 
-   return((rc ? errno : 0));
+    return((rc ? errno : 0));
 }
 
 static int send_socks_request(struct connreq *conn) {
-	int rc = 0;
+    int rc = 0;
 
 #ifdef USE_TOR_DNS
     if (conn->path->type == 4) {
@@ -1054,15 +1054,15 @@ static int send_socks_request(struct connreq *conn) {
         } else {
             rc = send_socksv4_request(conn);
         }
-#else 
+#else
     if (conn->path->type == 4) {
       rc = send_socksv4_request(conn);
 #endif
     } else {
-	  rc = send_socksv5_method(conn);
-	}
+      rc = send_socksv5_method(conn);
+    }
    return(rc);
-}			
+}
 
 #ifdef USE_TOR_DNS
 static int send_socksv4a_request(struct connreq *conn,const char *onion_host) 
@@ -1071,7 +1071,7 @@ static int send_socksv4a_request(struct connreq *conn,const char *onion_host)
   struct sockreq *thisreq;
   int endOfUser;
   /* Determine the current username */
-  user = getpwuid(getuid());	
+  user = getpwuid(getuid());
 
   thisreq = (struct sockreq *) conn->buffer;
   endOfUser=sizeof(struct sockreq) +
@@ -1110,40 +1110,40 @@ static int send_socksv4a_request(struct connreq *conn,const char *onion_host)
 #endif /* USE_TOR_DNS */
 
 static int send_socksv4_request(struct connreq *conn) {
-	struct passwd *user;
-	struct sockreq *thisreq;
-	
-	/* Determine the current username */
-	user = getpwuid(getuid());	
+    struct passwd *user;
+    struct sockreq *thisreq;
 
-   thisreq = (struct sockreq *) conn->buffer;
+    /* Determine the current username */
+    user = getpwuid(getuid());
 
-   /* Check the buffer has enough space for the request  */
-   /* and the user name                                  */
-   conn->datalen = sizeof(struct sockreq) + 
-                   (user == NULL ? 0 : strlen(user->pw_name)) + 1;
-   if (sizeof(conn->buffer) < conn->datalen) {
-      show_msg(MSGERR, "The SOCKS username is too long");
-      conn->state = FAILED;
-      return(ECONNREFUSED);
-   }
+    thisreq = (struct sockreq *) conn->buffer;
 
-	/* Create the request */
-	thisreq->version = 4;
-	thisreq->command = 1;
-	thisreq->dstport = conn->connaddr.sin_port;
-	thisreq->dstip   = conn->connaddr.sin_addr.s_addr;
+    /* Check the buffer has enough space for the request  */
+    /* and the user name                                  */
+    conn->datalen = sizeof(struct sockreq) + 
+                    (user == NULL ? 0 : strlen(user->pw_name)) + 1;
+    if (sizeof(conn->buffer) < conn->datalen) {
+        show_msg(MSGERR, "The SOCKS username is too long");
+        conn->state = FAILED;
+        return(ECONNREFUSED);
+    }
 
-	/* Copy the username */
-	strcpy((char *) thisreq + sizeof(struct sockreq), 
-	       (user == NULL ? "" : user->pw_name));
+    /* Create the request */
+    thisreq->version = 4;
+    thisreq->command = 1;
+    thisreq->dstport = conn->connaddr.sin_port;
+    thisreq->dstip   = conn->connaddr.sin_addr.s_addr;
 
-   conn->datadone = 0;
-   conn->state = SENDING;
-   conn->nextstate = SENTV4REQ;
+    /* Copy the username */
+    strcpy((char *) thisreq + sizeof(struct sockreq),
+            (user == NULL ? "" : user->pw_name));
 
-	return(0);   
-}			
+    conn->datadone = 0;
+    conn->state = SENDING;
+    conn->nextstate = SENTV4REQ;
+
+    return(0);
+}
 
 static int send_socksv5_method(struct connreq *conn) {
    char verstring[] = { 0x05,    /* Version 5 SOCKS */
@@ -1159,7 +1159,7 @@ static int send_socksv5_method(struct connreq *conn) {
    conn->datadone = 0;
 
    return(0);
-}			
+}
 
 static int send_socksv5_connect(struct connreq *conn) {
 #ifdef USE_TOR_DNS
@@ -1213,7 +1213,7 @@ static int send_socksv5_connect(struct connreq *conn) {
    conn->datalen += sizeof(conn->connaddr.sin_port);
 
    return(0);
-}			
+}
 
 static int send_buffer(struct connreq *conn) {
    int rc = 0;
@@ -1270,8 +1270,8 @@ static int recv_buffer(struct connreq *conn) {
 }
 
 static int read_socksv5_method(struct connreq *conn) {
-	struct passwd *nixuser;
-	char *uname, *upass;
+    struct passwd *nixuser;
+    char *uname, *upass;
 
     /* See if we offered an acceptable method */
     if (conn->buffer[1] == '\xff') {
@@ -1280,115 +1280,115 @@ static int read_socksv5_method(struct connreq *conn) {
         return(ECONNREFUSED);
     }
 
-  /* If the socks server chose username/password authentication */
-  /* (method 2) then do that                                    */
-  if ((unsigned short int) conn->buffer[1] == 2) {
-      show_msg(MSGDEBUG, "SOCKS V5 server chose username/password authentication\n");
+    /* If the socks server chose username/password authentication */
+    /* (method 2) then do that                                    */
+    if ((unsigned short int) conn->buffer[1] == 2) {
+        show_msg(MSGDEBUG, "SOCKS V5 server chose username/password authentication\n");
 
-      /* Determine the current *nix username */
-      nixuser = getpwuid(getuid());
+        /* Determine the current *nix username */
+        nixuser = getpwuid(getuid());
 
-      if (((uname = conn->path->defuser) == NULL) &&
-        ((uname = getenv("TSOCKS_USERNAME")) == NULL) &&
-          ((uname = (nixuser == NULL ? NULL : nixuser->pw_name)) == NULL)) {
-          show_msg(MSGERR, "Could not get SOCKS username from "
-                  "local passwd file, tsocks.conf "
-                  "or $TSOCKS_USERNAME to authenticate "
-                  "with");
-        conn->state = FAILED;
-          return(ECONNREFUSED);
-      }
+        if (((uname = conn->path->defuser) == NULL) &&
+          ((uname = getenv("TSOCKS_USERNAME")) == NULL) &&
+            ((uname = (nixuser == NULL ? NULL : nixuser->pw_name)) == NULL)) {
+            show_msg(MSGERR, "Could not get SOCKS username from "
+                    "local passwd file, tsocks.conf "
+                    "or $TSOCKS_USERNAME to authenticate "
+                    "with");
+          conn->state = FAILED;
+            return(ECONNREFUSED);
+        }
 
-      if (((upass = getenv("TSOCKS_PASSWORD")) == NULL) &&
-        ((upass = conn->path->defpass) == NULL)) {
-          show_msg(MSGERR, "Need a password in tsocks.conf or "
-                  "$TSOCKS_PASSWORD to authenticate with");
-        conn->state = FAILED;
-          return(ECONNREFUSED);
-      }
+        if (((upass = getenv("TSOCKS_PASSWORD")) == NULL) &&
+          ((upass = conn->path->defpass) == NULL)) {
+            show_msg(MSGERR, "Need a password in tsocks.conf or "
+                    "$TSOCKS_PASSWORD to authenticate with");
+          conn->state = FAILED;
+            return(ECONNREFUSED);
+        }
 
-      /* Check that the username / pass specified will */
-      /* fit into the buffer				                */
-      if ((3 + strlen(uname) + strlen(upass)) >= sizeof(conn->buffer)) {
-          show_msg(MSGERR, "The supplied socks username or "
-                  "password is too long");
-        conn->state = FAILED;
-          return(ECONNREFUSED);
-      }
-      
-      conn->datalen = 0;
-      conn->buffer[conn->datalen] = '\x01';
-      conn->datalen++;
-      conn->buffer[conn->datalen] = (int8_t) strlen(uname);
-      conn->datalen++;
-      memcpy(&(conn->buffer[conn->datalen]), uname, strlen(uname));
-      conn->datalen = conn->datalen + strlen(uname);
-      conn->buffer[conn->datalen] = (int8_t) strlen(upass);
-      conn->datalen++;
-      memcpy(&(conn->buffer[conn->datalen]), upass, strlen(upass));
-      conn->datalen = conn->datalen + strlen(upass);
+        /* Check that the username / pass specified will */
+        /* fit into the buffer                */
+        if ((3 + strlen(uname) + strlen(upass)) >= sizeof(conn->buffer)) {
+            show_msg(MSGERR, "The supplied socks username or "
+                    "password is too long");
+          conn->state = FAILED;
+            return(ECONNREFUSED);
+        }
+        
+        conn->datalen = 0;
+        conn->buffer[conn->datalen] = '\x01';
+        conn->datalen++;
+        conn->buffer[conn->datalen] = (int8_t) strlen(uname);
+        conn->datalen++;
+        memcpy(&(conn->buffer[conn->datalen]), uname, strlen(uname));
+        conn->datalen = conn->datalen + strlen(uname);
+        conn->buffer[conn->datalen] = (int8_t) strlen(upass);
+        conn->datalen++;
+        memcpy(&(conn->buffer[conn->datalen]), upass, strlen(upass));
+        conn->datalen = conn->datalen + strlen(upass);
 
-      conn->state = SENDING;
-      conn->nextstate = SENTV5AUTH;
-      conn->datadone = 0;
-	} else
-      return(send_socksv5_connect(conn));
+        conn->state = SENDING;
+        conn->nextstate = SENTV5AUTH;
+        conn->datadone = 0;
+      } else
+        return(send_socksv5_connect(conn));
 
-   return(0);
+    return(0);
 }
 
 static int read_socksv5_auth(struct connreq *conn) {
 
-   if (conn->buffer[1] != '\x00') {
-      show_msg(MSGERR, "SOCKS authentication failed, check username and password\n");
-      conn->state = FAILED;
-      return(ECONNREFUSED);
-   }
-		
-   /* Ok, we authenticated ok, send the connection request */
-   return(send_socksv5_connect(conn));
+    if (conn->buffer[1] != '\x00') {
+        show_msg(MSGERR, "SOCKS authentication failed, check username and password\n");
+        conn->state = FAILED;
+        return(ECONNREFUSED);
+    }
+
+    /* Ok, we authenticated ok, send the connection request */
+    return(send_socksv5_connect(conn));
 }
 
 static int read_socksv5_connect(struct connreq *conn) {
 
-  /* See if the connection succeeded */
-  if (conn->buffer[1] != '\x00') {
-      show_msg(MSGERR, "SOCKS V5 connect failed: ");
-    conn->state = FAILED;
-      switch ((int8_t) conn->buffer[1]) {
-          case 1:
-              show_msg(MSGERR, "General SOCKS server failure\n");
-              return(ECONNABORTED);
-          case 2:
-              show_msg(MSGERR, "Connection denied by rule\n");
-              return(ECONNABORTED);
-          case 3:
-              show_msg(MSGERR, "Network unreachable\n");
-              return(ENETUNREACH);
-          case 4:
-              show_msg(MSGERR, "Host unreachable\n");
-              return(EHOSTUNREACH);
-          case 5:
-              show_msg(MSGERR, "Connection refused\n");
-              return(ECONNREFUSED);
-          case 6:
-              show_msg(MSGERR, "TTL Expired\n");
-              return(ETIMEDOUT);
-          case 7:
-              show_msg(MSGERR, "Command not supported\n");
-              return(ECONNABORTED);
-          case 8:
-              show_msg(MSGERR, "Address type not supported\n");
-              return(ECONNABORTED);
-          default:
-              show_msg(MSGERR, "Unknown error\n");
-              return(ECONNABORTED);
-      }
-  }
+    /* See if the connection succeeded */
+    if (conn->buffer[1] != '\x00') {
+        show_msg(MSGERR, "SOCKS V5 connect failed: ");
+      conn->state = FAILED;
+        switch ((int8_t) conn->buffer[1]) {
+            case 1:
+                show_msg(MSGERR, "General SOCKS server failure\n");
+                return(ECONNABORTED);
+            case 2:
+                show_msg(MSGERR, "Connection denied by rule\n");
+                return(ECONNABORTED);
+            case 3:
+                show_msg(MSGERR, "Network unreachable\n");
+                return(ENETUNREACH);
+            case 4:
+                show_msg(MSGERR, "Host unreachable\n");
+                return(EHOSTUNREACH);
+            case 5:
+                show_msg(MSGERR, "Connection refused\n");
+                return(ECONNREFUSED);
+            case 6:
+                show_msg(MSGERR, "TTL Expired\n");
+                return(ETIMEDOUT);
+            case 7:
+                show_msg(MSGERR, "Command not supported\n");
+                return(ECONNABORTED);
+            case 8:
+                show_msg(MSGERR, "Address type not supported\n");
+                return(ECONNABORTED);
+            default:
+                show_msg(MSGERR, "Unknown error\n");
+                return(ECONNABORTED);
+        }
+    }
 
-  conn->state = DONE;
+    conn->state = DONE;
 
-  return(0);
+    return(0);
 }
 
 static int read_socksv4_req(struct connreq *conn) {
@@ -1428,13 +1428,12 @@ static int read_socksv4_req(struct connreq *conn) {
 int res_init(void) {
         int rc;
 
-	if (realresinit == NULL) {
-		show_msg(MSGERR, "Unresolved symbol: res_init\n");
-		return(-1);
-	}
-        
-	/* Call normal res_init */
-	rc = realresinit();
+    if (realresinit == NULL) {
+        show_msg(MSGERR, "Unresolved symbol: res_init\n");
+        return(-1);
+    }
+    /* Call normal res_init */
+    rc = realresinit();
 
    /* Force using TCP protocol for DNS queries */
    _res.options |= RES_USEVC;
@@ -1503,96 +1502,95 @@ struct hostent *getipnodebyname(GETIPNODEBYNAME_SIGNATURE)
 
 ssize_t sendto(SENDTO_SIGNATURE)
 {
-  struct sockaddr_in *connaddr;
-  int sock_type = -1;
-  unsigned int sock_type_len = sizeof(sock_type);
+    struct sockaddr_in *connaddr;
+    int sock_type = -1;
+    unsigned int sock_type_len = sizeof(sock_type);
 
-  /* See comment in close() */
-  if (!tsocks_init_complete) {
-    tsocks_init();
-  }
+    /* See comment in close() */
+    if (!tsocks_init_complete) {
+      tsocks_init();
+    }
 
-  /* If the real connect doesn't exist, we're stuffed */
-  if (realsendto == NULL) {
-      show_msg(MSGERR, "Unresolved symbol: sendto\n");
-      return(-1);
-  }
+    /* If the real connect doesn't exist, we're stuffed */
+    if (realsendto == NULL) {
+        show_msg(MSGERR, "Unresolved symbol: sendto\n");
+        return(-1);
+    }
 
-  show_msg(MSGDEBUG, "Got sendto request\n");
+    show_msg(MSGDEBUG, "Got sendto request\n");
 
-  connaddr = (struct sockaddr_in *) to;
+    connaddr = (struct sockaddr_in *) to;
 
-  /* Get the type of the socket */
-  getsockopt(s, SOL_SOCKET, SO_TYPE,
-    (void *) &sock_type, &sock_type_len);
+    /* Get the type of the socket */
+    getsockopt(s, SOL_SOCKET, SO_TYPE,
+      (void *) &sock_type, &sock_type_len);
 
-  show_msg(MSGDEBUG, "sin_family: %i "
-                      "\n",
-                   connaddr->sin_family);
+    show_msg(MSGDEBUG, "sin_family: %i "
+                        "\n",
+                    connaddr->sin_family);
 
-  show_msg(MSGDEBUG, "sockopt: %i "
-                      "\n",
-                   sock_type);
+    show_msg(MSGDEBUG, "sockopt: %i "
+                        "\n",
+                    sock_type);
 
-  /* If this a UDP socket with a non-local destination address  */
-  /* then we refuse it, since it is probably a DNS request      */
-  if (sock_type == SOCK_DGRAM){
-      show_msg(MSGDEBUG, "Sendto is on a UDP stream.\n");
+    /* If this a UDP socket with a non-local destination address  */
+    /* then we refuse it, since it is probably a DNS request      */
+    if (sock_type == SOCK_DGRAM){
+        show_msg(MSGDEBUG, "Sendto is on a UDP stream.\n");
 
-      if (!(is_local(config, &(connaddr->sin_addr))))
-        show_msg(MSGWARN, "Sendto() is on a UDP stream with a non-local "
-                          "destination, may be a DNS request: rejecting.\n");
-        return -1;
-  }
-  return (ssize_t) realsendto(s, buf, len, flags, to, tolen);
+        if (!(is_local(config, &(connaddr->sin_addr))))
+          show_msg(MSGWARN, "Sendto() is on a UDP stream with a non-local "
+                            "destination, may be a DNS request: rejecting.\n");
+          return -1;
+    }
+    return (ssize_t) realsendto(s, buf, len, flags, to, tolen);
 
 }
 
 ssize_t sendmsg(SENDMSG_SIGNATURE)
 {
-  struct sockaddr_in *connaddr;
-  int sock_type = -1;
-  unsigned int sock_type_len = sizeof(sock_type);
+    struct sockaddr_in *connaddr;
+    int sock_type = -1;
+    unsigned int sock_type_len = sizeof(sock_type);
 
-  /* See comment in close() */
-  if (!tsocks_init_complete) {
-    tsocks_init();
-  }
+    /* See comment in close() */
+    if (!tsocks_init_complete) {
+      tsocks_init();
+    }
 
-  /* If the real connect doesn't exist, we're stuffed */
-  if (realsendmsg == NULL) {
-      show_msg(MSGERR, "Unresolved symbol: sendmsg\n");
-      return(-1);
-  }
+    /* If the real connect doesn't exist, we're stuffed */
+    if (realsendmsg == NULL) {
+        show_msg(MSGERR, "Unresolved symbol: sendmsg\n");
+        return(-1);
+    }
 
-  show_msg(MSGDEBUG, "Got sendmsg request\n");
+    show_msg(MSGDEBUG, "Got sendmsg request\n");
 
-  connaddr = (struct sockaddr_in *) msg->msg_name;
+    connaddr = (struct sockaddr_in *) msg->msg_name;
 
-  /* Get the type of the socket */
-  getsockopt(s, SOL_SOCKET, SO_TYPE,
-    (void *) &sock_type, &sock_type_len);
+    /* Get the type of the socket */
+    getsockopt(s, SOL_SOCKET, SO_TYPE,
+      (void *) &sock_type, &sock_type_len);
 
-  show_msg(MSGDEBUG, "sin_family: %i "
-                      "\n",
-                   connaddr->sin_family);
+    show_msg(MSGDEBUG, "sin_family: %i "
+                        "\n",
+                    connaddr->sin_family);
 
-  show_msg(MSGDEBUG, "sockopt: %i "
-                      "\n",
-                   sock_type);
+    show_msg(MSGDEBUG, "sockopt: %i "
+                        "\n",
+                    sock_type);
 
-  /* If this a UDP socket with a non-local destination address  */
-  /* then we refuse it, since it is probably a DNS request      */
-  if (sock_type == SOCK_DGRAM){
-      show_msg(MSGDEBUG, "sendmsg() is on a UDP stream.\n");
+    /* If this a UDP socket with a non-local destination address  */
+    /* then we refuse it, since it is probably a DNS request      */
+    if (sock_type == SOCK_DGRAM){
+        show_msg(MSGDEBUG, "sendmsg() is on a UDP stream.\n");
 
-      if (!(is_local(config, &(connaddr->sin_addr))))
-        show_msg(MSGWARN, "sendmsg() is on a UDP stream with a non-local "
-                          "destination, may be a DNS request: rejecting.\n");
-        return -1;
-  }
-  return (ssize_t) realsendmsg(s, msg, flags);
-
+        if (!(is_local(config, &(connaddr->sin_addr))))
+          show_msg(MSGWARN, "sendmsg() is on a UDP stream with a non-local "
+                            "destination, may be a DNS request: rejecting.\n");
+          return -1;
+    }
+    return (ssize_t) realsendmsg(s, msg, flags);
 }
 
 #endif 
