@@ -154,6 +154,12 @@ static int send_socksv4a_request(struct connreq *conn, const char *onion_host);
 #endif
 
 void tsocks_init(void) {
+
+    /* We only need to be called once */
+    if (tsocks_init_complete) {
+      return;
+    }
+
 #ifdef USE_OLD_DLSYM
 	void *lib;
 #endif
@@ -276,6 +282,11 @@ int connect(CONNECT_SIGNATURE) {
     struct connreq *newconn;
 
     get_environment();
+
+    /* See comment in close() */
+    if (!tsocks_init_complete) {
+      tsocks_init();
+    }
 
     /* If the real connect doesn't exist, we're stuffed */
     if (realconnect == NULL) {
@@ -788,6 +799,10 @@ int close(CLOSE_SIGNATURE) {
   int rc;
   struct connreq *conn;
 
+  /* If we are called before this symbol has been dlopened then try
+     loading symbols now. This is a workaround for a problem I don't
+     really understand and have only encountered when using torsocks
+     with svn on Fedora 10, so definitely a hack. */
   if (!tsocks_init_complete) {
     tsocks_init();
   }
@@ -796,22 +811,7 @@ int close(CLOSE_SIGNATURE) {
     show_msg(MSGERR, "Unresolved symbol: close\n");
     return(-1);
   }
-/*
-  if (realclose == NULL) {
-      #ifndef USE_OLD_DLSYM
-          realclose = dlsym(RTLD_NEXT, "close");
-      #else
-          void *lib;
-          lib = dlopen(LIBC, RTLD_LAZY);
-          realclose = dlsym(lib, "close");
-          dlclose(lib);
-      #endif
-      if (realclose == NULL) {
-        show_msg(MSGERR, "Unresolved symbol: close\n");
-        return(-1);
-      }
-  }
-*/
+   
    show_msg(MSGDEBUG, "Call to close(%d)\n", fd);
 
    rc = realclose(fd);
@@ -847,6 +847,11 @@ int getpeername(GETPEERNAME_SIGNATURE) {
    struct connreq *conn;
    int rc;
 
+    /* See comment in close() */
+    if (!tsocks_init_complete) {
+      tsocks_init();
+    }
+    
     if (realgetpeername == NULL) {
         show_msg(MSGERR, "Unresolved symbol: getpeername\n");
         return(-1);
@@ -1502,6 +1507,11 @@ ssize_t sendto(SENDTO_SIGNATURE)
   int sock_type = -1;
   unsigned int sock_type_len = sizeof(sock_type);
 
+  /* See comment in close() */
+  if (!tsocks_init_complete) {
+    tsocks_init();
+  }
+
   /* If the real connect doesn't exist, we're stuffed */
   if (realsendto == NULL) {
       show_msg(MSGERR, "Unresolved symbol: sendto\n");
@@ -1543,6 +1553,11 @@ ssize_t sendmsg(SENDMSG_SIGNATURE)
   struct sockaddr_in *connaddr;
   int sock_type = -1;
   unsigned int sock_type_len = sizeof(sock_type);
+
+  /* See comment in close() */
+  if (!tsocks_init_complete) {
+    tsocks_init();
+  }
 
   /* If the real connect doesn't exist, we're stuffed */
   if (realsendmsg == NULL) {
