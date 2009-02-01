@@ -353,14 +353,11 @@ int connect(CONNECT_SIGNATURE) {
 #ifdef USE_TOR_DNS
     /* If this a UDP socket with a non-local destination address  */
     /* then we refuse it, since it is probably a DNS request      */
-    if (sock_type == SOCK_DGRAM){
-        show_msg(MSGDEBUG, "Connection is a UDP stream.\n");
-
-        if (!(is_local(config, &(connaddr->sin_addr)))) {
-          show_msg(MSGWARN, "Connection is a UDP stream with a non-local "
-                            "destination, may be a DNS request: rejecting.\n");
-          return -1;
-        }
+    if ((connaddr->sin_family != AF_INET) ||
+        (sock_type != SOCK_STREAM)) {
+        show_msg(MSGDEBUG, "Connection is a UDP stream, may be a "
+                           "DNS request: rejecting.\n");
+        return -1;
     }
 #endif
 
@@ -1684,14 +1681,11 @@ ssize_t sendto(SENDTO_SIGNATURE)
 
     /* If this a UDP socket with a non-local destination address  */
     /* then we refuse it, since it is probably a DNS request      */
-    if (sock_type == SOCK_DGRAM){
-        show_msg(MSGDEBUG, "Sendto is on a UDP stream.\n");
-
-        if (!(is_local(config, &(connaddr->sin_addr)))) {
-          show_msg(MSGWARN, "Sendto() is on a UDP stream with a non-local "
-                            "destination, may be a DNS request: rejecting.\n");
-          return -1;
-        }
+    if ((connaddr->sin_family != AF_INET) ||
+        (sock_type != SOCK_STREAM)) {
+        show_msg(MSGDEBUG, "Connection is a UDP stream, may be a "
+                           "DNS request: rejecting.\n");
+        return -1;
     }
     return (ssize_t) realsendto(s, buf, len, flags, to, tolen);
 
@@ -1732,14 +1726,11 @@ ssize_t sendmsg(SENDMSG_SIGNATURE)
 
     /* If this a UDP socket with a non-local destination address  */
     /* then we refuse it, since it is probably a DNS request      */
-    if (sock_type == SOCK_DGRAM){
-        show_msg(MSGDEBUG, "sendmsg() is on a UDP stream.\n");
-
-        if (!(is_local(config, &(connaddr->sin_addr)))) {
-          show_msg(MSGWARN, "sendmsg() is on a UDP stream with a non-local "
-                            "destination, may be a DNS request: rejecting.\n");
-          return -1;
-        }
+    if ((connaddr->sin_family != AF_INET) ||
+        (sock_type != SOCK_STREAM)) {
+        show_msg(MSGDEBUG, "Connection is a UDP stream, may be a "
+                           "DNS request: rejecting.\n");
+        return -1;
     }
     return (ssize_t) realsendmsg(s, msg, flags);
 }
