@@ -26,16 +26,6 @@ AC_ARG_ENABLE(hostnames,
 [  --enable-hostnames      enable hostname lookups for socks servers ])
 AC_ARG_ENABLE(envconf,
 [  --disable-envconf       do not allow TSOCKS_CONF_FILE to specify configuration file ])
-AC_ARG_WITH(conf,
-[  --with-conf=<file>      location of configuration file (/etc/tsocks.conf default)],[
-if test "${withval}" = "yes" ; then
-  AC_MSG_ERROR("--with-conf requires the location of the configuration file as an argument")
-else
-  AC_DEFINE_UNQUOTED([CONF_FILE], ["${withval}"],[Description])
-fi
-], [
-  AC_DEFINE_UNQUOTED([CONF_FILE], ["/etc/tsocks.conf"],[Description])
-])
 
 dnl -----------------------------------
 dnl Get hostname and other information.
@@ -426,6 +416,17 @@ fi
 AC_SUBST(CONFDIR)
 AH_TEMPLATE([CONFDIR],[torsock's configuration directory])
 AC_DEFINE_UNQUOTED(CONFDIR,"$CONFDIR")
+
+AC_ARG_WITH(conf,
+[  --with-conf=<file>      location of configuration file (${CONFDIR}/torsocks.conf default)],[
+if test "${withval}" = "yes" ; then
+  AC_MSG_ERROR("--with-conf requires the location of the configuration file as an argument")
+else
+  AC_DEFINE_UNQUOTED([CONF_FILE], ["${withval}"],[Description])
+fi
+], [
+  AC_DEFINE_UNQUOTED([CONF_FILE], ["${CONFDIR}/torsocks.conf"],[Description])
+])
 
 AC_LANG_C
 AC_PROG_CC
