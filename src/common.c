@@ -180,53 +180,53 @@ int count_netmask_bits(uint32_t mask)
 }
 
 void show_msg(int level, const char *fmt, ...) {
-   va_list ap;
-   int saveerr;
-/*   extern char *progname; */
-   char timestring[20];
-   time_t timestamp;
+    va_list ap;
+    int saveerr;
+    extern char *progname;
+    char timestring[20];
+    time_t timestamp;
 
-   if ((loglevel == MSGNONE) || (level > loglevel))
-      return;
+    if ((loglevel == MSGNONE) || (level > loglevel))
+        return;
 
-   if (!logfile) {
-      if (logfilename[0]) {
-         logfile = fopen(logfilename, "a");
-         if (logfile == NULL) {
-            logfile = stderr;
-            show_msg(MSGERR, "Could not open log file, %s, %s\n", 
-                     logfilename, strerror(errno));
-         }
-      } else
-         logfile = stderr;
-   }
+    if (!logfile) {
+        if (logfilename[0]) {
+          logfile = fopen(logfilename, "a");
+          if (logfile == NULL) {
+              logfile = stderr;
+              show_msg(MSGERR, "Could not open log file, %s, %s\n", 
+                      logfilename, strerror(errno));
+          }
+        } else
+          logfile = stderr;
+    }
 
-   if (logstamp) {
-      timestamp = time(NULL);
-      strftime(timestring, sizeof(timestring),  "%H:%M:%S", 
-               localtime(&timestamp));
-      fprintf(logfile, "%s ", timestring);
-   }
+    if (logstamp) {
+        timestamp = time(NULL);
+        strftime(timestring, sizeof(timestring),  "%H:%M:%S", 
+                localtime(&timestamp));
+        fprintf(logfile, "%s ", timestring);
+    }
 
-   /* fputs(progname, logfile); */
+    fputs(progname, logfile);
 
-   if (logstamp) {
-      fprintf(logfile, "(%d)", getpid());
-   }
-   
-   fputs(": ", logfile);
-	
-	va_start(ap, fmt);
+    if (logstamp) {
+        fprintf(logfile, "(%d)", getpid());
+    }
+    
+    fputs(": ", logfile);
+      
+    va_start(ap, fmt);
 
-	/* Save errno */
-	saveerr = errno;
+    /* Save errno */
+    saveerr = errno;
 
-	vfprintf(logfile, fmt, ap);
-	
-   fflush(logfile);
+    vfprintf(logfile, fmt, ap);
+    
+    fflush(logfile);
 
-	errno = saveerr;
+    errno = saveerr;
 
-	va_end(ap);
+    va_end(ap);
 }
 
