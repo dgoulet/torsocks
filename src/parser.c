@@ -27,7 +27,7 @@
  ***************************************************************************/
 /*
 
-   parser.c    - Parsing routines for tsocks.conf
+   parser.c    - Parsing routines for torsocks.conf
 
 */
 
@@ -93,15 +93,15 @@ int read_config (char *filename, struct parsedfile *config) {
 	/* If there is no configuration file use reasonable defaults for Tor */
 	if ((conf = fopen(filename, "r")) == NULL) {
 		show_msg(MSGERR, "Could not open socks configuration file "
-			   "(%s), assuming all networks local\n", filename);
+			   "(%s), assuming sensible defaults for Tor.\n", filename);
         memset(&(config->defaultserver), 0x0, sizeof(config->defaultserver));
 		check_server(&(config->defaultserver));
 		handle_local(config, 0, "127.0.0.0/255.0.0.0");
         handle_local(config, 0, "10.0.0.0/255.0.0.0");
         handle_local(config, 0, "192.168.0.0/255.255.0.0");
-//         handle_local(config, 0, "172.16.0.0/255.224.0.0"); /* ?? */
+        handle_local(config, 0, "172.16.0.0/255.240.0.0");
+        handle_local(config, 0, "169.254.0.0/255.255.0.0");
 
-/*        handle_local(config, 0, "0.0.0.0/0.0.0.0");*/
 		rc = 1; /* Severe errors reading configuration */
 	}	
 	else {
@@ -120,7 +120,12 @@ int read_config (char *filename, struct parsedfile *config) {
 
 		/* Always add the 127.0.0.1/255.0.0.0 subnet to local */
 		handle_local(config, 0, "127.0.0.0/255.0.0.0");
+        /* We always consider this local, because many users' dsl
+           routers act as their DNS. */
         handle_local(config, 0, "10.0.0.0/255.0.0.0");
+        handle_local(config, 0, "192.168.0.0/255.255.0.0");
+        handle_local(config, 0, "172.16.0.0/255.240.0.0");
+        handle_local(config, 0, "169.254.0.0/255.255.0.0");
         handle_local(config, 0, "192.168.0.0/255.255.0.0");
 
 		/* Check default server */
@@ -759,15 +764,44 @@ int make_netent(char *value, struct netent **ent) {
 }
 
 int is_local(struct parsedfile *config, struct in_addr *testip) {
-        struct netent *ent;
+    struct netent *ent;
+    char buf[16];
+    inet_ntop(AF_INET, testip, buf, sizeof(buf));
+    show_msg(MSGDEBUG, "checking if address: %s is local"
+                        "\n",
+                        buf);
 
 	for (ent = (config->localnets); ent != NULL; ent = ent -> next) {
+        inet_ntop(AF_INET, &ent->localnet, buf, sizeof(buf));
+        show_msg(MSGDEBUG, "localnet addr: %s"
+                            "\n",
+                            buf);
+        inet_ntop(AF_INET, &ent->localip, buf, sizeof(buf));
+        show_msg(MSGDEBUG, "localip addr: %s"
+                            "\n",
+                            buf);
+        show_msg(MSGDEBUG, "result testip->s_addr & ent->localnet.s_addr : %i"
+                            "\n",
+                            testip->s_addr & ent->localnet.s_addr);
+        show_msg(MSGDEBUG, "result ent->localip.s_addr & ent->localnet.s_addr : %i"
+                            "\n",
+                            ent->localip.s_addr & ent->localnet.s_addr);
+        show_msg(MSGDEBUG, "result ent->localip.s_addr : %i"
+                            "\n",
+                            ent->localip.s_addr);
 		if ((testip->s_addr & ent->localnet.s_addr) ==
 		    (ent->localip.s_addr & ent->localnet.s_addr))  {
+            show_msg(MSGDEBUG, "address: %s is local"
+                                "\n",
+                                buf);
 			return(0);
 		}
 	}
 
+    inet_ntop(AF_INET, testip, buf, sizeof(buf));
+    show_msg(MSGDEBUG, "address: %s is not local"
+                        "\n",
+                        buf);
 	return(1);
 }
 
