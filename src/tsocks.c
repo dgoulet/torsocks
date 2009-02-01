@@ -76,7 +76,7 @@ const char *progname = "libtorsocks";         /* Name used in err msgs    */
 #include <fcntl.h>
 #include <common.h>
 #include <stdarg.h>
-#ifdef USE_SOCKS_DNS
+#ifdef USE_TOR_DNS
 #include <resolv.h>
 #endif
 #include <parser.h>
@@ -84,8 +84,9 @@ const char *progname = "libtorsocks";         /* Name used in err msgs    */
 #include "dead_pool.h"
 
 /* Global Declarations */
-#ifdef USE_SOCKS_DNS
+#ifdef USE_TOR_DNS
 static int (*realresinit)(void);
+static int (*realresquery)(RES_QUERY_SIGNATURE);
 #endif
 #ifdef USE_TOR_DNS
 static dead_pool *pool = NULL;
@@ -114,8 +115,9 @@ int select(SELECT_SIGNATURE);
 int poll(POLL_SIGNATURE);
 int close(CLOSE_SIGNATURE);
 int getpeername(GETPEERNAME_SIGNATURE);
-#ifdef USE_SOCKS_DNS
+#ifdef USE_TOR_DNS
 int res_init(void);
+int res_query(RES_QUERY_SIGNATURE);
 #endif
 #ifdef USE_TOR_DNS
 struct hostent *gethostbyname(GETHOSTBYNAME_SIGNATURE);
@@ -193,9 +195,11 @@ void tsocks_init(void) {
       LOAD_ERROR("close", MSGERR);
     if ((realgetpeername = dlsym(RTLD_NEXT, "getpeername")) == NULL)
       LOAD_ERROR("getpeername", MSGERR);
-    #ifdef USE_SOCKS_DNS
+    #ifdef USE_TOR_DNS
     if ((realresinit = dlsym(RTLD_NEXT, "res_init")) == NULL)
-      LOAD_ERROR("resinit", MSGERR);
+      LOAD_ERROR("res_init", MSGERR);
+    if ((realresquery = dlsym(RTLD_NEXT, "res_query")) == NULL)
+      LOAD_ERROR("res_query", MSGERR);
     #endif
     #ifdef USE_TOR_DNS
     if ((realgethostbyname = dlsym(RTLD_NEXT, "gethostbyname")) == NULL)
@@ -218,8 +222,9 @@ void tsocks_init(void) {
     realconnect = dlsym(lib, "connect");
     realselect = dlsym(lib, "select");
     realpoll = dlsym(lib, "poll");
-    #ifdef USE_SOCKS_DNS
+    #ifdef USE_TOR_DNS
     realresinit = dlsym(lib, "res_init");
+    realresquery = dlsym(lib, "res_query");
     #endif
     #ifdef USE_TOR_DNS
     realgethostbyname = dlsym(lib, "gethostbyname");
@@ -340,10 +345,11 @@ int connect(CONNECT_SIGNATURE) {
     if (sock_type == SOCK_DGRAM){
         show_msg(MSGDEBUG, "Connection is a UDP stream.\n");
 
-        if (!(is_local(config, &(connaddr->sin_addr))))
+        if (!(is_local(config, &(connaddr->sin_addr)))) {
           show_msg(MSGWARN, "Connection is a UDP stream with a non-local "
                             "destination, may be a DNS request: rejecting.\n");
           return -1;
+        }
     }
 #endif
 
@@ -1316,7 +1322,7 @@ static int read_socksv5_method(struct connreq *conn) {
           ((uname = getenv("TSOCKS_USERNAME")) == NULL) &&
             ((uname = (nixuser == NULL ? NULL : nixuser->pw_name)) == NULL)) {
             show_msg(MSGERR, "Could not get SOCKS username from "
-                    "local passwd file, tsocks.conf "
+                    "local passwd file, torsocks.conf "
                     "or $TSOCKS_USERNAME to authenticate "
                     "with");
           conn->state = FAILED;
@@ -1325,7 +1331,7 @@ static int read_socksv5_method(struct connreq *conn) {
 
         if (((upass = getenv("TSOCKS_PASSWORD")) == NULL) &&
           ((upass = conn->path->defpass) == NULL)) {
-            show_msg(MSGERR, "Need a password in tsocks.conf or "
+            show_msg(MSGERR, "Need a password in torsocks.conf or "
                     "$TSOCKS_PASSWORD to authenticate with");
           conn->state = FAILED;
             return(ECONNREFUSED);
@@ -1448,9 +1454,16 @@ static int read_socksv4_req(struct connreq *conn) {
    return(0);
 }
 
-#ifdef USE_SOCKS_DNS
+#ifdef USE_TOR_DNS
 int res_init(void) {
-        int rc;
+    int rc;
+
+    show_msg(MSGDEBUG, "Got res_init request\n");
+
+    /* See comment in close() */
+    if (!tsocks_init_complete) {
+      tsocks_init();
+    }
 
     if (realresinit == NULL) {
         show_msg(MSGERR, "Unresolved symbol: res_init\n");
@@ -1461,12 +1474,34 @@ int res_init(void) {
 
    /* Force using TCP protocol for DNS queries */
    _res.options |= RES_USEVC;
+   return(rc);
+}
+
+int res_query(RES_QUERY_SIGNATURE) {
+    int rc;
+
+    show_msg(MSGDEBUG, "Got res_query request\n");
+
+    /* See comment in close() */
+    if (!tsocks_init_complete) {
+      tsocks_init();
+    }
+
+    if (realresquery == NULL) {
+        show_msg(MSGERR, "Unresolved symbol: res_query\n");
+        return(-1);
+    }
+
+    /* Ensure we force using TCP for DNS queries by calling res_init
+       above */
+    res_init();
+
+    /* Call normal res_query */
+    rc = realresquery(dname, class, type, answer, anslen);
 
    return(rc);
 }
-#endif
 
-#ifdef USE_TOR_DNS
 static int deadpool_init(void)
 {
   if(!pool) {
@@ -1562,10 +1597,11 @@ ssize_t sendto(SENDTO_SIGNATURE)
     if (sock_type == SOCK_DGRAM){
         show_msg(MSGDEBUG, "Sendto is on a UDP stream.\n");
 
-        if (!(is_local(config, &(connaddr->sin_addr))))
+        if (!(is_local(config, &(connaddr->sin_addr)))) {
           show_msg(MSGWARN, "Sendto() is on a UDP stream with a non-local "
                             "destination, may be a DNS request: rejecting.\n");
           return -1;
+        }
     }
     return (ssize_t) realsendto(s, buf, len, flags, to, tolen);
 
@@ -1609,10 +1645,11 @@ ssize_t sendmsg(SENDMSG_SIGNATURE)
     if (sock_type == SOCK_DGRAM){
         show_msg(MSGDEBUG, "sendmsg() is on a UDP stream.\n");
 
-        if (!(is_local(config, &(connaddr->sin_addr))))
+        if (!(is_local(config, &(connaddr->sin_addr)))) {
           show_msg(MSGWARN, "sendmsg() is on a UDP stream with a non-local "
                             "destination, may be a DNS request: rejecting.\n");
           return -1;
+        }
     }
     return (ssize_t) realsendmsg(s, msg, flags);
 }
