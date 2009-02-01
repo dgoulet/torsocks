@@ -332,6 +332,87 @@ fi
 AC_MSG_RESULT([close(${PROTO})])
 AC_DEFINE_UNQUOTED([CLOSE_SIGNATURE], [${PROTO}],[Description])
 
+
+dnl Find the correct res_querydomain prototype on this machine
+AC_MSG_CHECKING(for correct res_querydomain prototype)
+PROTO=
+PROTO1='const char *name, const char *domain, int class, int type, unsigned char *answer, int anslen'
+for testproto in "${PROTO1}"
+do
+  if test "${PROTO}" = ""; then
+    AC_TRY_COMPILE([
+      #include <resolv.h>
+      int res_querydomain($testproto);
+    ],,[PROTO="$testproto";],)
+  fi
+done
+if test "${PROTO}" = ""; then
+  AC_MSG_ERROR("no match found!")
+fi
+AC_MSG_RESULT([res_querydomain(${PROTO})])
+AC_DEFINE_UNQUOTED([RES_QUERYDOMAIN_SIGNATURE], [${PROTO}],[Description])
+
+dnl Find the correct res_send prototype on this machine
+AC_MSG_CHECKING(for correct res_send prototype)
+PROTO=
+PROTO1='const char *msg, int msglen, char *answer, int anslen'
+PROTO2='const unsigned char *msg, int msglen, unsigned char *answer, int anslen'
+for testproto in "${PROTO1}" \
+                 "${PROTO2}"
+do
+  if test "${PROTO}" = ""; then
+    AC_TRY_COMPILE([
+      #include <resolv.h>
+      int res_send($testproto);
+    ],,[PROTO="$testproto";],)
+  fi
+done
+if test "${PROTO}" = ""; then
+  AC_MSG_ERROR("no match found!")
+fi
+AC_MSG_RESULT([res_send(${PROTO})])
+AC_DEFINE_UNQUOTED([RES_SEND_SIGNATURE], [${PROTO}],[Description])
+
+
+dnl Find the correct res_search prototype on this machine
+AC_MSG_CHECKING(for correct res_search prototype)
+PROTO=
+PROTO1='const char *dname, int class, int type,unsigned char *answer, int anslen'
+for testproto in "${PROTO1}" 
+do
+  if test "${PROTO}" = ""; then
+    AC_TRY_COMPILE([
+      #include <resolv.h>
+      int res_search($testproto);
+    ],,[PROTO="$testproto";],)
+  fi
+done
+if test "${PROTO}" = ""; then
+  AC_MSG_ERROR("no match found!")
+fi
+AC_MSG_RESULT([res_search(${PROTO})])
+AC_DEFINE_UNQUOTED([RES_SEARCH_SIGNATURE], [${PROTO}],[Description])
+
+
+dnl Find the correct res_query prototype on this machine
+AC_MSG_CHECKING(for correct res_query prototype)
+PROTO=
+PROTO1='const char *dname, int class, int type,unsigned char *answer, int anslen'
+for testproto in "${PROTO1}" 
+do
+  if test "${PROTO}" = ""; then
+    AC_TRY_COMPILE([
+      #include <resolv.h>
+      int res_query($testproto);
+    ],,[PROTO="$testproto";],)
+  fi
+done
+if test "${PROTO}" = ""; then
+  AC_MSG_ERROR("no match found!")
+fi
+AC_MSG_RESULT([res_query(${PROTO})])
+AC_DEFINE_UNQUOTED([RES_QUERY_SIGNATURE], [${PROTO}],[Description])
+
 dnl Find the correct getpeername prototype on this machine
 AC_MSG_CHECKING(for correct getpeername prototype)
 PROTO=
