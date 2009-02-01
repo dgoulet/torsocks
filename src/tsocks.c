@@ -87,6 +87,9 @@ const char *progname = "libtorsocks";         /* Name used in err msgs    */
 #ifdef USE_TOR_DNS
 static int (*realresinit)(void);
 static int (*realresquery)(RES_QUERY_SIGNATURE);
+static int (*realressearch)(RES_SEARCH_SIGNATURE);
+static int (*realressend)(RES_SEND_SIGNATURE);
+static int (*realresquerydomain)(RES_QUERYDOMAIN_SIGNATURE);
 #endif
 #ifdef USE_TOR_DNS
 static dead_pool *pool = NULL;
@@ -118,8 +121,9 @@ int getpeername(GETPEERNAME_SIGNATURE);
 #ifdef USE_TOR_DNS
 int res_init(void);
 int res_query(RES_QUERY_SIGNATURE);
-#endif
-#ifdef USE_TOR_DNS
+int res_search(RES_SEARCH_SIGNATURE);
+int res_querydomain(RES_QUERYDOMAIN_SIGNATURE);
+int res_send(RES_SEND_SIGNATURE);
 struct hostent *gethostbyname(GETHOSTBYNAME_SIGNATURE);
 struct hostent *gethostbyaddr(GETHOSTBYADDR_SIGNATURE);
 int getaddrinfo(GETADDRINFO_SIGNATURE);
@@ -200,8 +204,12 @@ void tsocks_init(void) {
       LOAD_ERROR("res_init", MSGERR);
     if ((realresquery = dlsym(RTLD_NEXT, "res_query")) == NULL)
       LOAD_ERROR("res_query", MSGERR);
-    #endif
-    #ifdef USE_TOR_DNS
+    if ((realressearch = dlsym(RTLD_NEXT, "res_search")) == NULL)
+      LOAD_ERROR("res_search", MSGERR);
+    if ((realresquerydomain = dlsym(RTLD_NEXT, "res_querydomain")) == NULL)
+      LOAD_ERROR("res_querydomain", MSGERR);
+    if ((realressend = dlsym(RTLD_NEXT, "res_send")) == NULL)
+      LOAD_ERROR("res_send", MSGERR);
     if ((realgethostbyname = dlsym(RTLD_NEXT, "gethostbyname")) == NULL)
       LOAD_ERROR("gethostbyname", MSGERR);
     if ((realgethostbyaddr = dlsym(RTLD_NEXT, "gethostbyaddr")) == NULL)
@@ -225,6 +233,9 @@ void tsocks_init(void) {
     #ifdef USE_TOR_DNS
     realresinit = dlsym(lib, "res_init");
     realresquery = dlsym(lib, "res_query");
+    realressend = dlsym(lib, "res_send");
+    realresquerydomain = dlsym(lib, "res_querydomain");
+    realressearch = dlsym(lib, "res_search");
     #endif
     #ifdef USE_TOR_DNS
     realgethostbyname = dlsym(lib, "gethostbyname");
@@ -1493,11 +1504,90 @@ int res_query(RES_QUERY_SIGNATURE) {
     }
 
     /* Ensure we force using TCP for DNS queries by calling res_init
-       above */
-    res_init();
+       above if it has not already been called.*/
+    if (!(_res.options & RES_INIT) || !(_res.options & RES_USEVC))
+      res_init();
 
     /* Call normal res_query */
     rc = realresquery(dname, class, type, answer, anslen);
+
+   return(rc);
+}
+
+int res_querydomain(RES_QUERYDOMAIN_SIGNATURE) {
+    int rc;
+
+    show_msg(MSGDEBUG, "Got res_querydomain request\n");
+
+    /* See comment in close() */
+    if (!tsocks_init_complete) {
+      tsocks_init();
+    }
+
+    if (realresquerydomain == NULL) {
+        show_msg(MSGERR, "Unresolved symbol: res_querydomain\n");
+        return(-1);
+    }
+
+    /* Ensure we force using TCP for DNS queries by calling res_init
+       above if it has not already been called.*/
+    if (!(_res.options & RES_INIT) || !(_res.options & RES_USEVC))
+      res_init();
+
+    /* Call normal res_querydomain */
+    rc = realresquerydomain(name, domain, class, type, answer, anslen);
+
+   return(rc);
+}
+
+int res_search(RES_SEARCH_SIGNATURE) {
+    int rc;
+
+    show_msg(MSGDEBUG, "Got res_search request\n");
+
+    /* See comment in close() */
+    if (!tsocks_init_complete) {
+      tsocks_init();
+    }
+
+    if (realressearch == NULL) {
+        show_msg(MSGERR, "Unresolved symbol: res_search\n");
+        return(-1);
+    }
+
+    /* Ensure we force using TCP for DNS queries by calling res_init
+       above if it has not already been called.*/
+    if (!(_res.options & RES_INIT) || !(_res.options & RES_USEVC))
+      res_init();
+
+    /* Call normal res_search */
+    rc = realressearch(dname, class, type, answer, anslen);
+
+   return(rc);
+}
+
+int res_send(RES_SEND_SIGNATURE) {
+    int rc;
+
+    show_msg(MSGDEBUG, "Got res_send request\n");
+
+    /* See comment in close() */
+    if (!tsocks_init_complete) {
+      tsocks_init();
+    }
+
+    if (realressend == NULL) {
+        show_msg(MSGERR, "Unresolved symbol: res_send\n");
+        return(-1);
+    }
+
+    /* Ensure we force using TCP for DNS queries by calling res_init
+       above if it has not already been called.*/
+    if (!(_res.options & RES_INIT) || !(_res.options & RES_USEVC))
+      res_init();
+
+    /* Call normal res_send */
+    rc = realressend(msg, msglen, answer, anslen);
 
    return(rc);
 }
