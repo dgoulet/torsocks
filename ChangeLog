@@ -1,3 +1,17 @@
+Torsocks 1.0
+2008-XX-XX Robert Hogan <robert@roberthogan.net>
+    o Fix issue with poll(). Reported by Mike Perry.
+    o Handle premature call of symbols before pre-loaded.
+      Reported by Mike Perry using 'torsocks svn' on Fedora 10.
+    o Catch res_query, res_search, res_querydomain, and res_send and
+      try to ensure DNS requests using these API calls are transmitted
+      via TCP rather than UDP.
+    o Reject even locally-destined UDP messages, since these may be
+      DNS requests to a DNS proxy on an DSL router.
+    o Ensure torsocks.conf is in the expected place.
+    o Match tor's list of local subnets both in torsocks.conf and by
+      default.
+
 Torsocks 1.0-beta
 2008-10-26 Robert Hogan <robert@roberthogan.net>
   Housekeeping changes:
