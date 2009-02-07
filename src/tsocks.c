@@ -231,13 +231,6 @@ void tsocks_init(void) {
     realselect = dlsym(lib, "select");
     realpoll = dlsym(lib, "poll");
     #ifdef USE_TOR_DNS
-    realresinit = dlsym(lib, "res_init");
-    realresquery = dlsym(lib, "res_query");
-    realressend = dlsym(lib, "res_send");
-    realresquerydomain = dlsym(lib, "res_querydomain");
-    realressearch = dlsym(lib, "res_search");
-    #endif
-    #ifdef USE_TOR_DNS
     realgethostbyname = dlsym(lib, "gethostbyname");
     realgethostbyaddr = dlsym(lib, "gethostbyaddr");
     realgetaddrinfo = dlsym(lib, "getaddrinfo");
@@ -249,6 +242,15 @@ void tsocks_init(void) {
     lib = dlopen(LIBC, RTLD_LAZY);
     realclose = dlsym(lib, "close");
     dlclose(lib);
+    #ifdef USE_TOR_DNS
+    lib = dlopen(LIBRESOLV, RTLD_LAZY);
+    realresinit = dlsym(lib, "res_init");
+    realresquery = dlsym(lib, "res_query");
+    realressend = dlsym(lib, "res_send");
+    realresquerydomain = dlsym(lib, "res_querydomain");
+    realressearch = dlsym(lib, "res_search");
+    dlclose(lib);
+    #endif
 #endif
 #ifdef USE_TOR_DNS
     /* Unfortunately, we can't do this lazily because otherwise our mmap'd
@@ -350,24 +352,22 @@ int connect(CONNECT_SIGNATURE) {
                         "\n",
                      sock_type);
 
+    /* If this isn't an INET socket we can't  */
+    /* handle it, just call the real connect now        */
+    if ((connaddr->sin_family != AF_INET)) {
+        show_msg(MSGDEBUG, "Connection isn't a TCP stream ignoring\n");
+          return(realconnect(__fd, __addr, __len));
+    }
+
 #ifdef USE_TOR_DNS
-    /* If this a UDP socket with a non-local destination address  */
+    /* If this a UDP socket  */
     /* then we refuse it, since it is probably a DNS request      */
-    if ((connaddr->sin_family != AF_INET) ||
-        (sock_type != SOCK_STREAM)) {
-        show_msg(MSGDEBUG, "Connection is a UDP stream, may be a "
+    if ((sock_type != SOCK_STREAM)) {
+        show_msg(MSGERR, "Connection is a UDP stream, may be a "
                            "DNS request: rejecting.\n");
         return -1;
     }
 #endif
-
-      /* If this isn't an INET socket for a TCP stream we can't  */
-      /* handle it, just call the real connect now               */
-    if ((connaddr->sin_family != AF_INET) ||
-        (sock_type != SOCK_STREAM)) {
-        show_msg(MSGDEBUG, "Connection isn't a TCP stream ignoring\n");
-          return(realconnect(__fd, __addr, __len));
-    }
 
     /* If we haven't initialized yet, do it now */
     get_config();
@@ -1679,14 +1679,22 @@ ssize_t sendto(SENDTO_SIGNATURE)
                         "\n",
                     sock_type);
 
-    /* If this a UDP socket with a non-local destination address  */
+    /* If this isn't an INET socket we can't  */
+    /* handle it, just call the real connect now        */
+    if ((connaddr->sin_family != AF_INET)) {
+        show_msg(MSGDEBUG, "Connection isn't a TCP stream ignoring\n");
+          return(realconnect(__fd, __addr, __len));
+    }
+
+#ifdef USE_TOR_DNS
+    /* If this a UDP socket  */
     /* then we refuse it, since it is probably a DNS request      */
-    if ((connaddr->sin_family != AF_INET) ||
-        (sock_type != SOCK_STREAM)) {
-        show_msg(MSGDEBUG, "Connection is a UDP stream, may be a "
+    if ((sock_type != SOCK_STREAM)) {
+        show_msg(MSGERR, "Connection is a UDP stream, may be a "
                            "DNS request: rejecting.\n");
         return -1;
     }
+#endif
     return (ssize_t) realsendto(s, buf, len, flags, to, tolen);
 
 }
@@ -1724,14 +1732,22 @@ ssize_t sendmsg(SENDMSG_SIGNATURE)
                         "\n",
                     sock_type);
 
-    /* If this a UDP socket with a non-local destination address  */
+    /* If this isn't an INET socket we can't  */
+    /* handle it, just call the real connect now        */
+    if ((connaddr->sin_family != AF_INET)) {
+        show_msg(MSGDEBUG, "Connection isn't a TCP stream ignoring\n");
+          return(realconnect(__fd, __addr, __len));
+    }
+
+#ifdef USE_TOR_DNS
+    /* If this a UDP socket  */
     /* then we refuse it, since it is probably a DNS request      */
-    if ((connaddr->sin_family != AF_INET) ||
-        (sock_type != SOCK_STREAM)) {
-        show_msg(MSGDEBUG, "Connection is a UDP stream, may be a "
+    if ((sock_type != SOCK_STREAM)) {
+        show_msg(MSGERR, "Connection is a UDP stream, may be a "
                            "DNS request: rejecting.\n");
         return -1;
     }
+#endif
     return (ssize_t) realsendmsg(s, msg, flags);
 }
 
