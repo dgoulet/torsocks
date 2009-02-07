@@ -26,14 +26,17 @@ or launch pidgin by doing:
 
 The following applications are known to be compatible with usewithtor:
 
-Application   Comments 
-ssh
-telnet        (plaintext passwords are not recommended with Tor)
-pidgin
-kopete
-konversation
-claws-mail
-svn
+Type  Application   Comments
+COMM  ssh
+COMM  telnet        (plaintext passwords are not recommended with Tor)
+IM    pidgin
+IM    kopete
+IRC   konversation
+MAIL  claws-mail
+DEV   svn
+IRC   xchat
+IRC   irssi
+IRC   silc
 
 
 Differences between torsocks and tsocks
