@@ -1,6 +1,7 @@
 Torsocks 1.0
 2008-XX-XX Robert Hogan <robert@roberthogan.net>
-    o Fix issue with poll(). Reported by Mike Perry.
+    o Fix issue with poll(). We were looking for READ events rather than
+      POLLIN events. Reported by Mike Perry.
     o Handle premature call of symbols before pre-loaded.
       Reported by Mike Perry using 'torsocks svn' on Fedora 10.
     o Catch res_query, res_search, res_querydomain, and res_send and
@@ -11,6 +12,10 @@ Torsocks 1.0
     o Ensure torsocks.conf is in the expected place.
     o Match tor's list of local subnets both in torsocks.conf and by
       default.
+    o Ignore non-INET streams. Reject INET UDP streams. We were previously
+      rejecting anything that wasn't an INET stream, this prevented connect
+      calls of the PF_FILE type by applications such as xchat. Is there a
+      security issue here - applications bypassing TCP to leak user info?
 
 Torsocks 1.0-beta
 2008-10-26 Robert Hogan <robert@roberthogan.net>
