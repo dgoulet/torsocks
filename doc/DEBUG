@@ -1,4 +1,4 @@
 gdb ./gethostbyaddr
-set environment LD_PRELOAD /lib/libtsocks.so.1
+set environment LD_PRELOAD /usr/local/lib/torsocks/libtorsocks.so
 b our_gethostbyaddr
 run
