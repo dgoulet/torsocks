@@ -28,7 +28,7 @@
 /*
 
     VALIDATECONF - Part of the tsocks package
-		   This utility can be used to validate the tsocks.conf
+		   This utility can be used to validate the torsocks.conf
 		   configuration file
 
     Copyright (C) 2000 Shaun Clowes 
