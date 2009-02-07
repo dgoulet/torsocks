@@ -1,5 +1,17 @@
-Current prioritized items:
+Version 1.0
+-----------
 
+- is_local is fishy. investigate.
+- Resolve race condition where hooks are called before dlsym'd. - DONE
+- Need to ensure even locally destined dns requests are caught and handled
+  appropriately.
+    Do we need to detect TCP dns requests in connect() to ensure
+    they are rejected/re-routed?
+    Where do such requests come from? res_*?
+    How can we re-route them to Tor? DNSPort? 
+
+Version 1.1
+-----------
 * What about the isc library calls like res_init and so on?  How widely are
   they use?  Does this present a more elegant way to implement this stuff?
 
@@ -9,6 +21,8 @@ Current prioritized items:
   to monitor torsocks for errors.
 
 * Merge dsocks so we support BSD (http://monkey.org/~dugsong/dsocks/)
+
+--------------------------------------------------------------------------
 
 DONE:
 
