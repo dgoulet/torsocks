@@ -129,6 +129,11 @@ if test "$tempdso" = "no"; then
                "Check your system for libc.so and/or libdl.so."))
 fi
 
+AC_CHECK_LIB(resolv, res_query, [ tempres="no" ],tempres="yes")
+if test "$tempres" = "no"; then
+  AC_DEFINE([SUPPORT_RES_API],[],[Support the res_query family of calls])
+fi
+
 dnl If we're using gcc here define _GNU_SOURCE
 AC_MSG_CHECKING(for RTLD_NEXT from dlfcn.h)
 AC_EGREP_CPP(yes,
@@ -239,6 +244,21 @@ if test "${oldmethod}" = "yes"; then
   fi
 
   AC_MSG_RESULT($LIBCONNECT)
+
+  dnl Now find the resolve library we need
+  AC_MSG_CHECKING(location of libresolv.so)
+  LIBRESOLV=
+  for DIR in '/lib' '/usr/lib'; do
+    if test "${LIBRESOLV}" = ""; then
+      LIBRESOLV=`$FIND $DIR -name "libresolv.so.?" 2>/dev/null | $TAIL -1`
+    fi
+  done
+  AC_DEFINE_UNQUOTED([LIBRESOLV],["${LIBRESOLV}"],[Description])
+  if test "${LIBRESOLV}" = ""; then
+     AC_MSG_ERROR("not found!")
+  fi
+
+  AC_MSG_RESULT($LIBRESOLV)
 
   dnl close() should be in libc, find it
   AC_MSG_CHECKING(location of libc.so)
