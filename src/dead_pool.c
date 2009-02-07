@@ -107,7 +107,7 @@ init_pool(unsigned int pool_size, struct in_addr deadrange_base,
         return NULL;
     }
 
-    show_msg(MSGWARN, "init_pool: sockshost %s ", sockshost);
+    show_msg(MSGWARN, "init_pool: sockshost %s \n", sockshost);
 
     /* Initialize the dead_pool structure */
 #ifdef HAVE_INET_ATON
