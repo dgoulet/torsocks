@@ -84,7 +84,7 @@ const char *progname = "libtorsocks";         /* Name used in err msgs    */
 #include "dead_pool.h"
 
 /* Global Declarations */
-#ifdef USE_TOR_DNS
+#ifdef SUPPORT_RES_API
 static int (*realresinit)(void);
 static int (*realresquery)(RES_QUERY_SIGNATURE);
 static int (*realressearch)(RES_SEARCH_SIGNATURE);
@@ -118,12 +118,14 @@ int select(SELECT_SIGNATURE);
 int poll(POLL_SIGNATURE);
 int close(CLOSE_SIGNATURE);
 int getpeername(GETPEERNAME_SIGNATURE);
-#ifdef USE_TOR_DNS
+#ifdef SUPPORT_RES_API
 int res_init(void);
 int res_query(RES_QUERY_SIGNATURE);
 int res_search(RES_SEARCH_SIGNATURE);
 int res_querydomain(RES_QUERYDOMAIN_SIGNATURE);
 int res_send(RES_SEND_SIGNATURE);
+#endif
+#ifdef USE_TOR_DNS
 struct hostent *gethostbyname(GETHOSTBYNAME_SIGNATURE);
 struct hostent *gethostbyaddr(GETHOSTBYADDR_SIGNATURE);
 int getaddrinfo(GETADDRINFO_SIGNATURE);
@@ -199,7 +201,7 @@ void tsocks_init(void) {
       LOAD_ERROR("close", MSGERR);
     if ((realgetpeername = dlsym(RTLD_NEXT, "getpeername")) == NULL)
       LOAD_ERROR("getpeername", MSGERR);
-    #ifdef USE_TOR_DNS
+    #ifdef SUPPORT_RES_API
     if ((realresinit = dlsym(RTLD_NEXT, "res_init")) == NULL)
       LOAD_ERROR("res_init", MSGERR);
     if ((realresquery = dlsym(RTLD_NEXT, "res_query")) == NULL)
@@ -210,6 +212,8 @@ void tsocks_init(void) {
       LOAD_ERROR("res_querydomain", MSGERR);
     if ((realressend = dlsym(RTLD_NEXT, "res_send")) == NULL)
       LOAD_ERROR("res_send", MSGERR);
+    #endif
+    #ifdef USE_TOR_DNS
     if ((realgethostbyname = dlsym(RTLD_NEXT, "gethostbyname")) == NULL)
       LOAD_ERROR("gethostbyname", MSGERR);
     if ((realgethostbyaddr = dlsym(RTLD_NEXT, "gethostbyaddr")) == NULL)
@@ -242,7 +246,7 @@ void tsocks_init(void) {
     lib = dlopen(LIBC, RTLD_LAZY);
     realclose = dlsym(lib, "close");
     dlclose(lib);
-    #ifdef USE_TOR_DNS
+    #ifdef SUPPORT_RES_API
     lib = dlopen(LIBRESOLV, RTLD_LAZY);
     realresinit = dlsym(lib, "res_init");
     realresquery = dlsym(lib, "res_query");
@@ -1462,7 +1466,7 @@ static int read_socksv4_req(struct connreq *conn) {
    return(0);
 }
 
-#ifdef USE_TOR_DNS
+#ifdef SUPPORT_RES_API
 int res_init(void) {
     int rc;
 
@@ -1588,6 +1592,7 @@ int res_send(RES_SEND_SIGNATURE) {
 
    return(rc);
 }
+#endif
 
 static int deadpool_init(void)
 {
@@ -1750,6 +1755,4 @@ ssize_t sendmsg(SENDMSG_SIGNATURE)
 #endif
     return (ssize_t) realsendmsg(s, msg, flags);
 }
-
-#endif 
 

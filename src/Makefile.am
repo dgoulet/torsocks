@@ -1,6 +1,6 @@
 # Makefile used by configure to create real Makefile
 
-LIBS = -ldl -lc
+LIBS = -ldl -lc -lresolv
 libdir = @prefix@/lib/torsocks
 
 # Install helper programs
