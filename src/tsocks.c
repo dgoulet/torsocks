@@ -1683,7 +1683,7 @@ ssize_t sendto(SENDTO_SIGNATURE)
     /* handle it, just call the real connect now        */
     if ((connaddr->sin_family != AF_INET)) {
         show_msg(MSGDEBUG, "Connection isn't a TCP stream ignoring\n");
-          return(realconnect(__fd, __addr, __len));
+        return (ssize_t) realsendto(s, buf, len, flags, to, tolen);
     }
 
 #ifdef USE_TOR_DNS
@@ -1736,7 +1736,7 @@ ssize_t sendmsg(SENDMSG_SIGNATURE)
     /* handle it, just call the real connect now        */
     if ((connaddr->sin_family != AF_INET)) {
         show_msg(MSGDEBUG, "Connection isn't a TCP stream ignoring\n");
-          return(realconnect(__fd, __addr, __len));
+        return (ssize_t) realsendmsg(s, msg, flags);
     }
 
 #ifdef USE_TOR_DNS
