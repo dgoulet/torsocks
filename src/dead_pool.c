@@ -725,7 +725,7 @@ our_getaddrinfo(dead_pool *pool, const char *node, const char *service,
     /* TODO: work out what to do with AF_INET6 requests */
 
 #ifdef HAVE_INET_ATON
-    if(inet_aton(node, &addr) == 0) {
+    if(node && inet_aton(node, &addr) == 0) {
 #elif defined(HAVE_INET_ADDR)
     /* If we're stuck with inet_addr, then getaddrinfo() won't work 
        properly with 255.255.255.255 (= -1).  There's not much we can
