@@ -9,6 +9,7 @@ Version 1.0
     they are rejected/re-routed?
     Where do such requests come from? res_*?
     How can we re-route them to Tor? DNSPort? 
+- kill ICMP as well.
 
 Version 1.1
 -----------

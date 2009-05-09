@@ -21,14 +21,14 @@
   <kdevautoproject>
     <general>
       <activetarget>src/torsocks</activetarget>
-      <useconfiguration>default</useconfiguration>
+      <useconfiguration>debug</useconfiguration>
     </general>
     <run>
-      <mainprogram>/home/robert/Development/torsocks</mainprogram>
+      <mainprogram>/home/robert/Development/torsocks-svn/torsocks/debug/</mainprogram>
       <terminal>true</terminal>
-      <programargs/>
-      <globaldebugarguments/>
-      <globalcwd>/home/robert/Development/torsocks</globalcwd>
+      <programargs>ping google.com</programargs>
+      <globaldebugarguments>ping www.google.com</globaldebugarguments>
+      <globalcwd>/home/robert/Development/torsocks-svn/torsocks/</globalcwd>
       <useglobalprogram>true</useglobalprogram>
       <autocompile>false</autocompile>
       <autoinstall>false</autoinstall>

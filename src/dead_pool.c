@@ -289,9 +289,6 @@ build_socks5_resolve_ptr_request(char **out, const void *_addr)
   set_uint32((*out)+4, addr->s_addr);/*IP*/
   set_uint16((*out)+4+4, 0); /* port */
 
-//   memcpy((*out)+4, &addr.s_addr,4); /*IP*/
-//   memcpy((*out)+4+4, *(uint32_t)0, 2); /* port */
-
   return len;
 }
 
@@ -592,7 +589,6 @@ our_gethostbyaddr(dead_pool *pool, const void *_addr, socklen_t len, int type)
   else
     he.h_name = inet_ntoa(*((struct in_addr *)addr));
 
-//   aliases = malloc(sizeof(char *));
   aliases[0] = NULL;
   aliases[1] = NULL;
 

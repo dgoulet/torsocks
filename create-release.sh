@@ -1,9 +1,11 @@
-#cvs -z3 -d:ext:hoganrobert@tork.cvs.sourceforge.net:/cvsroot/tork
-# import -m "Initial Load" torsocks hoganrobert initial
+# Make tag:
+# svn copy https://torsocks.googlecode.com/svn/trunk \
+#          https://torsocks.googlecode.com/svn/tags/v1_0_gamma \
+#          -m "tag for torsocks release v1.0 gamma"
 
-export VN=1.0-beta
+export VN=1.0-gamma
 export VER=torsocks-$VN
-export TAG=v1_0_beta
+export TAG=v1_0_gamma
 cd ..
 TOPDIR=$PWD
 mkdir TorsocksReleases
