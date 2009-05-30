@@ -73,7 +73,6 @@ const char *progname = "libtorsocks";         /* Name used in err msgs    */
 #include <sys/socket.h>
 #include <string.h>
 #include <strings.h>
-#include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/poll.h>
