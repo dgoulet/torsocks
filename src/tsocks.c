@@ -367,8 +367,8 @@ int connect(CONNECT_SIGNATURE) {
     /* If this a UDP socket  */
     /* then we refuse it, since it is probably a DNS request      */
     if ((sock_type != SOCK_STREAM)) {
-        show_msg(MSGERR, "Connection is a UDP stream, may be a "
-                           "DNS request: rejecting.\n");
+        show_msg(MSGERR, "connect: Connection is a UDP or ICMP stream, may be a "
+                           "DNS request or other form of leak: rejecting.\n");
         return -1;
     }
 #endif
@@ -1695,11 +1695,12 @@ ssize_t sendto(SENDTO_SIGNATURE)
     /* If this a UDP socket  */
     /* then we refuse it, since it is probably a DNS request      */
     if ((sock_type != SOCK_STREAM)) {
-        show_msg(MSGERR, "Connection is a UDP stream, may be a "
-                           "DNS request: rejecting.\n");
+        show_msg(MSGERR, "sendto: Connection is a UDP or ICMP stream, may be a "
+                           "DNS request or other form of leak: rejecting.\n");
         return -1;
     }
 #endif
+
     return (ssize_t) realsendto(s, buf, len, flags, to, tolen);
 
 }
@@ -1748,8 +1749,8 @@ ssize_t sendmsg(SENDMSG_SIGNATURE)
     /* If this a UDP socket  */
     /* then we refuse it, since it is probably a DNS request      */
     if ((sock_type != SOCK_STREAM)) {
-        show_msg(MSGERR, "Connection is a UDP stream, may be a "
-                           "DNS request: rejecting.\n");
+        show_msg(MSGERR, "sendmsg: Connection is a UDP or ICMP stream, may be a "
+                           "DNS request or other form of leak: rejecting.\n");
         return -1;
     }
 #endif
