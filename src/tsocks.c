@@ -284,9 +284,9 @@ static int get_environment() {
 #ifndef ALLOW_MSG_OUTPUT
    set_log_options(-1, (char *)stderr, 0);
 #else
-   if ((env = getenv("TSOCKS_DEBUG")))
+   if ((env = getenv("TORSOCKS_DEBUG")))
       loglevel = atoi(env);
-   if (((env = getenv("TSOCKS_DEBUG_FILE"))) && !suid)
+   if (((env = getenv("TORSOCKS_DEBUG_FILE"))) && !suid)
       logfile = env;
    set_log_options(loglevel, logfile, 1);
 #endif
@@ -305,7 +305,7 @@ static int get_config () {
     /* Determine the location of the config file */
   #ifdef ALLOW_ENV_CONFIG
     if (!suid) 
-        conffile = getenv("TSOCKS_CONF_FILE");
+        conffile = getenv("TORSOCKS_CONF_FILE");
   #endif
     
     /* Read in the config file */
@@ -1337,20 +1337,20 @@ static int read_socksv5_method(struct connreq *conn) {
         nixuser = getpwuid(getuid());
 
         if (((uname = conn->path->defuser) == NULL) &&
-          ((uname = getenv("TSOCKS_USERNAME")) == NULL) &&
+          ((uname = getenv("TORSOCKS_USERNAME")) == NULL) &&
             ((uname = (nixuser == NULL ? NULL : nixuser->pw_name)) == NULL)) {
             show_msg(MSGERR, "Could not get SOCKS username from "
                     "local passwd file, torsocks.conf "
-                    "or $TSOCKS_USERNAME to authenticate "
+                    "or $TORSOCKS_USERNAME to authenticate "
                     "with");
           conn->state = FAILED;
             return(ECONNREFUSED);
         }
 
-        if (((upass = getenv("TSOCKS_PASSWORD")) == NULL) &&
+        if (((upass = getenv("TORSOCKS_PASSWORD")) == NULL) &&
           ((upass = conn->path->defpass) == NULL)) {
             show_msg(MSGERR, "Need a password in torsocks.conf or "
-                    "$TSOCKS_PASSWORD to authenticate with");
+                    "$TORSOCKS_PASSWORD to authenticate with");
           conn->state = FAILED;
             return(ECONNREFUSED);
         }
