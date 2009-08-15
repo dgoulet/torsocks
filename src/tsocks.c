@@ -50,6 +50,14 @@
 /* PreProcessor Defines */
 #include <config.h>
 
+/*Defining _NONSTD_SOURCE causes library and kernel calls to behave as closely
+to Mac OS X 10.3's library and kernel calls as possible.*/
+#if defined(__APPLE__) || defined(__darwin__)
+#define _NONSTD_SOURCE 1
+#include <sys/socket.h>
+#endif
+
+
 #ifdef USE_GNU_SOURCE
 #define _GNU_SOURCE
 #endif
@@ -63,7 +71,6 @@ const char *progname = "libtorsocks";         /* Name used in err msgs    */
 #include <unistd.h>
 #include <dlfcn.h>
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <string.h>
 #include <strings.h>
 #include <netinet/in.h>
@@ -75,6 +82,9 @@ const char *progname = "libtorsocks";         /* Name used in err msgs    */
 #include <fcntl.h>
 #include <common.h>
 #include <stdarg.h>
+#if !defined(__APPLE__) && !defined(__darwin__)
+#include <sys/socket.h>
+#endif
 #ifdef USE_TOR_DNS
 #include <resolv.h>
 #endif
@@ -89,21 +99,41 @@ static int (*realresquery)(RES_QUERY_SIGNATURE);
 static int (*realressearch)(RES_SEARCH_SIGNATURE);
 static int (*realressend)(RES_SEND_SIGNATURE);
 static int (*realresquerydomain)(RES_QUERYDOMAIN_SIGNATURE);
-#endif
+#endif /*SUPPORT_RES_API*/
 #ifdef USE_TOR_DNS
 static dead_pool *pool = NULL;
 static struct hostent *(*realgethostbyname)(GETHOSTBYNAME_SIGNATURE);
 static struct hostent *(*realgethostbyaddr)(GETHOSTBYADDR_SIGNATURE);
 int (*realgetaddrinfo)(GETADDRINFO_SIGNATURE);
 static struct hostent *(*realgetipnodebyname)(GETIPNODEBYNAME_SIGNATURE);
-static ssize_t *(*realsendto)(SENDTO_SIGNATURE);
-static ssize_t *(*realsendmsg)(SENDMSG_SIGNATURE);
+static ssize_t (*realsendto)(SENDTO_SIGNATURE);
+static ssize_t (*realsendmsg)(SENDMSG_SIGNATURE);
+#if defined(__APPLE__) || defined(__darwin__)
+static ssize_t (*realsendto_unix2003)(SENDTO_SIGNATURE);
+static ssize_t (*realsendto_nocancel)(SENDTO_SIGNATURE);
+static ssize_t (*realsendmsg_unix2003)(SENDMSG_SIGNATURE);
+static ssize_t (*realsendmsg_nocancel)(SENDMSG_SIGNATURE);
 #endif
+#endif /*USE_TOR_DNS*/
 int (*realconnect)(CONNECT_SIGNATURE);
 static int (*realselect)(SELECT_SIGNATURE);
 static int (*realpoll)(POLL_SIGNATURE);
 int (*realclose)(CLOSE_SIGNATURE);
 static int (*realgetpeername)(GETPEERNAME_SIGNATURE);
+#if defined(__APPLE__) || defined(__darwin__)
+static int (*realconnect_unix2003)(CONNECT_SIGNATURE);
+static int (*realconnect_nocancel)(CONNECT_SIGNATURE);
+static int (*realselect_darwinextsn)(SELECT_SIGNATURE);
+static int (*realselect_darwinextsn_nocancel)(SELECT_SIGNATURE);
+static int (*realselect_unix2003)(SELECT_SIGNATURE);
+static int (*realselect_nocancel)(SELECT_SIGNATURE);
+static int (*realpoll_unix2003)(POLL_SIGNATURE);
+static int (*realpoll_nocancel)(POLL_SIGNATURE);
+static int (*realclose_unix2003)(CLOSE_SIGNATURE);
+static int (*realclose_nocancel)(CLOSE_SIGNATURE);
+static int (*realgetpeername_unix2003)(GETPEERNAME_SIGNATURE);
+#endif
+
 static struct parsedfile *config;
 static struct connreq *requests = NULL;
 static int suid = 0;
@@ -117,6 +147,20 @@ int select(SELECT_SIGNATURE);
 int poll(POLL_SIGNATURE);
 int close(CLOSE_SIGNATURE);
 int getpeername(GETPEERNAME_SIGNATURE);
+#if defined(__APPLE__) || defined(__darwin__)
+int connect_unix2003(CONNECT_SIGNATURE) __asm("_connect$UNIX2003");
+int connect_nocancel(CONNECT_SIGNATURE) __asm("_connect$NOCANCEL$UNIX2003");
+int select_darwinextsn(SELECT_SIGNATURE) __asm("_select$DARWIN_EXTSN");
+int select_darwinextsn_nocancel(SELECT_SIGNATURE) __asm("_select$DARWIN_EXTSN$NOCANCEL");
+int select_unix2003(SELECT_SIGNATURE) __asm("_select$UNIX2003");
+int select_nocancel(SELECT_SIGNATURE) __asm("_select$NOCANCEL$UNIX2003");
+int poll_unix2003(POLL_SIGNATURE) __asm("_poll$UNIX2003");
+int poll_nocancel(POLL_SIGNATURE) __asm("_poll$NOCANCEL$UNIX2003");
+int close_unix2003(CLOSE_SIGNATURE) __asm("_close$UNIX2003");
+int close_nocancel(CLOSE_SIGNATURE) __asm("_close$NOCANCEL$UNIX2003");
+int getpeername_unxi2003(GETPEERNAME_SIGNATURE) __asm("_getpeername$UNIX2003");
+#endif
+
 #ifdef SUPPORT_RES_API
 int res_init(void);
 int res_query(RES_QUERY_SIGNATURE);
@@ -131,9 +175,23 @@ int getaddrinfo(GETADDRINFO_SIGNATURE);
 struct hostent *getipnodebyname(GETIPNODEBYNAME_SIGNATURE);
 ssize_t sendto(SENDTO_SIGNATURE);
 ssize_t sendmsg(SENDMSG_SIGNATURE);
+#if defined(__APPLE__) || defined(__darwin__)
+ssize_t sendto_unix2003(SENDTO_SIGNATURE) __asm("_sendto$UNIX2003");
+ssize_t sendto_nocancel(SENDTO_SIGNATURE) __asm("_sendto$NOCANCEL$UNIX2003");
+ssize_t sendmsg_unix2003(SENDMSG_SIGNATURE) __asm("_sendmsg$UNIX2003");
+ssize_t sendmsg_nocancel(SENDMSG_SIGNATURE) __asm("_sendmsg$NOCANCEL$UNIX2003");
 #endif
+#endif /*USE_TOR_DNS*/
 
 /* Private Function Prototypes */
+static int tsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIGNATURE));
+static int tsocks_select_guts(SELECT_SIGNATURE, int (*original_select)(SELECT_SIGNATURE));
+static int tsocks_poll_guts(POLL_SIGNATURE, int (*original_poll)(POLL_SIGNATURE));
+static int tsocks_close_guts(CLOSE_SIGNATURE, int (*original_close)(CLOSE_SIGNATURE));
+static int tsocks_getpeername_guts(GETPEERNAME_SIGNATURE, int (*original_getpeername)(GETPEERNAME_SIGNATURE));
+static ssize_t tsocks_sendto_guts(SENDTO_SIGNATURE, ssize_t (*original_sendto)(SENDTO_SIGNATURE));
+static ssize_t tsocks_sendmsg_guts(SENDMSG_SIGNATURE, ssize_t (*original_sendmsg)(SENDMSG_SIGNATURE));
+
 static int get_config();
 static int get_environment();
 static int connect_server(struct connreq *conn);
@@ -176,11 +234,17 @@ void tsocks_init(void) {
       return;
     }
 
+    show_msg(MSGWARN, "In tsocks_init \n");
+
+    get_environment();
+    get_config();
+
+    show_msg(MSGWARN, "In tsocks_init after env/config\n");
+
 #ifdef USE_OLD_DLSYM
     void *lib;
 #endif
 
-    show_msg(MSGWARN, "In tsocks_init \n");
     /* We could do all our initialization here, but to be honest */
     /* most programs that are run won't use our services, so     */
     /* we do our general initialization on first call            */
@@ -192,14 +256,51 @@ void tsocks_init(void) {
 #ifndef USE_OLD_DLSYM
     if ((realconnect = dlsym(RTLD_NEXT, "connect")) == NULL)
       LOAD_ERROR("connect", MSGERR);
+#if defined(__APPLE__) || defined(__darwin__)
+    if ((realconnect_unix2003 = dlsym(RTLD_NEXT, "connect$UNIX2003")) == NULL)
+      LOAD_ERROR("connect$UNIX2003", MSGERR);
+    if ((realconnect_nocancel = dlsym(RTLD_NEXT, "connect$NOCANCEL$UNIX2003")) == NULL)
+      LOAD_ERROR("connect$NOCANCEL$UNIX2003", MSGERR);
+#endif
+
     if ((realselect = dlsym(RTLD_NEXT, "select")) == NULL)
       LOAD_ERROR("select", MSGERR);
+#if defined(__APPLE__) || defined(__darwin__)
+    if ((realselect_darwinextsn = dlsym(RTLD_NEXT, "select$DARWIN_EXTSN")) == NULL)
+      LOAD_ERROR("select$DARWIN_EXTSN", MSGERR);
+    if ((realselect_darwinextsn_nocancel = dlsym(RTLD_NEXT, "select$DARWIN_EXTSN$NOCANCEL")) == NULL)
+      LOAD_ERROR("select$DARWIN_EXTSN$NOCANCEL", MSGERR);
+    if ((realselect_unix2003 = dlsym(RTLD_NEXT, "select$UNIX2003")) == NULL)
+      LOAD_ERROR("select$UNIX2003", MSGERR);
+    if ((realselect_nocancel = dlsym(RTLD_NEXT, "select$NOCANCEL$UNIX2003")) == NULL)
+      LOAD_ERROR("select$NOCANCEL$UNIX2003", MSGERR);
+#endif
+
     if ((realpoll = dlsym(RTLD_NEXT, "poll")) == NULL)
       LOAD_ERROR("poll", MSGERR);
+#if defined(__APPLE__) || defined(__darwin__)
+    if ((realpoll_unix2003 = dlsym(RTLD_NEXT, "poll$UNIX2003")) == NULL)
+      LOAD_ERROR("poll$UNIX2003", MSGERR);
+    if ((realpoll_nocancel = dlsym(RTLD_NEXT, "poll$NOCANCEL$UNIX2003")) == NULL)
+      LOAD_ERROR("poll$NOCANCEL$UNIX2003", MSGERR);
+#endif
+
     if ((realclose = dlsym(RTLD_NEXT, "close")) == NULL)
       LOAD_ERROR("close", MSGERR);
+#if defined(__APPLE__) || defined(__darwin__)
+    if ((realclose_unix2003 = dlsym(RTLD_NEXT, "close$UNIX2003")) == NULL)
+      LOAD_ERROR("close$UNIX2003", MSGERR);
+    if ((realclose_nocancel = dlsym(RTLD_NEXT, "close$NOCANCEL$UNIX2003")) == NULL)
+      LOAD_ERROR("close$NOCANCEL$UNIX2003", MSGERR);
+#endif
+
     if ((realgetpeername = dlsym(RTLD_NEXT, "getpeername")) == NULL)
       LOAD_ERROR("getpeername", MSGERR);
+#if defined(__APPLE__) || defined(__darwin__)
+    if ((realgetpeername_unix2003 = dlsym(RTLD_NEXT, "getpeername$UNIX2003")) == NULL)
+      LOAD_ERROR("getpeername$UNIX2003", MSGERR);
+#endif
+
     #ifdef SUPPORT_RES_API
     if ((realresinit = dlsym(RTLD_NEXT, "res_init")) == NULL)
       LOAD_ERROR("res_init", MSGERR);
@@ -223,11 +324,25 @@ void tsocks_init(void) {
        available.*/
     if ((realgetipnodebyname = dlsym(RTLD_NEXT, "getipnodebyname")) == NULL)
       LOAD_ERROR("getipnodebyname", MSGWARN);
+
     if ((realsendto = dlsym(RTLD_NEXT, "sendto")) == NULL)
       LOAD_ERROR("sendto", MSGERR);
+#if defined(__APPLE__) || defined(__darwin__)
+    if ((realsendto_unix2003 = dlsym(RTLD_NEXT, "sendto$UNIX2003")) == NULL)
+      LOAD_ERROR("sendto$UNIX2003", MSGERR);
+    if ((realsendto_nocancel = dlsym(RTLD_NEXT, "sendto$NOCANCEL$UNIX2003")) == NULL)
+      LOAD_ERROR("sendto$NOCANCEL$UNIX2003", MSGERR);
+#endif
+
     if ((realsendmsg = dlsym(RTLD_NEXT, "sendmsg")) == NULL)
       LOAD_ERROR("sendmsg", MSGERR);
-    #endif
+#if defined(__APPLE__) || defined(__darwin__)
+    if ((realsendmsg_unix2003 = dlsym(RTLD_NEXT, "sendmsg$UNIX2003")) == NULL)
+      LOAD_ERROR("sendmsg$UNIX2003", MSGERR);
+    if ((realsendmsg_nocancel = dlsym(RTLD_NEXT, "sendmsg$NOCANCEL$UNIX2003")) == NULL)
+      LOAD_ERROR("sendmsg$NOCANCEL$UNIX2003", MSGERR);
+#endif
+    #endif /*USE_TOR_DNS*/
 #else
     lib = dlopen(LIBCONNECT, RTLD_LAZY);
     realconnect = dlsym(lib, "connect");
@@ -261,6 +376,7 @@ void tsocks_init(void) {
     deadpool_init();
 #endif
     tsocks_init_complete=1;
+    show_msg(MSGWARN, "Exit tsocks_init \n");
 }
 
 static int get_environment() {
@@ -314,19 +430,123 @@ static int get_config () {
     return(0);
 }
 
-int connect(CONNECT_SIGNATURE) {
+#define PATCH_CONNECT(funcname, symbolname) \
+  int funcname(CONNECT_SIGNATURE) { \
+    if (!real ## funcname) { \
+      dlerror(); \
+      if ((real ## funcname = dlsym(RTLD_NEXT, symbolname)) == NULL) \
+        LOAD_ERROR(symbolname, MSGERR); \
+    } \
+    return tsocks_connect_guts(__fd, __addr, __len, real ## funcname); \
+  }
+PATCH_CONNECT(connect, "connect")
+#if defined(__APPLE__) || defined(__darwin__)
+PATCH_CONNECT(connect_unix2003, "conncect$UNIX2003")
+PATCH_CONNECT(connect_nocancel, "conncect$NOCANCEL$UNIX2003")
+#endif
+
+#define PATCH_CLOSE(funcname, symbolname) \
+  int funcname(CLOSE_SIGNATURE) { \
+    if (!real ## funcname) { \
+      dlerror(); \
+      if ((real ## funcname = dlsym(RTLD_NEXT, symbolname)) == NULL) \
+        LOAD_ERROR(symbolname, MSGERR); \
+    } \
+    return tsocks_close_guts(fd, real ## funcname); \
+  }
+PATCH_CLOSE(close, "close")
+#if defined(__APPLE__) || defined(__darwin__)
+PATCH_CLOSE(close_unix2003, "close$UNIX2003")
+PATCH_CLOSE(close_nocancel, "close$NOCANCEL$UNIX2003")
+#endif
+
+#define PATCH_SELECT(funcname, symbolname) \
+  int funcname(SELECT_SIGNATURE) { \
+    if (!real ## funcname) { \
+      dlerror(); \
+      if ((real ## funcname = dlsym(RTLD_NEXT, symbolname)) == NULL) \
+        LOAD_ERROR(symbolname, MSGERR); \
+    } \
+    return tsocks_select_guts(n, readfds, writefds, exceptfds, timeout, real ## funcname); \
+  }
+PATCH_SELECT(select, "select")
+#if defined(__APPLE__) || defined(__darwin__)
+PATCH_SELECT(select_darwinextsn, "select$DARWIN_EXTSN")
+PATCH_SELECT(select_darwinextsn_nocancel, "select$DARWIN_EXTSN$NOCANCEL")
+PATCH_SELECT(select_unix2003, "select$UNIX2003")
+PATCH_SELECT(select_nocancel, "select$NOCANCEL$UNIX2003")
+#endif
+
+#define PATCH_POLL(funcname, symbolname) \
+  int funcname(POLL_SIGNATURE) { \
+    if (!real ## funcname) { \
+      dlerror(); \
+      if ((real ## funcname = dlsym(RTLD_NEXT, symbolname)) == NULL) \
+        LOAD_ERROR(symbolname, MSGERR); \
+    } \
+    return tsocks_poll_guts(ufds, nfds, timeout, real ## funcname); \
+  }
+PATCH_POLL(poll, "poll")
+#if defined(__APPLE__) || defined(__darwin__)
+PATCH_POLL(poll_unix2003, "poll$UNIX2003")
+PATCH_POLL(poll_nocancel, "poll$NOCANCEL$UNIX2003")
+#endif
+
+#define PATCH_GETPEERNAME(funcname, symbolname) \
+  int funcname(GETPEERNAME_SIGNATURE) { \
+    if (!real ## funcname) { \
+      dlerror(); \
+      if ((real ## funcname = dlsym(RTLD_NEXT, symbolname)) == NULL) \
+        LOAD_ERROR(symbolname, MSGERR); \
+    } \
+    return tsocks_getpeername_guts(__fd, __name, __namelen, real ## funcname); \
+  }
+PATCH_GETPEERNAME(getpeername, "getpeername")
+#if defined(__APPLE__) || defined(__darwin__)
+PATCH_GETPEERNAME(getpeername_unix2003, "getpeername$UNIX2003")
+#endif
+
+#define PATCH_SENDTO(funcname, symbolname) \
+  ssize_t funcname(SENDTO_SIGNATURE) { \
+    if (!real ## funcname) { \
+      dlerror(); \
+      if ((real ## funcname = dlsym(RTLD_NEXT, symbolname)) == NULL) \
+        LOAD_ERROR(symbolname, MSGERR); \
+    } \
+    return tsocks_sendto_guts(s, buf, len, flags, to, tolen, real ## funcname); \
+  }
+PATCH_SENDTO(sendto, "sendto")
+#if defined(__APPLE__) || defined(__darwin__)
+PATCH_SENDTO(sendto_unix2003, "sendto$UNIX2003")
+PATCH_SENDTO(sendto_nocancel, "sendto$NOCANCEL$UNIX2003")
+#endif
+
+#define PATCH_SENDMSG(funcname, symbolname) \
+  ssize_t funcname(SENDMSG_SIGNATURE) { \
+    if (!real ## funcname) { \
+      dlerror(); \
+      if ((real ## funcname = dlsym(RTLD_NEXT, symbolname)) == NULL) \
+        LOAD_ERROR(symbolname, MSGERR); \
+    } \
+    return tsocks_sendmsg_guts(s, msg, flags, real ## funcname); \
+  }
+PATCH_SENDMSG(sendmsg, "sendmsg")
+#if defined(__APPLE__) || defined(__darwin__)
+PATCH_SENDMSG(sendmsg_unix2003, "sendmsg$UNIX2003")
+PATCH_SENDMSG(sendmsg_nocancel, "sendmsg$NOCANCEL$UNIX2003")
+#endif
+
+int tsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIGNATURE)) {
     struct sockaddr_in *connaddr;
     struct sockaddr_in peer_address;
     struct sockaddr_in server_address;
     int gotvalidserver = 0, rc;
-    unsigned int namelen = sizeof(peer_address);
+    socklen_t namelen = sizeof(peer_address);
     int sock_type = -1;
-    unsigned int sock_type_len = sizeof(sock_type);
+    socklen_t sock_type_len = sizeof(sock_type);
     int res = -1;
     struct serverent *path;
     struct connreq *newconn;
-
-    get_environment();
 
     /* See comment in close() */
     if (!tsocks_init_complete) {
@@ -334,7 +554,7 @@ int connect(CONNECT_SIGNATURE) {
     }
 
     /* If the real connect doesn't exist, we're stuffed */
-    if (realconnect == NULL) {
+    if (original_connect == NULL) {
         show_msg(MSGERR, "Unresolved symbol: connect\n");
         return(-1);
     }
@@ -359,7 +579,7 @@ int connect(CONNECT_SIGNATURE) {
     /* handle it, just call the real connect now        */
     if ((connaddr->sin_family != AF_INET)) {
         show_msg(MSGDEBUG, "Connection isn't a TCP stream ignoring\n");
-          return(realconnect(__fd, __addr, __len));
+          return(original_connect(__fd, __addr, __len));
     }
 
 #ifdef USE_TOR_DNS
@@ -372,7 +592,7 @@ int connect(CONNECT_SIGNATURE) {
     }
 #endif
 
-    /* If we haven't initialized yet, do it now */
+    // /* If we haven't initialized yet, do it now */
     get_config();
 
     /* Are we already handling this connect? */
@@ -421,13 +641,13 @@ int connect(CONNECT_SIGNATURE) {
     if (!getpeername(__fd, (struct sockaddr *) &peer_address, &namelen)) {
         show_msg(MSGDEBUG, "Socket is already connected, defering to "
                           "real connect\n");
-          return(realconnect(__fd, __addr, __len));
+          return(original_connect(__fd, __addr, __len));
     }
       
     show_msg(MSGDEBUG, "Got connection request for socket %d to "
                         "%s\n", __fd, inet_ntoa(connaddr->sin_addr));
 
-    /* If the address is local call realconnect */
+    /* If the address is local call original_connect */
 #ifdef USE_TOR_DNS
     if (!(is_local(config, &(connaddr->sin_addr))) && 
         !is_dead_address(pool, connaddr->sin_addr.s_addr)) {
@@ -435,7 +655,7 @@ int connect(CONNECT_SIGNATURE) {
     if (!(is_local(config, &(connaddr->sin_addr)))) {
 #endif
       show_msg(MSGDEBUG, "Connection for socket %d is local\n", __fd);
-      return(realconnect(__fd, __addr, __len));
+      return(original_connect(__fd, __addr, __len));
     }
 
    /* Ok, so its not local, we need a path to the net */
@@ -493,7 +713,8 @@ int connect(CONNECT_SIGNATURE) {
    }
 }
 
-int select(SELECT_SIGNATURE) {
+
+int tsocks_select_guts(SELECT_SIGNATURE, int (*original_select)(SELECT_SIGNATURE)) {
    int nevents = 0;
    int rc = 0;
    int setevents = 0;
@@ -505,10 +726,12 @@ int select(SELECT_SIGNATURE) {
     * leave here */
    if (!requests) {
       show_msg(MSGDEBUG, "No requests waiting, calling real select\n");
-      return(realselect(n, readfds, writefds, exceptfds, timeout));
+      return(original_select(n, readfds, writefds, exceptfds, timeout));
    }
 
-   get_environment();
+   if (!tsocks_init_complete) {
+     tsocks_init();
+   }
 
    show_msg(MSGDEBUG, "Intercepted call to select with %d fds, "
             "0x%08x 0x%08x 0x%08x, timeout %08x\n", n, 
@@ -530,7 +753,7 @@ int select(SELECT_SIGNATURE) {
    }
 
    if (!monitoring)
-      return(realselect(n, readfds, writefds, exceptfds, timeout));
+      return(original_select(n, readfds, writefds, exceptfds, timeout));
 
    /* This is our select loop. In it we repeatedly call select(). We 
     * pass select the same fdsets as provided by the caller except we
@@ -576,7 +799,7 @@ int select(SELECT_SIGNATURE) {
             FD_CLR(conn->sockid,&myreadfds);
       }
 
-      nevents = realselect(n, &myreadfds, &mywritefds, &myexceptfds, timeout);
+      nevents = original_select(n, &myreadfds, &mywritefds, &myexceptfds, timeout);
       /* If there were no events we must have timed out or had an error */
       if (nevents <= 0)
          break;
@@ -678,7 +901,7 @@ int select(SELECT_SIGNATURE) {
    return(nevents);
 }
 
-int poll(POLL_SIGNATURE) {
+int tsocks_poll_guts(POLL_SIGNATURE, int (*original_poll)(POLL_SIGNATURE)) {
    int nevents = 0;
    int rc = 0;
    unsigned int i;
@@ -689,9 +912,11 @@ int poll(POLL_SIGNATURE) {
    /* If we're not currently managing any requests we can just 
     * leave here */
    if (!requests)
-      return(realpoll(ufds, nfds, timeout));
+      return(original_poll(ufds, nfds, timeout));
 
-   get_environment();
+    if (!tsocks_init_complete) {
+      tsocks_init();
+    }
 
    show_msg(MSGDEBUG, "Intercepted call to poll with %d fds, "
             "0x%08x timeout %d\n", nfds, ufds, timeout);
@@ -711,7 +936,7 @@ int poll(POLL_SIGNATURE) {
    }
 
    if (!monitoring)
-      return(realpoll(ufds, nfds, timeout));
+      return(original_poll(ufds, nfds, timeout));
 
    /* This is our poll loop. In it we repeatedly call poll(). We 
     * pass select the same event list as provided by the caller except we
@@ -742,7 +967,7 @@ int poll(POLL_SIGNATURE) {
             ufds[i].events |= POLLIN;
       }
 
-      nevents = realpoll(ufds, nfds, timeout);
+      nevents = original_poll(ufds, nfds, timeout);
       /* If there were no events we must have timed out or had an error */
       if (nevents <= 0)
          break;
@@ -836,7 +1061,7 @@ int poll(POLL_SIGNATURE) {
    return(nevents);
 }
 
-int close(CLOSE_SIGNATURE) {
+int tsocks_close_guts(CLOSE_SIGNATURE, int (*original_close)(CLOSE_SIGNATURE)) {
   int rc;
   struct connreq *conn;
 
@@ -848,14 +1073,14 @@ int close(CLOSE_SIGNATURE) {
     tsocks_init();
   }
 
-  if (realclose == NULL) {
+  if (original_close == NULL) {
     show_msg(MSGERR, "Unresolved symbol: close\n");
     return(-1);
   }
    
    show_msg(MSGDEBUG, "Call to close(%d)\n", fd);
 
-   rc = realclose(fd);
+   rc = original_close(fd);
 
    /* If we have this fd in our request handling list we 
     * remove it now */
@@ -884,7 +1109,8 @@ int close(CLOSE_SIGNATURE) {
  *
  * PP, Sat, 27 Mar 2004 11:30:23 +0100
  */
-int getpeername(GETPEERNAME_SIGNATURE) {
+
+int tsocks_getpeername_guts(GETPEERNAME_SIGNATURE, int (*original_getpeername)(GETPEERNAME_SIGNATURE)) {
    struct connreq *conn;
    int rc;
 
@@ -893,7 +1119,7 @@ int getpeername(GETPEERNAME_SIGNATURE) {
       tsocks_init();
     }
     
-    if (realgetpeername == NULL) {
+    if (original_getpeername == NULL) {
         show_msg(MSGERR, "Unresolved symbol: getpeername\n");
         return(-1);
     }
@@ -901,7 +1127,7 @@ int getpeername(GETPEERNAME_SIGNATURE) {
    show_msg(MSGDEBUG, "Call to getpeername for fd %d\n", __fd);
 
 
-   rc = realgetpeername(__fd, __name, __namelen);
+   rc = original_getpeername(__fd, __name, __namelen);
    if (rc == -1)
        return rc;
 
@@ -1067,7 +1293,11 @@ static int connect_server(struct connreq *conn) {
                       sizeof(conn->serveraddr));
 
     show_msg(MSGDEBUG, "Connect returned %d, errno is %d\n", rc, errno); 
-    if (rc) {
+    if (rc && errno == EISCONN) {
+        rc = 0;
+        show_msg(MSGDEBUG, "Socket %d already connected to SOCKS server\n", conn->sockid);
+        conn->state = CONNECTED;
+     } else if (rc) {
         if (errno != EINPROGRESS) {
           show_msg(MSGERR, "Error %d attempting to connect to SOCKS "
                     "server (%s)\n", errno, strerror(errno));
@@ -1469,6 +1699,11 @@ static int read_socksv4_req(struct connreq *conn) {
 int res_init(void) {
     int rc;
 
+    if (!realresinit) {
+      if ((realresinit = dlsym(RTLD_NEXT, "res_init")) == NULL)
+        LOAD_ERROR("res_init", MSGERR);
+    }
+
     show_msg(MSGDEBUG, "Got res_init request\n");
 
     /* See comment in close() */
@@ -1490,6 +1725,11 @@ int res_init(void) {
 
 int res_query(RES_QUERY_SIGNATURE) {
     int rc;
+
+    if (!realresquery) {
+      if ((realresquery = dlsym(RTLD_NEXT, "res_query")) == NULL)
+        LOAD_ERROR("res_query", MSGERR);
+    }
 
     show_msg(MSGDEBUG, "Got res_query request\n");
 
@@ -1517,6 +1757,11 @@ int res_query(RES_QUERY_SIGNATURE) {
 int res_querydomain(RES_QUERYDOMAIN_SIGNATURE) {
     int rc;
 
+    if (!realresquerydomain) {
+      if ((realresquerydomain = dlsym(RTLD_NEXT, "res_querydomain")) == NULL)
+        LOAD_ERROR("res_querydoimain", MSGERR);
+    }
+
     show_msg(MSGDEBUG, "Got res_querydomain request\n");
 
     /* See comment in close() */
@@ -1543,6 +1788,11 @@ int res_querydomain(RES_QUERYDOMAIN_SIGNATURE) {
 int res_search(RES_SEARCH_SIGNATURE) {
     int rc;
 
+    if (!realressearch) {
+      if ((realressearch = dlsym(RTLD_NEXT, "res_search")) == NULL)
+        LOAD_ERROR("res_search", MSGERR);
+    }
+
     show_msg(MSGDEBUG, "Got res_search request\n");
 
     /* See comment in close() */
@@ -1568,6 +1818,11 @@ int res_search(RES_SEARCH_SIGNATURE) {
 
 int res_send(RES_SEND_SIGNATURE) {
     int rc;
+
+    if (!realressend) {
+      if ((realressend = dlsym(RTLD_NEXT, "res_send")) == NULL)
+        LOAD_ERROR("res_send", MSGERR);
+    }
 
     show_msg(MSGDEBUG, "Got res_send request\n");
 
@@ -1650,7 +1905,7 @@ struct hostent *getipnodebyname(GETIPNODEBYNAME_SIGNATURE)
   }
 }
 
-ssize_t sendto(SENDTO_SIGNATURE)
+ssize_t tsocks_sendto_guts(SENDTO_SIGNATURE, ssize_t (*original_sendto)(SENDTO_SIGNATURE))
 {
     struct sockaddr_in *connaddr;
     int sock_type = -1;
@@ -1662,7 +1917,7 @@ ssize_t sendto(SENDTO_SIGNATURE)
     }
 
     /* If the real connect doesn't exist, we're stuffed */
-    if (realsendto == NULL) {
+    if (original_sendto == NULL) {
         show_msg(MSGERR, "Unresolved symbol: sendto\n");
         return(-1);
     }
@@ -1687,7 +1942,7 @@ ssize_t sendto(SENDTO_SIGNATURE)
     /* handle it, just call the real connect now        */
     if ((connaddr->sin_family != AF_INET)) {
         show_msg(MSGDEBUG, "Connection isn't a TCP stream ignoring\n");
-        return (ssize_t) realsendto(s, buf, len, flags, to, tolen);
+        return (ssize_t) original_sendto(s, buf, len, flags, to, tolen);
     }
 
 #ifdef USE_TOR_DNS
@@ -1700,11 +1955,11 @@ ssize_t sendto(SENDTO_SIGNATURE)
     }
 #endif
 
-    return (ssize_t) realsendto(s, buf, len, flags, to, tolen);
+    return (ssize_t) original_sendto(s, buf, len, flags, to, tolen);
 
 }
 
-ssize_t sendmsg(SENDMSG_SIGNATURE)
+ssize_t tsocks_sendmsg_guts(SENDMSG_SIGNATURE, ssize_t (*original_sendmsg)(SENDMSG_SIGNATURE))
 {
     struct sockaddr_in *connaddr;
     int sock_type = -1;
@@ -1716,7 +1971,7 @@ ssize_t sendmsg(SENDMSG_SIGNATURE)
     }
 
     /* If the real connect doesn't exist, we're stuffed */
-    if (realsendmsg == NULL) {
+    if (original_sendmsg == NULL) {
         show_msg(MSGERR, "Unresolved symbol: sendmsg\n");
         return(-1);
     }
@@ -1741,7 +1996,7 @@ ssize_t sendmsg(SENDMSG_SIGNATURE)
     /* handle it, just call the real connect now        */
     if ((connaddr->sin_family != AF_INET)) {
         show_msg(MSGDEBUG, "Connection isn't a TCP stream ignoring\n");
-        return (ssize_t) realsendmsg(s, msg, flags);
+        return (ssize_t) original_sendmsg(s, msg, flags);
     }
 
 #ifdef USE_TOR_DNS
@@ -1753,6 +2008,6 @@ ssize_t sendmsg(SENDMSG_SIGNATURE)
         return -1;
     }
 #endif
-    return (ssize_t) realsendmsg(s, msg, flags);
+    return (ssize_t) original_sendmsg(s, msg, flags);
 }
 
