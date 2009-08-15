@@ -517,7 +517,8 @@ SPECIALLIBS=${LIBS}
 AC_SUBST(SPECIALLIBS)
 LIBS=${SIMPLELIBS}
 
-dnl Linker checks for Mac OSX
+dnl Linker checks for Mac OSX, which uses DYLD_INSERT_LIBRARIES
+dnl instead of LD_PRELOAD
 case "$host_os" in
 darwin*)
     dnl Check if the linker accepts -dynamiclib; necessary on Mac OS X
