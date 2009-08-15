@@ -54,13 +54,6 @@
 #define _GNU_SOURCE
 #endif
 
-/* Required by some BSDs */
-#ifndef  MAP_ANONYMOUS
-#ifdef MAP_ANON
-#define MAP_ANONYMOUS MAP_ANON
-#endif
-#endif
-
 /* Global configuration variables */
 const char *progname = "libtorsocks";         /* Name used in err msgs    */
 
