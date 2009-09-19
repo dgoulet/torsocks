@@ -53,7 +53,16 @@
 /*Defining _NONSTD_SOURCE causes library and kernel calls to behave as closely
 to Mac OS X 10.3's library and kernel calls as possible.*/
 #if defined(__APPLE__) || defined(__darwin__)
+/*
+From 'man compat' in OSX:
+64-BIT COMPILATION
+     When compiling for 64-bit architectures, the __LP64__ macro will be defined to 1, and UNIX conformance
+     is always on (the _DARWIN_FEATURE_UNIX_CONFORMANCE macro will also be defined to the SUS conformance
+     level).  Defining _NONSTD_SOURCE will cause a compilation error.
+*/
+#if !defined(__LP64__)
 #define _NONSTD_SOURCE 1
+#endif
 #include <sys/socket.h>
 #endif
 
