@@ -162,11 +162,12 @@ executables that make system calls directly with the system call trap or
 through the syscall() routine.
 
 .SH FILES
-/etc/torsocks.conf - default torsocks configuration file
+@CONFDIR@/torsocks.conf - default torsocks configuration file
 
 .SH SEE ALSO
 torsocks.conf(5)
 torsocks(1)
+usewithtor(1)
 
 .SH AUTHOR
 Shaun Clowes (delius@progsoc.uts.edu.au)

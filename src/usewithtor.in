@@ -92,14 +92,14 @@ fi
 
 if [ "$PROG" = "torsocks" ]; then
 	# Define our torsocks config file
-	TSOCKS_CONF_FILE="@CONFDIR@/torsocks.conf"
-	export TSOCKS_CONF_FILE
+	TORSOCKS_CONF_FILE="@CONFDIR@/torsocks.conf"
+	export TORSOCKS_CONF_FILE
 
 	# Check that we've got a torsocks config file
-	if [ -r "$TSOCKS_CONF_FILE" ]; 	then
+	if [ -r "$TORSOCKS_CONF_FILE" ]; 	then
 		exec torsocks "$@"
 	else
-		echo "$0: Missing torsocks configuration file \"$TSOCKS_CONF_FILE\" - torsocks will use defaults sensible for Tor." >&2
+		echo "$0: Missing torsocks configuration file \"$TORSOCKS_CONF_FILE\" - torsocks will use defaults sensible for Tor." >&2
 		exec torsocks "$@"
 	fi
 fi

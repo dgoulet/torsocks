@@ -297,8 +297,9 @@ static int get_config () {
 
     /* Determine the location of the config file */
   #ifdef ALLOW_ENV_CONFIG
-    if (!suid) 
+    if (!suid) {
         conffile = getenv("TORSOCKS_CONF_FILE");
+    }
   #endif
     
     /* Read in the config file */

@@ -1,0 +1,57 @@
+.TH USEWITHTOR 1 "" "USEWITHTOR"
+
+.SH NAME
+.BR usewithtor
+\- Shell wrapper to simplify the use of the torsocks(8) library to
+transparently allow an application to use a SOCKS proxy. 
+
+.SH SYNOPSIS
+.B usewithtor
+.RB [application\ [application's\ arguments]]
+.br
+.SH DESCRIPTION
+.B usewithtor
+is a wrapper between the torsocks library and the application what you
+would like to run socksified.
+
+.SH OPTIONS
+.IP \fB[application\ \fB[application's\ arguments]]
+run the application as specified with the environment (LD_PRELOAD) set
+such that torsocks(8) will transparently proxy SOCKS connections in
+that program.
+
+.SH USEWITHTOR VERSUS TORSOCKS
+.B usewithtor
+runs
+.B torsocks(1)
+with the default configuration file,
+located at
+.B @CONFDIR@/torsocks.conf.
+Running torsocks(1) directly means
+that no configuration file will be used (unless you manually set the
+TORSOCKS_CONF_FILE or TSOCKS_CONF_FILE environment variable), instead
+.B torsocks(8)
+will
+use defaults that are sensible for most Tor installations.
+
+.SH USEWITHTOR VERSUS TORIFY
+.B usewithtor(1)
+and
+.B torify(1)
+intend to achieve the same ends for most
+practical purposes. However
+.B torify(1)
+will use a default tsocks installation if one exists.
+.B Usewithtor(1)
+will only ever use a
+.B torsocks(8)
+installation.
+
+.SH SEE ALSO
+torsocks.conf(5)
+torsocks(1)
+usewithtor(1)
+
+.SH AUTHOR
+Robert Hogan (robert@roberthogan.net).This script is very similar to torify(1),
+provided by the Tor project.

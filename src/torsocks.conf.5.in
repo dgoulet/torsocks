@@ -1,13 +1,44 @@
-.TH TSOCKS.CONF 5 "" "Shaun Clowes" \" -*-
+.TH TORSOCKS.CONF 5 "" "Robert Hogan" \" -*-
  \" nroff -*
 
 .SH NAME
-.BR tsocks.conf
-\- configuration file for tsocks(8)
+.BR torsocks.conf
+\- configuration file for torsocks(8)
+
+.SH SUMMARY
+
+By default, torsocks will assume that it should connect to the SOCKS proxy
+running at 127.0.0.1 on port 9050. This is the default address and port for
+Tor's socks server on most installations. If you are running a normal Tor
+installation and have no special requirements, then you should not need to
+create, edit or invoke a configuration file when using torsocks.
+
+Your installation of torsocks includes a default configuration file
+that contains values sensible for use with most Tor installations. The
+installation location for your default configuration file is:
+
+  @CONFDIR@/torsocks.conf
+
+In order to use a configuration file, you must set the environment variable
+TORSOCKS_CONF_FILE with the location of the file.
+
+If TORSOCKS_CONF_FILE is not set, torsocks will attempt to read the configuration
+file at @CONFDIR@/torsocks.conf. If that file cannot be read, torsocks will
+use sensible defaults for most Tor installations, i.e. it will assume that
+you want to use a SOCKS proxy running at 127.0.0.1 (localhost) on port 9050.
+
+An example of typical usage is provided under the 'example' heading at the
+end of this manual page. The script 'usewithtor' provided with your torsocks
+installation will set this environment variable for you, and load the
+configuration file provided with your installation.
+
+If you want to use a custom file in a different location, you should set the
+environment variable yourself and then use the torsocks command, rather than
+usewithtor.
 
 .SH OVERVIEW
 
-The configuration for tsocks can be anything from two lines to hundreds of 
+The configuration for torsocks can be anything from two lines to hundreds of
 lines based on the needs at any particular site. The basic idea is to define 
 any networks the machine can access directly (i.e without the use of a 
 SOCKS server) and define one or many SOCKS servers to be used to access
@@ -15,7 +46,7 @@ other networks (including a 'default' server).
 
 Local networks are declared using the 'local' keyword in the configuration 
 file. When applications attempt to connect to machines in networks marked
-as local tsocks will not attempt to use a SOCKS server to negotiate the 
+as local torsocks will not attempt to use a SOCKS server to negotiate the
 connection.
 
 Obviously if a connection is not to a locally accessible network it will need
@@ -33,7 +64,7 @@ be used to reach. N.B Each path MUST define a SOCKS server and contain one or
 more 'reaches' directives.
 
 SOCKS server declaration directives that are not contained within a 'path' 
-block define the default SOCKS server. If tsocks needs to connect to a machine
+block define the default SOCKS server. If torsocks needs to connect to a machine
 via a SOCKS server (i.e it isn't a network declared as 'local') and no 'path'
 has declared it can reach that network via a 'reaches' directive this server 
 is used to negotiate the connection. 
@@ -60,7 +91,7 @@ Empty lines are ignored and all input on a line after a '#' character is
 ignored.
 
 .SS DIRECTIVES 
-The following directives are used in the tsocks configuration file:
+The following directives are used in the torsocks configuration file:
 
 .TP
 .I server
@@ -84,7 +115,7 @@ for only the connect operation).  The default is 4. Only one server_type
 may be specified per path block, or one outside a path (for the default
 server). 
 
-You can use the inspectsocks utility to determine the type of server, see
+You can use the inspectorsocks utility to determine the type of server, see
 the 'UTILITIES' section later in this manual page.
 
 .TP
@@ -92,7 +123,7 @@ the 'UTILITIES' section later in this manual page.
 This specifies the default username to be used for username and password
 authentication in SOCKS version 5. In order to determine the username to
 use (if the socks server requires username and password authentication)
-tsocks first looks for the environment variable TSOCKS_USERNAME, then
+torsocks first looks for the environment variable TSOCKS_USERNAME, then
 looks for this configuration option, then tries to get the local username.
 This option is not valid for SOCKS version 4 servers. Only one default_user 
 may be specified per path block, or one outside a path (for the default 
@@ -103,7 +134,7 @@ server)
 This specified the default password to be used for username and password
 authentication in SOCKS version 5. In order to determine the password to
 use (if the socks server requires username and password authentication)
-tsocks first looks for the environment variable TSOCKS_PASSWORD, then
+torsocks first looks for the environment variable TSOCKS_PASSWORD, then
 looks for this configuration option. This option is not valid for SOCKS
 version 4 servers. Onle one default_pass may be specified per path block, 
 or one outside a path (for the default server)
@@ -113,7 +144,7 @@ or one outside a path (for the default server)
 An IP/Subnet pair specifying a network which may be accessed directly without
 proxying through a SOCKS server (e.g "local = 10.0.0.0/255.0.0.0"). 
 Obviously all SOCKS server IP addresses must be in networks specified as 
-local, otherwise tsocks would need a SOCKS server to reach SOCKS servers.
+local, otherwise torsocks would need a SOCKS server to reach SOCKS servers.
 
 .TP
 .I reaches
@@ -121,14 +152,14 @@ This directive is only valid inside a path block. Its parameter is formed
 as IP[:startport[-endport]]/Subnet and it specifies a network (and a range
 of ports on that network) that can be accessed by the SOCKS server specified
 in this path block. For example, in a path block "reaches =
-150.0.0.0:80-1024/255.0.0.0" indicates to tsocks that the SOCKS server 
+150.0.0.0:80-1024/255.0.0.0" indicates to torsocks that the SOCKS server
 specified in the current path block should be used to access any IPs in the 
 range 150.0.0.0 to 150.255.255.255 when the connection request is for ports
 80-1024.
 
 .TP
 .I tordns_enable
-This enables the use of the 'tordns' feature in tsocks, which overrides the
+This enables the use of the 'tordns' feature in torsocks, which overrides the
 standard C library name resolution calls to use SOCKS.    The default value is 
 'true'. 
 
@@ -150,52 +181,34 @@ deadpool range. This is to prevent duplicate deadpool addresses from ever
 appearing in the cache. 
 
 .SH UTILITIES
-tsocks comes with two utilities that can be useful in creating and verifying
-the tsocks configuration file. 
+torsocks comes with two utilities that can be useful in creating and verifying
+the torsocks configuration file.
 
-.TP
-inspectsocks
-inspectsocks can be used to determine the SOCKS version that a server supports.
-Inspectsocks takes as its arguments the ip address/hostname of the SOCKS
-server and optionally the port number for socks (e.g 'inspectsocks 
-socks.nec.com 1080'). It then inspects that server to attempt to determine 
-the version that server supports. 
+.SH EXAMPLE
 
-.TP
-validateconf
-validateconf can be used to verify the configuration file. It checks the format
-of the file and also the contents for errors. Having read the file it dumps 
-the configuration to the screen in a formatted, readable manner. This can be 
-extremely useful in debugging problems.
-
-validateconf can read a configuration file from a location other than the 
-location specified at compile time with the -f <filename> command line 
-option.
-
-Normally validateconf simply dumps the configuration read to the screen (in
-a nicely readable format), however it also has a useful 'test' mode. When
-passed a hostname/ip on the command line like -t <hostname/ip>, validateconf 
-determines which of the SOCKS servers specified in the configuration file 
-would be used by tsocks to access the specified host. 
+  export TORSOCKS_CONF_FILE=$PWD/torsocks.conf
+  torsocks ssh account@sshserver.com
 
 .SH SEE ALSO
-tsocks(8)
+torsocks(8)
 
 .SH AUTHOR
+Robert Hogan (robert@roberthogan.net)
 Shaun Clowes (delius@progsoc.uts.edu.au)
 
 .SH COPYRIGHT
+Copyright 2009 Robert Hogan
 Copyright 2000 Shaun Clowes
 
-Renamed for use by torsocks to avoid conflict with tsocks by Robert Hogan.
+Renamed for use by torsocks to avoid conflict with torsocks by Robert Hogan.
 
-tsocks and its documentation may be freely copied under the terms and
+torsocks and its documentation may be freely copied under the terms and
 conditions of version 2 of the GNU General Public License, as published
 by the Free Software Foundation (Cambridge, Massachusetts, United
 States of America).
 
 This documentation is based on the documentation for logwrites, another
 shared library interceptor. One line of code from it was used in
-tsocks and a lot of the documentation :) logwrites is by
+torsocks and a lot of the documentation :) logwrites is by
 adam@yggdrasil.com (Adam J. Richter) and can be had from ftp.yggdrasil.com
 pub/dist/pkg

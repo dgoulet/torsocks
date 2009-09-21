@@ -88,6 +88,8 @@ int read_config (char *filename, struct parsedfile *config) {
 		/* Insure null termination */
 		line[sizeof(line) - 1] = (char) 0;
 		filename = line;
+		show_msg(MSGWARN, "Configuration file not provided by TORSOCKS_CONF_FILE "
+			   "environment variable, attempting to use defaults in %s.\n", filename);
 	}
 
 	/* If there is no configuration file use reasonable defaults for Tor */

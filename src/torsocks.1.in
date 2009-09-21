@@ -3,7 +3,7 @@
 .SH NAME
 .BR torsocks
 \- Shell wrapper to simplify the use of the torsocks(8) library to
-transparently allow an application to use a SOCKS proxy. Basically a renamed, patched torsocks.
+transparently allow an application to use a SOCKS proxy. Basically a renamed, patched tsocks.
 .SH SYNOPSIS
 .B torsocks
 .RB [application\ [application's\ arguments]]
@@ -18,6 +18,23 @@ or
 .B torsocks
 is a wrapper between the torsocks library and the application what you
 would like to run socksified.
+.SH SUMMARY
+
+By default, torsocks will assume that it should connect to the SOCKS proxy
+running at 127.0.0.1 on port 9050. This is the default address and port for
+Tor's socks server on most installations.
+
+In order to use a configuration file, you must set the environment variable
+TORSOCKS_CONF_FILE with the location of the file.
+
+If TORSOCKS_CONF_FILE is not set, torsocks will attempt to read the configuration
+file at @CONFDIR@/torsocks.conf. If that file cannot be read, torsocks will
+use sensible defaults for most Tor installations, i.e. it will assume that
+you want to use a SOCKS proxy running at 127.0.0.1 (localhost) on port 9050.
+
+For further information on configuration, see
+.B torsocks.conf(5).
+
 .SH OPTIONS
 .IP \fB[application\ \fB[application's\ arguments]]
 run the application as specified with the environment (LD_PRELOAD) set
