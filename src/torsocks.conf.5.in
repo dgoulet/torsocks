@@ -53,7 +53,7 @@ Obviously if a connection is not to a locally accessible network it will need
 to be proxied over a SOCKS server. However, many installations have several
 different SOCKS servers to be used to access different internal (and external)
 networks. For this reason the configuration file allows the definition of 
-'paths' as well as a default SOCKS server. 
+`paths' as well as a default SOCKS server.
 
 Paths are declared as blocks in the configuration file. That is, they begin
 with a 'path {' line in the configuration file and end with a '}' line. Inside
@@ -97,7 +97,7 @@ The following directives are used in the torsocks configuration file:
 .I server
 The IP address of the SOCKS server (e.g "server = 10.1.4.253"). Only one
 server may be specified per path block, or one outside a path
-block (to define the default server). Unless --disable-hostnames was 
+block (to define the default server). Unless \-\-disable-hostnames was 
 specified to configure at compile time the server can be specified as 
 a hostname (e.g "server = socks.nec.com") 
 
@@ -149,7 +149,7 @@ local, otherwise torsocks would need a SOCKS server to reach SOCKS servers.
 .TP
 .I reaches
 This directive is only valid inside a path block. Its parameter is formed
-as IP[:startport[-endport]]/Subnet and it specifies a network (and a range
+as IP[:startport[\-endport]]/Subnet and it specifies a network (and a range
 of ports on that network) that can be accessed by the SOCKS server specified
 in this path block. For example, in a path block "reaches =
 150.0.0.0:80-1024/255.0.0.0" indicates to torsocks that the SOCKS server
@@ -161,7 +161,7 @@ range 150.0.0.0 to 150.255.255.255 when the connection request is for ports
 .I tordns_enable
 This enables the use of the 'tordns' feature in torsocks, which overrides the
 standard C library name resolution calls to use SOCKS.    The default value is 
-'true'. 
+`true'.
 
 .TP
 .I tordns_deadpool_range
