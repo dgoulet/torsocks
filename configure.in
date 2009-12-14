@@ -129,10 +129,13 @@ if test "$tempdso" = "no"; then
                "Check your system for libc.so and/or libdl.so."))
 fi
 
-AC_CHECK_LIB(resolv, res_query, [ tempres="no" ],tempres="yes")
+AC_CHECK_LIB(resolv, res_query, [ tempres="yes" ],tempres="no")
 if test "$tempres" = "no"; then
-  AC_DEFINE([SUPPORT_RES_API],[],[Support the res_query family of calls])
+  AC_CHECK_LIB(c, res_query,,AC_MSG_ERROR("res_query() not found in libc or libresolve." \
+               "Check your system for libc.so and/or libresolve.so."))
 fi
+
+AC_DEFINE([SUPPORT_RES_API],[],[Support the res_query family of calls])
 
 dnl If we're using gcc here define _GNU_SOURCE
 AC_MSG_CHECKING(for RTLD_NEXT from dlfcn.h)
