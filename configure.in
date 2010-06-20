@@ -520,6 +520,55 @@ SPECIALLIBS=${LIBS}
 AC_SUBST(SPECIALLIBS)
 LIBS=${SIMPLELIBS}
 
+dnl Linker checks for Mac OSX, which uses DYLD_INSERT_LIBRARIES
+dnl instead of LD_PRELOAD
+case "$host_os" in
+darwin*)
+    dnl Check if the linker accepts -dynamiclib; necessary on Mac OS X
+    AC_MSG_CHECKING(if the linker accepts -dynamiclib)
+    OLDLDFLAGS="$LDFLAGS"
+    LDFLAGS="$LDFLAGS -dynamiclib"
+    AC_TRY_COMPILE(,,AC_MSG_RESULT(yes),[
+       LDFLAGS="$OLDLDFLAGS"
+       AC_MSG_RESULT(no)])
+
+    # dnl Check if the linker accepts -multiply_defined suppress; necessary on Mac OS X
+    # AC_MSG_CHECKING(if the linker accepts -multiply_defined suppress)
+    # OLDLDFLAGS="$LDFLAGS"
+    # LDFLAGS="$LDFLAGS -multiply_defined suppress"
+    # AC_TRY_COMPILE(,,AC_MSG_RESULT(yes),[
+    #    LDFLAGS="$OLDLDFLAGS"
+    #    AC_MSG_RESULT(no)])
+
+    dnl Check if the linker accepts -single_module; necessary on Mac OS X
+    AC_MSG_CHECKING(if the linker accepts -single_module)
+    OLDLDFLAGS="$LDFLAGS"
+    SHLIB_EXT="so"
+    LD_PRELOAD="LD_PRELOAD"
+    LDFLAGS="$LDFLAGS -single_module"
+    AC_TRY_COMPILE(,,
+       [
+          SHLIB_EXT="dylib"
+          LD_PRELOAD="DYLD_INSERT_LIBRARIES"
+          AC_MSG_RESULT(yes)
+       ], [
+          LDFLAGS="$OLDLDFLAGS"
+          AC_MSG_RESULT(no)
+       ]
+    )
+
+    ;;
+*)
+    SHLIB_EXT="so"
+    LD_PRELOAD="LD_PRELOAD"
+    ;;
+esac
+
+AC_SUBST(SHLIB_EXT)
+AC_SUBST(LD_PRELOAD)
+
+
+
 if test "x$prefix" = "xNONE"; then
   prefix=$ac_default_prefix
 fi
