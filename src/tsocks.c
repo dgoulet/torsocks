@@ -176,6 +176,10 @@ void tsocks_init(void) {
       return;
     }
 
+    /* Not strictly true yet, but prevents us getting called while still in progress.*/
+    /* This has been observed on Snow Leopard for instance. */
+    tsocks_init_complete = 1;
+
 #ifdef USE_OLD_DLSYM
     void *lib;
 #endif
@@ -260,7 +264,6 @@ void tsocks_init(void) {
        area won't be shared across fork()s. */
     deadpool_init();
 #endif
-    tsocks_init_complete=1;
 }
 
 static int get_environment() {
