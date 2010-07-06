@@ -129,11 +129,20 @@ if test "$tempdso" = "no"; then
                "Check your system for libc.so and/or libdl.so."))
 fi
 
-AC_CHECK_LIB(resolv, res_query, [ tempres="yes" ],tempres="no")
-if test "$tempres" = "no"; then
-  AC_CHECK_LIB(c, res_query,,AC_MSG_ERROR("res_query() not found in libc or libresolve." \
-               "Check your system for libc.so and/or libresolve.so."))
-fi
+AC_CHECK_FUNC(res_query, ,
+  [AC_CHECK_LIB(resolv, res_query, [],
+   [ save_libs="$LIBS"
+     LIBS="-lresolv $LIBS"
+     AC_MSG_CHECKING([for res_query in -lresolv (alternate version)])
+     AC_LINK_IFELSE(
+       [AC_LANG_PROGRAM([[#include <resolv.h>]], [[res_query(0,0,0,0,0)]])],
+       [ AC_MSG_RESULT(yes) ],
+       [ AC_MSG_RESULT(no)
+         LIBS="$save_libs"
+         AC_CHECK_LIB(resolv, res_query,
+           [], [ AC_MSG_ERROR(res_query not found in libc or libresolve. Check your system for libc.so and/or libresolve.so.) ] ) ] ) ] )
+  ]
+)
 
 AC_DEFINE([SUPPORT_RES_API],[],[Support the res_query family of calls])
 
