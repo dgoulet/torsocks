@@ -292,6 +292,7 @@ fi
 dnl Find the correct select prototype on this machine 
 AC_MSG_CHECKING(for correct select prototype)
 PROTO=
+NAMES='n, readfds, writefds, exceptfds, timeout'
 for testproto in 'int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout' 
 do
   if test "${PROTO}" = ""; then
@@ -308,11 +309,13 @@ if test "${PROTO}" = ""; then
 fi
 AC_MSG_RESULT([select(${PROTO})])
 AC_DEFINE_UNQUOTED([SELECT_SIGNATURE],[${PROTO}],[Description])
+AC_DEFINE_UNQUOTED([SELECT_ARGNAMES],[${NAMES}],[Argument names])
 
 dnl Find the correct connect prototype on this machine 
 AC_MSG_CHECKING(for correct connect prototype)
 PROTO=
-PROTO1='int __fd, const struct sockaddr * __addr, int len'
+NAMES='__fd, __addr, __len'
+PROTO1='int __fd, const struct sockaddr * __addr, int __len'
 PROTO2='int __fd, const struct sockaddr_in * __addr, socklen_t __len'
 PROTO3='int __fd, struct sockaddr * __addr, int __len'
 PROTO4='int __fd, const struct sockaddr * __addr, socklen_t __len'
@@ -334,6 +337,7 @@ if test "${PROTO}" = ""; then
 fi
 AC_MSG_RESULT([connect(${PROTO})])
 AC_DEFINE_UNQUOTED([CONNECT_SIGNATURE],[${PROTO}],[Description])
+AC_DEFINE_UNQUOTED([CONNECT_ARGNAMES],[${NAMES}],[Argument names])
 
 dnl Pick which of the sockaddr type arguments we need for
 dnl connect(), we need to cast one of ours to it later 
@@ -348,6 +352,7 @@ AC_DEFINE_UNQUOTED([CONNECT_SOCKARG],[${SOCKETARG}],[Description])
 dnl Find the correct close prototype on this machine 
 AC_MSG_CHECKING(for correct close prototype)
 PROTO=
+NAMES='fd'
 PROTO1='int fd'
 for testproto in "${PROTO1}" 
 do
@@ -363,11 +368,13 @@ if test "${PROTO}" = ""; then
 fi
 AC_MSG_RESULT([close(${PROTO})])
 AC_DEFINE_UNQUOTED([CLOSE_SIGNATURE], [${PROTO}],[Description])
+AC_DEFINE_UNQUOTED([CLOSE_ARGNAMES],[${NAMES}],[Argument names])
 
 
 dnl Find the correct res_querydomain prototype on this machine
 AC_MSG_CHECKING(for correct res_querydomain prototype)
 PROTO=
+NAMES='name, domain, class, type, answer, anslen'
 PROTO1='const char *name, const char *domain, int class, int type, unsigned char *answer, int anslen'
 for testproto in "${PROTO1}"
 do
@@ -385,10 +392,12 @@ if test "${PROTO}" = ""; then
 fi
 AC_MSG_RESULT([res_querydomain(${PROTO})])
 AC_DEFINE_UNQUOTED([RES_QUERYDOMAIN_SIGNATURE], [${PROTO}],[Description])
+AC_DEFINE_UNQUOTED([RES_QUERYDOMAIN_ARGNAMES],[${NAMES}],[Argument names])
 
 dnl Find the correct res_send prototype on this machine
 AC_MSG_CHECKING(for correct res_send prototype)
 PROTO=
+NAMES='msg, msglen, answer, anslen'
 PROTO1='const char *msg, int msglen, char *answer, int anslen'
 PROTO2='const unsigned char *msg, int msglen, unsigned char *answer, int anslen'
 for testproto in "${PROTO1}" \
@@ -408,13 +417,15 @@ if test "${PROTO}" = ""; then
 fi
 AC_MSG_RESULT([res_send(${PROTO})])
 AC_DEFINE_UNQUOTED([RES_SEND_SIGNATURE], [${PROTO}],[Description])
+AC_DEFINE_UNQUOTED([RES_SEND_ARGNAMES],[${NAMES}],[Argument names])
 
 
 dnl Find the correct res_search prototype on this machine
 AC_MSG_CHECKING(for correct res_search prototype)
 PROTO=
-PROTO1='const char *dname, int class, int type,unsigned char *answer, int anslen'
-for testproto in "${PROTO1}" 
+NAMES='dname, class, type, answer, anslen'
+PROTO1='const char *dname, int class, int type, unsigned char *answer, int anslen'
+for testproto in "${PROTO1}"
 do
   if test "${PROTO}" = ""; then
     AC_TRY_COMPILE([
@@ -430,13 +441,15 @@ if test "${PROTO}" = ""; then
 fi
 AC_MSG_RESULT([res_search(${PROTO})])
 AC_DEFINE_UNQUOTED([RES_SEARCH_SIGNATURE], [${PROTO}],[Description])
+AC_DEFINE_UNQUOTED([RES_SEARCH_ARGNAMES],[${NAMES}],[Argument names])
 
 
 dnl Find the correct res_query prototype on this machine
 AC_MSG_CHECKING(for correct res_query prototype)
 PROTO=
-PROTO1='const char *dname, int class, int type,unsigned char *answer, int anslen'
-for testproto in "${PROTO1}" 
+NAMES='dname, class, type, answer, anslen'
+PROTO1='const char *dname, int class, int type, unsigned char *answer, int anslen'
+for testproto in "${PROTO1}"
 do
   if test "${PROTO}" = ""; then
     AC_TRY_COMPILE([
@@ -452,10 +465,12 @@ if test "${PROTO}" = ""; then
 fi
 AC_MSG_RESULT([res_query(${PROTO})])
 AC_DEFINE_UNQUOTED([RES_QUERY_SIGNATURE], [${PROTO}],[Description])
+AC_DEFINE_UNQUOTED([RES_QUERY_ARGNAMES],[${NAMES}],[Argument names])
 
 dnl Find the correct getpeername prototype on this machine
 AC_MSG_CHECKING(for correct getpeername prototype)
 PROTO=
+NAMES='__fd, __name, __namelen'
 PROTO1='int __fd, const struct sockaddr * __name, int *__namelen'
 PROTO2='int __fd, const struct sockaddr_in * __name, socklen_t *__namelen'
 PROTO3='int __fd, struct sockaddr * __name, socklen_t *__namelen'
@@ -478,14 +493,16 @@ if test "${PROTO}" = ""; then
 fi
 AC_MSG_RESULT([getpeername(${PROTO})])
 AC_DEFINE_UNQUOTED(GETPEERNAME_SIGNATURE, [${PROTO}],[Description])
+AC_DEFINE_UNQUOTED([GETPEERNAME_ARGNAMES],[${NAMES}],[Argument names])
 
 
 dnl Find the correct poll prototype on this machine 
 AC_MSG_CHECKING(for correct poll prototype)
 PROTO=
+NAMES='ufds, nfds, timeout'
 for testproto in 'struct pollfd *ufds, unsigned long nfds, int timeout' \
                  'struct pollfd *ufds, nfds_t nfds, int timeout' \
-                 'struct pollfd *pfd, unsigned int nfds, int timeout'
+                 'struct pollfd *ufds, unsigned int nfds, int timeout'
 do
   if test "${PROTO}" = ""; then
     AC_TRY_COMPILE([
@@ -499,30 +516,43 @@ if test "${PROTO}" = ""; then
 fi
 AC_MSG_RESULT([poll(${PROTO})])
 AC_DEFINE_UNQUOTED([POLL_SIGNATURE], [${PROTO}],[Description])
+AC_DEFINE_UNQUOTED([POLL_ARGNAMES],[${NAMES}],[Argument names])
 
 dnl Emit signature for gethostbyname
 PROTO="const char *name"
+NAMES='name'
 AC_DEFINE_UNQUOTED([GETHOSTBYNAME_SIGNATURE], [${PROTO}],[Description])
+AC_DEFINE_UNQUOTED([GETHOSTBYNAME_ARGNAMES],[${NAMES}],[Argument names])
 
 dnl Emit signature for getaddrinfo
 PROTO="const char *node, const char *service, void *hints, void *res"
+NAMES='node, service, hints, res'
 AC_DEFINE_UNQUOTED([GETADDRINFO_SIGNATURE], [${PROTO}],[Description])
+AC_DEFINE_UNQUOTED([GETADDRINFO_ARGNAMES],[${NAMES}],[Argument names])
 
 dnl Emit signature for getipnodebyname
 PROTO="const char *name, int af, int flags, int *error_num"
+NAMES='name, af, flags, error_num'
 AC_DEFINE_UNQUOTED([GETIPNODEBYNAME_SIGNATURE], [${PROTO}],[Description])
+AC_DEFINE_UNQUOTED([GETIPNODEBYNAME_ARGNAMES],[${NAMES}],[Argument names])
 
 dnl Emit signature for gethostbyaddr
 PROTO="const void *addr, socklen_t len, int type"
+NAMES='addr, len, type'
 AC_DEFINE_UNQUOTED(GETHOSTBYADDR_SIGNATURE, [${PROTO}], [Description])
+AC_DEFINE_UNQUOTED([GETHOSTBYADDR_ARGNAMES],[${NAMES}],[Argument names])
 
 dnl Emit signature for sendto
 PROTO="int s, const void *buf, size_t len, int flags, const struct sockaddr *to, socklen_t tolen"
+NAMES='s, buf, len, flags, to, tolen'
 AC_DEFINE_UNQUOTED(SENDTO_SIGNATURE, [${PROTO}], [Description])
+AC_DEFINE_UNQUOTED([SENDTO_ARGNAMES],[${NAMES}],[Argument names])
 
 dnl Emit signature for sendmsg
 PROTO="int s, const struct msghdr *msg, int flags"
+NAMES='s, msg, flags'
 AC_DEFINE_UNQUOTED(SENDMSG_SIGNATURE, [${PROTO}], [Description])
+AC_DEFINE_UNQUOTED([SENDMSG_ARGNAMES],[${NAMES}],[Argument names])
 
 dnl Output the special librarys (libdl etc needed for tsocks)
 SPECIALLIBS=${LIBS}
