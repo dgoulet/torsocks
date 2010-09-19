@@ -200,7 +200,7 @@ if test "${enable_oldmethod}" = "yes"; then
   oldmethod="yes"
 fi
 
-if test "x${enable_debug}" = "x"; then
+if test "x${enable_debug}" != "x"; then
   AC_DEFINE([ALLOW_MSG_OUTPUT],[],[Description])
 fi
 
