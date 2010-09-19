@@ -50,7 +50,7 @@
 */
 
 /* Global configuration variables */ 
-const char *progname = "validateconf";	      /* Name for error msgs      */
+const char *torsocks_progname = "validateconf";	      /* Name for error msgs      */
 
 /* Header Files */
 #include <config.h>

@@ -50,7 +50,7 @@
 */
 
 /* Global configuration variables */ 
-const char *progname = "inspectsocks";	   /* Name for error msgs      */
+const char *torsocks_progname = "inspectsocks";	   /* Name for error msgs      */
 int defaultport	= 1080;			   /* Default SOCKS port       */
 
 /* Header Files */

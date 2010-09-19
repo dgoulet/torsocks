@@ -72,7 +72,7 @@ From 'man compat' in OSX:
 #endif
 
 /* Global configuration variables */
-const char *progname = "libtorsocks";         /* Name used in err msgs    */
+const char *torsocks_progname = "libtorsocks";         /* Name used in err msgs    */
 
 /* Header Files */
 #include <stdio.h>

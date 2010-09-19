@@ -182,7 +182,7 @@ int count_netmask_bits(uint32_t mask)
 void show_msg(int level, const char *fmt, ...) {
     va_list ap;
     int saveerr;
-    extern char *progname;
+    extern char *torsocks_progname;
     char timestring[20];
     time_t timestamp;
 
@@ -208,7 +208,7 @@ void show_msg(int level, const char *fmt, ...) {
         fprintf(logfile, "%s ", timestring);
     }
 
-    fputs(progname, logfile);
+    fputs(torsocks_progname, logfile);
 
     if (logstamp) {
         fprintf(logfile, "(%d)", getpid());
