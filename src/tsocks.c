@@ -1732,9 +1732,10 @@ struct hostent *tsocks_getipnodebyname_guts(GETIPNODEBYNAME_SIGNATURE, struct ho
 
 ssize_t tsocks_sendto_guts(SENDTO_SIGNATURE, ssize_t (*original_sendto)(SENDTO_SIGNATURE))
 {
-    struct sockaddr_in *connaddr;
     int sock_type = -1;
     unsigned int sock_type_len = sizeof(sock_type);
+    int sock_domain = -1;
+    unsigned int sock_domain_len = sizeof(sock_domain);
 
     /* See comment in close() */
     if (!tsocks_init_complete) {
@@ -1749,30 +1750,26 @@ ssize_t tsocks_sendto_guts(SENDTO_SIGNATURE, ssize_t (*original_sendto)(SENDTO_S
 
     show_msg(MSGDEBUG, "Got sendto request\n");
 
-    connaddr = (struct sockaddr_in *) to;
+    /* Get the domain of the socket */
+    getsockopt(s, SOL_SOCKET, SO_DOMAIN,
+               (void *) &sock_domain, &sock_domain_len);
 
-    /* Get the type of the socket */
-    getsockopt(s, SOL_SOCKET, SO_TYPE,
-      (void *) &sock_type, &sock_type_len);
-
-    show_msg(MSGDEBUG, "sin_family: %i "
-                        "\n",
-                    connaddr->sin_family);
-
-    show_msg(MSGDEBUG, "sockopt: %i "
-                        "\n",
-                    sock_type);
-
-    /* If this isn't an INET socket we can't  */
-    /* handle it, just call the real connect now        */
-    if ((connaddr->sin_family != AF_INET)) {
-        show_msg(MSGDEBUG, "Connection isn't a TCP stream ignoring\n");
+    /* If this isn't an INET socket we can't handle it, just call the real
+       connect now */
+    if ((sock_domain != PF_INET)) {
+        show_msg(MSGDEBUG, "Connection isn't an Internet socket ignoring\n");
         return (ssize_t) original_sendto(s, buf, len, flags, to, tolen);
     }
 
 #ifdef USE_TOR_DNS
-    /* If this a UDP socket  */
-    /* then we refuse it, since it is probably a DNS request      */
+    /* Get the type of the socket */
+    getsockopt(s, SOL_SOCKET, SO_TYPE,
+               (void *) &sock_type, &sock_type_len);
+
+    show_msg(MSGDEBUG, "sockopt: %i\n",  sock_type);
+
+    /* If this a UDP socket then we refuse it, since it is probably a DNS
+       request */
     if ((sock_type != SOCK_STREAM)) {
         show_msg(MSGERR, "sendto: Connection is a UDP or ICMP stream, may be a "
                            "DNS request or other form of leak: rejecting.\n");
@@ -1786,9 +1783,10 @@ ssize_t tsocks_sendto_guts(SENDTO_SIGNATURE, ssize_t (*original_sendto)(SENDTO_S
 
 ssize_t tsocks_sendmsg_guts(SENDMSG_SIGNATURE, ssize_t (*original_sendmsg)(SENDMSG_SIGNATURE))
 {
-    struct sockaddr_in *connaddr;
     int sock_type = -1;
     unsigned int sock_type_len = sizeof(sock_type);
+    int sock_domain = -1;
+    unsigned int sock_domain_len = sizeof(sock_domain);
 
     /* See comment in close() */
     if (!tsocks_init_complete) {
@@ -1803,36 +1801,33 @@ ssize_t tsocks_sendmsg_guts(SENDMSG_SIGNATURE, ssize_t (*original_sendmsg)(SENDM
 
     show_msg(MSGDEBUG, "Got sendmsg request\n");
 
-    connaddr = (struct sockaddr_in *) msg->msg_name;
+    /* Get the domain of the socket */
+    getsockopt(s, SOL_SOCKET, SO_DOMAIN,
+               (void *) &sock_domain, &sock_domain_len);
 
-    /* Get the type of the socket */
-    getsockopt(s, SOL_SOCKET, SO_TYPE,
-      (void *) &sock_type, &sock_type_len);
-
-    show_msg(MSGDEBUG, "sin_family: %i "
-                        "\n",
-                    connaddr->sin_family);
-
-    show_msg(MSGDEBUG, "sockopt: %i "
-                        "\n",
-                    sock_type);
-
-    /* If this isn't an INET socket we can't  */
-    /* handle it, just call the real connect now        */
-    if ((connaddr->sin_family != AF_INET)) {
-        show_msg(MSGDEBUG, "Connection isn't a TCP stream ignoring\n");
+    /* If this isn't an INET socket we can't handle it, just call the real
+       connect now */
+    if ((sock_domain != PF_INET)) {
+        show_msg(MSGDEBUG, "Connection isn't an Internet socket ignoring\n");
         return (ssize_t) original_sendmsg(s, msg, flags);
     }
 
 #ifdef USE_TOR_DNS
-    /* If this a UDP socket  */
-    /* then we refuse it, since it is probably a DNS request      */
+    /* Get the type of the socket */
+    getsockopt(s, SOL_SOCKET, SO_TYPE,
+               (void *) &sock_type, &sock_type_len);
+
+    show_msg(MSGDEBUG, "sockopt: %i\n",  sock_type);
+
+    /* If this a UDP socket then we refuse it, since it is probably a DNS
+       request */
     if ((sock_type != SOCK_STREAM)) {
         show_msg(MSGERR, "sendmsg: Connection is a UDP or ICMP stream, may be a "
                            "DNS request or other form of leak: rejecting.\n");
         return -1;
     }
 #endif
+
     return (ssize_t) original_sendmsg(s, msg, flags);
 }
 
