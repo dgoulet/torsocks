@@ -180,7 +180,6 @@ void tsocks_init(void)
                      (error)?error:"not found"); \
     dlerror(); \
     }
-
     pthread_mutex_lock(&tsocks_init_mutex);
 
     /* We only need to be called once */
@@ -245,7 +244,11 @@ void tsocks_init(void)
 #endif
     /* Unfortunately, we can't do this lazily because otherwise our mmap'd
        area won't be shared across fork()s. */
-    deadpool_init();
+    if (!deadpool_init()) {
+        show_msg(MSGERR, "Fatal error: exiting\n");
+        exit(1);
+    }
+
     tsocks_init_complete=1;
     pthread_mutex_unlock(&tsocks_init_mutex);
 
@@ -1608,23 +1611,28 @@ int EXPAND_GUTS_NAME(res_send)(RES_SEND_SIGNATURE, int (*original_res_send)(RES_
 
 static int deadpool_init(void)
 {
-    if(!pool) {
-        get_environment();
-        get_config();
-        if(config.tordns_enabled) {
-            pool = init_pool(
-                config.tordns_cache_size,
-                config.tordns_deadpool_range->localip,
-                config.tordns_deadpool_range->localnet,
-                config.defaultserver.address,
-                config.defaultserver.port
-            );
-            if(!pool) {
-                show_msg(MSGERR, "failed to initialize deadpool: tordns disabled\n");
-            }
-        }
+    if (pool)
+        return 1;
+
+    if (!config.tordns_enabled) {
+        show_msg(MSGERR, "Tor DNS is disabled. Check your configuration.\n");
+        return 0;
     }
-    return 0;
+
+    get_environment();
+    get_config();
+    pool = init_pool(config.tordns_cache_size,
+                     config.tordns_deadpool_range->localip,
+                     config.tordns_deadpool_range->localnet,
+                     config.defaultserver.address,
+                     config.defaultserver.port);
+
+    if (!pool) {
+        show_msg(MSGERR, "Could not initialize reserved addresses for "
+                         ".onion addresses. Torsocks will not work properly.\n");
+        return 0;
+    }
+    return 1;
 }
 
 struct hostent *tsocks_gethostbyname_guts(GETHOSTBYNAME_SIGNATURE, struct hostent *(*original_gethostbyname)(GETHOSTBYNAME_SIGNATURE))
