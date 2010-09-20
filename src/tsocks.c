@@ -1667,31 +1667,19 @@ ssize_t tsocks_sendto_guts(SENDTO_SIGNATURE, ssize_t (*original_sendto)(SENDTO_S
 {
     int sock_type = -1;
     unsigned int sock_type_len = sizeof(sock_type);
-    int sock_domain = -1;
-    unsigned int sock_domain_len = sizeof(sock_domain);
+    struct sockaddr_in *connaddr;
 
     /* See comment in close() */
     if (!tsocks_init_complete)
         tsocks_init();
 
-    /* If the real connect doesn't exist, we're stuffed */
+    /* If the real sendto doesn't exist, we're stuffed */
     if (original_sendto == NULL) {
         show_msg(MSGERR, "Unresolved symbol: sendto\n");
         return(-1);
     }
 
     show_msg(MSGDEBUG, "Got sendto request\n");
-
-    /* Get the domain of the socket */
-    getsockopt(s, SOL_SOCKET, SO_DOMAIN,
-               (void *) &sock_domain, &sock_domain_len);
-
-    /* If this isn't an INET socket we can't handle it, just call the real
-       connect now */
-    if ((sock_domain != PF_INET)) {
-        show_msg(MSGDEBUG, "Connection isn't an Internet socket ignoring\n");
-        return (ssize_t) original_sendto(s, buf, len, flags, to, tolen);
-    }
 
     /* Get the type of the socket */
     getsockopt(s, SOL_SOCKET, SO_TYPE,
@@ -1707,22 +1695,29 @@ ssize_t tsocks_sendto_guts(SENDTO_SIGNATURE, ssize_t (*original_sendto)(SENDTO_S
         return -1;
     }
 
-    return (ssize_t) original_sendto(s, buf, len, flags, to, tolen);
+    connaddr = (struct sockaddr_in *) to;
 
+    /* If there is no address in 'to', sendto will only work if we
+       already allowed the socket to connect(), so we let it through.
+       Likewise if the socket is not an Internet connection. */
+    if (connaddr && (connaddr->sin_family != AF_INET)) {
+        show_msg(MSGDEBUG, "Connection isn't an Internet socket ignoring\n");
+    }
+
+    return (ssize_t) original_sendto(s, buf, len, flags, to, tolen);
 }
 
 ssize_t tsocks_sendmsg_guts(SENDMSG_SIGNATURE, ssize_t (*original_sendmsg)(SENDMSG_SIGNATURE))
 {
     int sock_type = -1;
     unsigned int sock_type_len = sizeof(sock_type);
-    int sock_domain = -1;
-    unsigned int sock_domain_len = sizeof(sock_domain);
+    struct sockaddr_in *connaddr;
 
     /* See comment in close() */
     if (!tsocks_init_complete)
         tsocks_init();
 
-    /* If the real connect doesn't exist, we're stuffed */
+    /* If the real sendmsg doesn't exist, we're stuffed */
     if (original_sendmsg == NULL) {
         show_msg(MSGERR, "Unresolved symbol: sendmsg\n");
         return(-1);
@@ -1730,29 +1725,25 @@ ssize_t tsocks_sendmsg_guts(SENDMSG_SIGNATURE, ssize_t (*original_sendmsg)(SENDM
 
     show_msg(MSGDEBUG, "Got sendmsg request\n");
 
-    /* Get the domain of the socket */
-    getsockopt(s, SOL_SOCKET, SO_DOMAIN,
-               (void *) &sock_domain, &sock_domain_len);
-
-    /* If this isn't an INET socket we can't handle it, just call the real
-       connect now */
-    if ((sock_domain != PF_INET)) {
-        show_msg(MSGDEBUG, "Connection isn't an Internet socket ignoring\n");
-        return (ssize_t) original_sendmsg(s, msg, flags);
-    }
-
     /* Get the type of the socket */
     getsockopt(s, SOL_SOCKET, SO_TYPE,
                (void *) &sock_type, &sock_type_len);
 
     show_msg(MSGDEBUG, "sockopt: %i\n",  sock_type);
 
-    /* If this a UDP socket then we refuse it, since it is probably a DNS
-       request */
     if ((sock_type != SOCK_STREAM)) {
         show_msg(MSGERR, "sendmsg: Connection is a UDP or ICMP stream, may be a "
-                           "DNS request or other form of leak: rejecting.\n");
+                          "DNS request or other form of leak: rejecting.\n");
         return -1;
+    }
+
+    connaddr = (struct sockaddr_in *) msg->msg_name;
+
+    /* If there is no address in msg_name, sendmsg will only work if we
+       already allowed the socket to connect(), so we let it through.
+       Likewise if the socket is not an Internet connection. */
+    if (connaddr && (connaddr->sin_family != AF_INET)) {
+        show_msg(MSGDEBUG, "Connection isn't an Internet socket\n");
     }
 
     return (ssize_t) original_sendmsg(s, msg, flags);
