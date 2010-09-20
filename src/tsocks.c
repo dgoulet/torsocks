@@ -185,7 +185,7 @@ void tsocks_init(void)
 
     /* We only need to be called once */
     if (tsocks_init_complete) {
-      return;
+        return;
     }
 
     /* Not strictly true yet, but prevents us getting called while still in progress.*/
@@ -212,13 +212,13 @@ void tsocks_init(void)
 
     dlerror();
 #ifndef USE_OLD_DLSYM
-   #ifdef SUPPORT_RES_API
-       if ((realres_init = dlsym(RTLD_NEXT, "res_init")) == NULL)
-         LOAD_ERROR("res_init", MSGERR);
-   #endif
-   #define PATCH_TABLE_EXPANSION(e,r,s,n,b,m)  if ((real##n = dlsym(RTLD_NEXT, m)) == NULL) LOAD_ERROR(m, MSG##e);
-   #include "patch_table.h"
-   #undef PATCH_TABLE_EXPANSION
+    #ifdef SUPPORT_RES_API
+    if ((realres_init = dlsym(RTLD_NEXT, "res_init")) == NULL)
+        LOAD_ERROR("res_init", MSGERR);
+    #endif
+    #define PATCH_TABLE_EXPANSION(e,r,s,n,b,m)  if ((real##n = dlsym(RTLD_NEXT, m)) == NULL) LOAD_ERROR(m, MSG##e);
+    #include "patch_table.h"
+    #undef PATCH_TABLE_EXPANSION
 #else
     lib = dlopen(LIBCONNECT, RTLD_LAZY);
     realconnect = dlsym(lib, "connect");
@@ -333,7 +333,7 @@ int tsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIGNA
 
     /* See comment in close() */
     if (!tsocks_init_complete) {
-      tsocks_init();
+        tsocks_init();
     }
 
     /* If the real connect doesn't exist, we're stuffed */
@@ -350,19 +350,15 @@ int tsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIGNA
     getsockopt(__fd, SOL_SOCKET, SO_TYPE,
             (void *) &sock_type, &sock_type_len);
 
-    show_msg(MSGDEBUG, "sin_family: %i "
-                        "\n",
-                     connaddr->sin_family);
+    show_msg(MSGDEBUG, "sin_family: %i\n", connaddr->sin_family);
 
-    show_msg(MSGDEBUG, "sockopt: %i "
-                        "\n",
-                     sock_type);
+    show_msg(MSGDEBUG, "sockopt: %i \n", sock_type);
 
     /* If this isn't an INET socket we can't  */
     /* handle it, just call the real connect now        */
     if ((connaddr->sin_family != AF_INET)) {
         show_msg(MSGDEBUG, "Connection isn't a TCP stream ignoring\n");
-          return(original_connect(__fd, __addr, __len));
+        return(original_connect(__fd, __addr, __len));
     }
 
     /* If this a UDP socket  */
@@ -373,47 +369,47 @@ int tsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIGNA
         return -1;
     }
 
-    // /* If we haven't initialized yet, do it now */
+    /* If we haven't initialized yet, do it now */
     get_config();
 
     /* Are we already handling this connect? */
     if ((newconn = find_socks_request(__fd, 1))) {
         if (memcmp(&newconn->connaddr, connaddr, sizeof(*connaddr))) {
-          /* Ok, they're calling connect on a socket that is in our
-            * queue but this connect() isn't to the same destination, 
-            * they're obviously not trying to check the status of 
-            * they're non blocking connect, they must have close()d 
-            * the other socket and created a new one which happens
-            * to have the same fd as a request we haven't had the chance
-            * to delete yet, so we delete it here. */
-          show_msg(MSGDEBUG, "Call to connect received on old "
-                              "tsocks request for socket %d but to "
-                              "new destination, deleting old request\n",
-                    newconn->sockid);
-          kill_socks_request(newconn);
-        } else {
-          /* Ok, this call to connect() is to check the status of 
-            * a current non blocking connect(). */
-          if (newconn->state == FAILED) {
-              show_msg(MSGDEBUG, "Call to connect received on failed "
-                                "request %d, returning %d\n",
-                      newconn->sockid, newconn->err);
-              errno = newconn->err;
-              rc = -1;
-          } else if (newconn->state == DONE) {
-              show_msg(MSGERR, "Call to connect received on completed "
-                              "request %d\n",
-                      newconn->sockid, newconn->err);
-              rc = 0;
-          } else {
-              show_msg(MSGDEBUG, "Call to connect received on current request %d\n",
+            /* Ok, they're calling connect on a socket that is in our
+             * queue but this connect() isn't to the same destination,
+             * they're obviously not trying to check the status of
+             * they're non blocking connect, they must have close()d
+             * the other socket and created a new one which happens
+             * to have the same fd as a request we haven't had the chance
+             * to delete yet, so we delete it here. */
+            show_msg(MSGDEBUG, "Call to connect received on old "
+                                "tsocks request for socket %d but to "
+                                "new destination, deleting old request\n",
                       newconn->sockid);
-              rc = handle_request(newconn);
-              errno = rc;
-          }
-          if ((newconn->state == FAILED) || (newconn->state == DONE))
-              kill_socks_request(newconn);
-          return((rc ? -1 : 0));
+            kill_socks_request(newconn);
+        } else {
+            /* Ok, this call to connect() is to check the status of
+             * a current non blocking connect(). */
+            if (newconn->state == FAILED) {
+                show_msg(MSGDEBUG, "Call to connect received on failed "
+                                  "request %d, returning %d\n",
+                        newconn->sockid, newconn->err);
+                errno = newconn->err;
+                rc = -1;
+            } else if (newconn->state == DONE) {
+                show_msg(MSGERR, "Call to connect received on completed "
+                                "request %d\n",
+                        newconn->sockid, newconn->err);
+                rc = 0;
+            } else {
+                show_msg(MSGDEBUG, "Call to connect received on current request %d\n",
+                        newconn->sockid);
+                rc = handle_request(newconn);
+                errno = rc;
+            }
+            if ((newconn->state == FAILED) || (newconn->state == DONE))
+                kill_socks_request(newconn);
+            return((rc ? -1 : 0));
         }
     }
 
@@ -422,7 +418,7 @@ int tsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIGNA
     if (!getpeername(__fd, (struct sockaddr *) &peer_address, &namelen)) {
         show_msg(MSGDEBUG, "Socket is already connected, defering to "
                           "real connect\n");
-          return(original_connect(__fd, __addr, __len));
+        return(original_connect(__fd, __addr, __len));
     }
 
     show_msg(MSGDEBUG, "Got connection request for socket %d to "
@@ -435,61 +431,60 @@ int tsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIGNA
         return(original_connect(__fd, __addr, __len));
     }
 
-   /* Ok, so its not local, we need a path to the net */
-   pick_server(&config, &path, &(connaddr->sin_addr), ntohs(connaddr->sin_port));
+    /* Ok, so its not local, we need a path to the net */
+    pick_server(&config, &path, &(connaddr->sin_addr), ntohs(connaddr->sin_port));
 
-   show_msg(MSGDEBUG, "Picked server %s for connection\n",
-            (path->address ? path->address : "(Not Provided)"));
-   if (path->address == NULL) {
-      if (path == &(config.defaultserver))
-         show_msg(MSGERR, "Connection needs to be made "
-                          "via default server but "
-                          "the default server has not "
-                          "been specified\n");
-      else 
-         show_msg(MSGERR, "Connection needs to be made "
-                          "via path specified at line "
-                          "%d in configuration file but "
-                          "the server has not been "
-                          "specified for this path\n",
-                  path->lineno);
-   } else if ((res = resolve_ip(path->address, 0, HOSTNAMES)) == -1) {
-      show_msg(MSGERR, "The SOCKS server (%s) listed in the configuration "
-                       "file which needs to be used for this connection "
-                       "is invalid\n", path->address);
-   } else {
-      /* Construct the addr for the socks server */
-      server_address.sin_family = AF_INET; /* host byte order */
-      server_address.sin_addr.s_addr = res;
-      server_address.sin_port = htons(path->port);
-      bzero(&(server_address.sin_zero), 8);
+    show_msg(MSGDEBUG, "Picked server %s for connection\n",
+              (path->address ? path->address : "(Not Provided)"));
+    if (path->address == NULL) {
+        if (path == &(config.defaultserver))
+            show_msg(MSGERR, "Connection needs to be made "
+                              "via default server but "
+                              "the default server has not "
+                              "been specified\n");
+        else
+            show_msg(MSGERR, "Connection needs to be made "
+                              "via path specified at line "
+                              "%d in configuration file but "
+                              "the server has not been "
+                              "specified for this path\n",
+                              path->lineno);
+    } else if ((res = resolve_ip(path->address, 0, HOSTNAMES)) == -1) {
+        show_msg(MSGERR, "The SOCKS server (%s) listed in the configuration "
+                        "file which needs to be used for this connection "
+                        "is invalid\n", path->address);
+    } else {
+        /* Construct the addr for the socks server */
+        server_address.sin_family = AF_INET; /* host byte order */
+        server_address.sin_addr.s_addr = res;
+        server_address.sin_port = htons(path->port);
+        bzero(&(server_address.sin_zero), 8);
 
-      /* Complain if this server isn't on a localnet */
-      if (is_local(&config, &server_address.sin_addr)) {
-         show_msg(MSGERR, "SOCKS server %s (%s) is not on a local subnet!\n", 
-                  path->address, inet_ntoa(server_address.sin_addr));
-      } else 
-         gotvalidserver = 1;
-   }
+        /* Complain if this server isn't on a localnet */
+        if (is_local(&config, &server_address.sin_addr)) {
+            show_msg(MSGERR, "SOCKS server %s (%s) is not on a local subnet!\n",
+                     path->address, inet_ntoa(server_address.sin_addr));
+        } else
+            gotvalidserver = 1;
+    }
 
-   /* If we haven't found a valid server we return connection refused */
-   if (!gotvalidserver || 
-       !(newconn = new_socks_request(__fd, connaddr, &server_address, path))) {
-      errno = ECONNREFUSED;
-      return(-1);
-   } else {
-      /* Now we call the main function to handle the connect. */
-      rc = handle_request(newconn);
-      /* If the request completed immediately it mustn't have been
-       * a non blocking socket, in this case we don't need to know
-       * about this socket anymore. */
-      if ((newconn->state == FAILED) || (newconn->state == DONE))
-         kill_socks_request(newconn);
-      errno = rc;
-      return((rc ? -1 : 0));
-   }
+    /* If we haven't found a valid server we return connection refused */
+    if (!gotvalidserver ||
+        !(newconn = new_socks_request(__fd, connaddr, &server_address, path))) {
+        errno = ECONNREFUSED;
+        return(-1);
+    } else {
+        /* Now we call the main function to handle the connect. */
+        rc = handle_request(newconn);
+        /* If the request completed immediately it mustn't have been
+        * a non blocking socket, in this case we don't need to know
+        * about this socket anymore. */
+        if ((newconn->state == FAILED) || (newconn->state == DONE))
+            kill_socks_request(newconn);
+        errno = rc;
+        return((rc ? -1 : 0));
+    }
 }
-
 
 int tsocks_select_guts(SELECT_SIGNATURE, int (*original_select)(SELECT_SIGNATURE))
 {
@@ -501,14 +496,14 @@ int tsocks_select_guts(SELECT_SIGNATURE, int (*original_select)(SELECT_SIGNATURE
     fd_set mywritefds, myreadfds, myexceptfds;
 
     /* If we're not currently managing any requests we can just
-      * leave here */
+     * leave here */
     if (!requests) {
         show_msg(MSGDEBUG, "No requests waiting, calling real select\n");
         return(original_select(n, readfds, writefds, exceptfds, timeout));
     }
 
     if (!tsocks_init_complete) {
-      tsocks_init();
+        tsocks_init();
     }
 
     show_msg(MSGDEBUG, "Intercepted call to select with %d fds, "
@@ -517,16 +512,16 @@ int tsocks_select_guts(SELECT_SIGNATURE, int (*original_select)(SELECT_SIGNATURE
 
     for (conn = requests; conn != NULL; conn = conn->next) {
         if ((conn->state == FAILED) || (conn->state == DONE))
-          continue;
+            continue;
         conn->selectevents = 0;
         show_msg(MSGDEBUG, "Checking requests for socks enabled socket %d\n",
-                conn->sockid);
+                 conn->sockid);
         conn->selectevents |= (writefds ? (FD_ISSET(conn->sockid, writefds) ? WRITE : 0) : 0);
         conn->selectevents |= (readfds ? (FD_ISSET(conn->sockid, readfds) ? READ : 0) : 0);
         conn->selectevents |= (exceptfds ? (FD_ISSET(conn->sockid, exceptfds) ? EXCEPT : 0) : 0);
         if (conn->selectevents) {
-          show_msg(MSGDEBUG, "Socket %d was set for events\n", conn->sockid);
-          monitoring = 1;
+            show_msg(MSGDEBUG, "Socket %d was set for events\n", conn->sockid);
+            monitoring = 1;
         }
     }
 
@@ -544,125 +539,125 @@ int tsocks_select_guts(SELECT_SIGNATURE, int (*original_select)(SELECT_SIGNATURE
     do {
         /* Copy the clients fd events, we'll change them as we wish */
         if (readfds)
-          memcpy(&myreadfds, readfds, sizeof(myreadfds));
+            memcpy(&myreadfds, readfds, sizeof(myreadfds));
         else
-          FD_ZERO(&myreadfds);
+            FD_ZERO(&myreadfds);
         if (writefds)
-          memcpy(&mywritefds, writefds, sizeof(mywritefds));
+            memcpy(&mywritefds, writefds, sizeof(mywritefds));
         else
-          FD_ZERO(&mywritefds);
+            FD_ZERO(&mywritefds);
         if (exceptfds)
-          memcpy(&myexceptfds, exceptfds, sizeof(myexceptfds));
+            memcpy(&myexceptfds, exceptfds, sizeof(myexceptfds));
         else
-          FD_ZERO(&myexceptfds);
+            FD_ZERO(&myexceptfds);
 
         /* Now enable our sockets for the events WE want to hear about */
         for (conn = requests; conn != NULL; conn = conn->next) {
-          if ((conn->state == FAILED) || (conn->state == DONE) ||
-              (conn->selectevents == 0))
-              continue;
-          /* We always want to know about socket exceptions */
-          FD_SET(conn->sockid, &myexceptfds);
-          /* If we're waiting for a connect or to be able to send
-            * on a socket we want to get write events */
-          if ((conn->state == SENDING) || (conn->state == CONNECTING))
-              FD_SET(conn->sockid,&mywritefds);
-          else
-              FD_CLR(conn->sockid,&mywritefds);
-          /* If we're waiting to receive data we want to get
-            * read events */
-          if (conn->state == RECEIVING)
-              FD_SET(conn->sockid,&myreadfds);
-          else
-              FD_CLR(conn->sockid,&myreadfds);
+            if ((conn->state == FAILED) || (conn->state == DONE) ||
+                (conn->selectevents == 0))
+                continue;
+            /* We always want to know about socket exceptions */
+            FD_SET(conn->sockid, &myexceptfds);
+            /* If we're waiting for a connect or to be able to send
+              * on a socket we want to get write events */
+            if ((conn->state == SENDING) || (conn->state == CONNECTING))
+                FD_SET(conn->sockid,&mywritefds);
+            else
+                FD_CLR(conn->sockid,&mywritefds);
+            /* If we're waiting to receive data we want to get
+              * read events */
+            if (conn->state == RECEIVING)
+                FD_SET(conn->sockid,&myreadfds);
+            else
+                FD_CLR(conn->sockid,&myreadfds);
         }
 
         nevents = original_select(n, &myreadfds, &mywritefds, &myexceptfds, timeout);
         /* If there were no events we must have timed out or had an error */
         if (nevents <= 0)
-          break;
+            break;
 
         /* Loop through all the sockets we're monitoring and see if
         * any of them have had events */
         for (conn = requests; conn != NULL; conn = nextconn) {
-          nextconn = conn->next;
-          if ((conn->state == FAILED) || (conn->state == DONE))
-              continue;
-          show_msg(MSGDEBUG, "Checking socket %d for events\n", conn->sockid);
-          /* Clear all the events on the socket (if any), we'll reset
-            * any that are necessary later. */
-          setevents = 0;
-          if (FD_ISSET(conn->sockid, &mywritefds))  {
-              nevents--;
-              setevents |= WRITE;
-              show_msg(MSGDEBUG, "Socket had write event\n");
-              FD_CLR(conn->sockid, &mywritefds);
-          }
-          if (FD_ISSET(conn->sockid, &myreadfds))  {
-              nevents--;
-              setevents |= READ;
-              show_msg(MSGDEBUG, "Socket had write event\n");
-              FD_CLR(conn->sockid, &myreadfds);
-          }
-          if (FD_ISSET(conn->sockid, &myexceptfds))  {
-              nevents--;
-              setevents |= EXCEPT;
-              show_msg(MSGDEBUG, "Socket had except event\n");
-              FD_CLR(conn->sockid, &myexceptfds);
-          }
+            nextconn = conn->next;
+            if ((conn->state == FAILED) || (conn->state == DONE))
+                continue;
+            show_msg(MSGDEBUG, "Checking socket %d for events\n", conn->sockid);
+            /* Clear all the events on the socket (if any), we'll reset
+              * any that are necessary later. */
+            setevents = 0;
+            if (FD_ISSET(conn->sockid, &mywritefds))  {
+                nevents--;
+                setevents |= WRITE;
+                show_msg(MSGDEBUG, "Socket had write event\n");
+                FD_CLR(conn->sockid, &mywritefds);
+            }
+            if (FD_ISSET(conn->sockid, &myreadfds))  {
+                nevents--;
+                setevents |= READ;
+                show_msg(MSGDEBUG, "Socket had write event\n");
+                FD_CLR(conn->sockid, &myreadfds);
+            }
+            if (FD_ISSET(conn->sockid, &myexceptfds))  {
+                nevents--;
+                setevents |= EXCEPT;
+                show_msg(MSGDEBUG, "Socket had except event\n");
+                FD_CLR(conn->sockid, &myexceptfds);
+            }
 
-          if (!setevents) {
-              show_msg(MSGDEBUG, "No events on socket %d\n", conn->sockid);
-              continue;
-          }
+            if (!setevents) {
+                show_msg(MSGDEBUG, "No events on socket %d\n", conn->sockid);
+                continue;
+            }
 
-          if (setevents & EXCEPT) {
-              conn->state = FAILED;
-          } else {
-              rc = handle_request(conn);
-          }
-          /* If the connection hasn't failed or completed there is nothing
-            * to report to the client */
-          if ((conn->state != FAILED) &&
-              (conn->state != DONE))
-              continue;
+            if (setevents & EXCEPT) {
+                conn->state = FAILED;
+            } else {
+                rc = handle_request(conn);
+            }
+            /* If the connection hasn't failed or completed there is nothing
+              * to report to the client */
+            if ((conn->state != FAILED) &&
+                (conn->state != DONE))
+                continue;
 
-          /* Ok, the connection is completed, for good or for bad. We now
-            * hand back the relevant events to the caller. We don't delete the
-            * connection though since the caller should call connect() to
-            * check the status, we delete it then */
+            /* Ok, the connection is completed, for good or for bad. We now
+              * hand back the relevant events to the caller. We don't delete the
+              * connection though since the caller should call connect() to
+              * check the status, we delete it then */
 
-          if (conn->state == FAILED) {
-              /* Damn, the connection failed. Whatever the events the socket
-              * was selected for we flag */
-              if (conn->selectevents & EXCEPT) {
-                FD_SET(conn->sockid, &myexceptfds);
-                nevents++;
-              }
-              if (conn->selectevents & READ) {
-                FD_SET(conn->sockid, &myreadfds);
-                nevents++;
-              }
-              if (conn->selectevents & WRITE) {
-                FD_SET(conn->sockid, &mywritefds);
-                nevents++;
-              }
-              /* We should use setsockopt to set the SO_ERROR errno for this
-              * socket, but this isn't allowed for some silly reason which
-              * leaves us a bit hamstrung.
-              * We don't delete the request so that hopefully we can
-              * return the error on the socket if they call connect() on it */
-          } else {
-              /* The connection is done,  if the client selected for
-              * writing we can go ahead and signal that now (since the socket must
-              * be ready for writing), otherwise we'll just let the select loop
-              * come around again (since we can't flag it for read, we don't know
-              * if there is any data to be read and can't be bothered checking) */
-              if (conn->selectevents & WRITE) {
-                FD_SET(conn->sockid, &mywritefds);
-                nevents++;
-              }
-          }
+            if (conn->state == FAILED) {
+                /* Damn, the connection failed. Whatever the events the socket
+                * was selected for we flag */
+                if (conn->selectevents & EXCEPT) {
+                    FD_SET(conn->sockid, &myexceptfds);
+                    nevents++;
+                }
+                if (conn->selectevents & READ) {
+                    FD_SET(conn->sockid, &myreadfds);
+                    nevents++;
+                }
+                if (conn->selectevents & WRITE) {
+                    FD_SET(conn->sockid, &mywritefds);
+                    nevents++;
+                }
+                /* We should use setsockopt to set the SO_ERROR errno for this
+                * socket, but this isn't allowed for some silly reason which
+                * leaves us a bit hamstrung.
+                * We don't delete the request so that hopefully we can
+                * return the error on the socket if they call connect() on it */
+            } else {
+                /* The connection is done,  if the client selected for
+                * writing we can go ahead and signal that now (since the socket must
+                * be ready for writing), otherwise we'll just let the select loop
+                * come around again (since we can't flag it for read, we don't know
+                * if there is any data to be read and can't be bothered checking) */
+                if (conn->selectevents & WRITE) {
+                    FD_SET(conn->sockid, &mywritefds);
+                    nevents++;
+                }
+            }
         }
     } while (nevents == 0);
 
@@ -693,9 +688,9 @@ int tsocks_poll_guts(POLL_SIGNATURE, int (*original_poll)(POLL_SIGNATURE))
     if (!requests)
         return(original_poll(ufds, nfds, timeout));
 
-      if (!tsocks_init_complete) {
+    if (!tsocks_init_complete) {
         tsocks_init();
-      }
+    }
 
     show_msg(MSGDEBUG, "Intercepted call to poll with %d fds, "
               "0x%08x timeout %d\n", nfds, ufds, timeout);
@@ -707,7 +702,7 @@ int tsocks_poll_guts(POLL_SIGNATURE, int (*original_poll)(POLL_SIGNATURE))
       * in */
     for (i = 0; i < nfds; i++) {
         if (!(conn = find_socks_request(ufds[i].fd, 0)))
-          continue;
+            continue;
         show_msg(MSGDEBUG, "Have event checks for socks enabled socket %d\n",
                 conn->sockid);
         conn->selectevents = ufds[i].events;
@@ -749,7 +744,7 @@ int tsocks_poll_guts(POLL_SIGNATURE, int (*original_poll)(POLL_SIGNATURE))
         nevents = original_poll(ufds, nfds, timeout);
         /* If there were no events we must have timed out or had an error */
         if (nevents <= 0)
-          break;
+            break;
 
         /* Loop through all the sockets we're monitoring and see if
         * any of them have had events */
@@ -800,25 +795,25 @@ int tsocks_poll_guts(POLL_SIGNATURE, int (*original_poll)(POLL_SIGNATURE))
                 continue;
 
             /* Ok, the connection is completed, for good or for bad. We now
-              * hand back the relevant events to the caller. We don't delete the
-              * connection though since the caller should call connect() to
-              * check the status, we delete it then */
+             * hand back the relevant events to the caller. We don't delete the
+             * connection though since the caller should call connect() to
+             * check the status, we delete it then */
 
             if (conn->state == FAILED) {
                 /* Damn, the connection failed. Just copy back the error events
-                * from the poll call, error events are always valid even if not
-                * requested by the client */
+                 * from the poll call, error events are always valid even if not
+                 * requested by the client */
                 /* We should use setsockopt to set the SO_ERROR errno for this
-                * socket, but this isn't allowed for some silly reason which
-                * leaves us a bit hamstrung.
-                * We don't delete the request so that hopefully we can
-                * return the error on the socket if they call connect() on it */
+                 * socket, but this isn't allowed for some silly reason which
+                 * leaves us a bit hamstrung.
+                 * We don't delete the request so that hopefully we can
+                 * return the error on the socket if they call connect() on it */
             } else {
                 /* The connection is done,  if the client polled for
-                * writing we can go ahead and signal that now (since the socket must
-                * be ready for writing), otherwise we'll just let the select loop
-                * come around again (since we can't flag it for read, we don't know
-                * if there is any data to be read and can't be bothered checking) */
+                 * writing we can go ahead and signal that now (since the socket must
+                 * be ready for writing), otherwise we'll just let the select loop
+                 * come around again (since we can't flag it for read, we don't know
+                 * if there is any data to be read and can't be bothered checking) */
                 if (conn->selectevents & POLLOUT) {
                   setevents |= POLLOUT;
                   nevents++;
@@ -832,8 +827,7 @@ int tsocks_poll_guts(POLL_SIGNATURE, int (*original_poll)(POLL_SIGNATURE))
     /* Now restore the events polled in each of the blocks */
     for (i = 0; i < nfds; i++) {
         if (!(conn = find_socks_request(ufds[i].fd, 1)))
-          continue;
-
+            continue;
         ufds[i].events = conn->selectevents;
     }
 
@@ -874,7 +868,7 @@ int tsocks_close_guts(CLOSE_SIGNATURE, int (*original_close)(CLOSE_SIGNATURE))
     if ((conn = find_socks_request(fd, 1))) {
         show_msg(MSGDEBUG, "Call to close() received on file descriptor "
                             "%d which is a connection request of status %d\n",
-                  conn->sockid, conn->state);
+                 conn->sockid, conn->state);
         kill_socks_request(conn);
     }
 
@@ -966,10 +960,10 @@ static void kill_socks_request(struct connreq *conn)
         requests = conn->next;
     else {
         for (connnode = requests; connnode != NULL; connnode = connnode->next) {
-          if (connnode->next == conn) {
-              connnode->next = conn->next;
-              break;
-          }
+            if (connnode->next == conn) {
+                connnode->next = conn->next;
+                break;
+            }
         }
     }
 
@@ -1005,8 +999,8 @@ static int handle_request(struct connreq *conn)
             (conn->state != DONE) &&
             (i++ < 20)) {
         show_msg(MSGDEBUG, "In request handle loop for socket %d, "
-                          "current state of request is %d\n", conn->sockid,
-                          conn->state);
+                           "current state of request is %d\n", conn->sockid,
+                           conn->state);
         switch(conn->state) {
           case UNSTARTED:
           case CONNECTING:
@@ -1062,7 +1056,6 @@ static int handle_request(struct connreq *conn)
               rc = read_socksv5_connect(conn);
               break;
         }
-
         conn->err = errno;
     }
 
@@ -1071,7 +1064,7 @@ static int handle_request(struct connreq *conn)
                 conn->sockid);
 
     show_msg(MSGDEBUG, "Handle loop completed for socket %d in state %d, "
-                        "returning %d\n", conn->sockid, conn->state, rc);
+                       "returning %d\n", conn->sockid, conn->state, rc);
     return(rc);
 }
 
@@ -1081,24 +1074,24 @@ static int connect_server(struct connreq *conn)
 
     /* Connect this socket to the socks server */
     show_msg(MSGDEBUG, "Connecting to %s port %d\n", 
-              inet_ntoa(conn->serveraddr.sin_addr), ntohs(conn->serveraddr.sin_port));
+             inet_ntoa(conn->serveraddr.sin_addr), ntohs(conn->serveraddr.sin_port));
 
     rc = realconnect(conn->sockid, (CONNECT_SOCKARG) &(conn->serveraddr),
-                      sizeof(conn->serveraddr));
+                     sizeof(conn->serveraddr));
 
     show_msg(MSGDEBUG, "Connect returned %d, errno is %d\n", rc, errno); 
     if (rc && errno == EISCONN) {
         rc = 0;
         show_msg(MSGDEBUG, "Socket %d already connected to SOCKS server\n", conn->sockid);
         conn->state = CONNECTED;
-     } else if (rc) {
+    } else if (rc) {
         if (errno != EINPROGRESS) {
-          show_msg(MSGERR, "Error %d attempting to connect to SOCKS "
-                    "server (%s)\n", errno, strerror(errno));
-          conn->state = FAILED;
+            show_msg(MSGERR, "Error %d attempting to connect to SOCKS "
+                             "server (%s)\n", errno, strerror(errno));
+            conn->state = FAILED;
         } else {
-          show_msg(MSGDEBUG, "Connection in progress\n");
-          conn->state = CONNECTING;
+            show_msg(MSGDEBUG, "Connection in progress\n");
+            conn->state = CONNECTING;
         }
     } else {
         show_msg(MSGDEBUG, "Socket %d connected to SOCKS server\n", conn->sockid);
@@ -1305,16 +1298,16 @@ static int recv_buffer(struct connreq *conn)
           rc = recv(conn->sockid, conn->buffer + conn->datadone,
                     conn->datalen - conn->datadone, 0);
           if (rc > 0) {
-            conn->datadone += rc;
-            rc = 0;
+              conn->datadone += rc;
+              rc = 0;
           } else if (rc == 0) {
-            show_msg(MSGDEBUG, "Peer has shutdown but we only read %d of %d bytes.\n",
-                conn->datadone, conn->datalen);
-            rc = ENOTCONN; /* ENOTCONN seems like the most fitting error message */
+              show_msg(MSGDEBUG, "Peer has shutdown but we only read %d of %d bytes.\n",
+                  conn->datadone, conn->datalen);
+              rc = ENOTCONN; /* ENOTCONN seems like the most fitting error message */
           } else {
-            if (errno != EWOULDBLOCK)
-                show_msg(MSGDEBUG, "Read failed, %s\n", strerror(errno));
-            rc = errno;
+              if (errno != EWOULDBLOCK)
+                  show_msg(MSGDEBUG, "Read failed, %s\n", strerror(errno));
+              rc = errno;
           }
     }
 
@@ -1322,7 +1315,7 @@ static int recv_buffer(struct connreq *conn)
         conn->state = conn->nextstate;
 
     show_msg(MSGDEBUG, "Received %d bytes of %d bytes expected, return code is %d\n",
-              conn->datadone, conn->datalen, rc);
+             conn->datadone, conn->datalen, rc);
     return(rc);
 }
 
@@ -1389,7 +1382,7 @@ static int read_socksv5_method(struct connreq *conn)
         conn->state = SENDING;
         conn->nextstate = SENTV5AUTH;
         conn->datadone = 0;
-      } else
+    } else
         return(send_socksv5_connect(conn));
 
     return(0);
@@ -1445,7 +1438,6 @@ static int read_socksv5_connect(struct connreq *conn)
                 return(ECONNABORTED);
         }
     }
-
     conn->state = DONE;
 
     return(0);
@@ -1479,7 +1471,6 @@ static int read_socksv4_req(struct connreq *conn)
               return(ECONNREFUSED);
         }
     }
-
     conn->state = DONE;
 
     return(0);
@@ -1491,15 +1482,15 @@ int res_init(void)
     int rc;
 
     if (!realres_init) {
-      if ((realres_init = dlsym(RTLD_NEXT, "res_init")) == NULL)
-        LOAD_ERROR("res_init", MSGERR);
+        if ((realres_init = dlsym(RTLD_NEXT, "res_init")) == NULL)
+            LOAD_ERROR("res_init", MSGERR);
     }
 
     show_msg(MSGDEBUG, "Got res_init request\n");
 
     /* See comment in close() */
     if (!tsocks_init_complete) {
-      tsocks_init();
+        tsocks_init();
     }
 
     if (realres_init == NULL) {
@@ -1509,9 +1500,9 @@ int res_init(void)
     /* Call normal res_init */
     rc = realres_init();
 
-   /* Force using TCP protocol for DNS queries */
-   _res.options |= RES_USEVC;
-   return(rc);
+    /* Force using TCP protocol for DNS queries */
+    _res.options |= RES_USEVC;
+    return(rc);
 }
 
 int EXPAND_GUTS_NAME(res_query)(RES_QUERY_SIGNATURE, int (*original_res_query)(RES_QUERY_SIGNATURE))
@@ -1519,15 +1510,15 @@ int EXPAND_GUTS_NAME(res_query)(RES_QUERY_SIGNATURE, int (*original_res_query)(R
     int rc;
 
     if (!original_res_query) {
-      if ((original_res_query = dlsym(RTLD_NEXT, "res_query")) == NULL)
-        LOAD_ERROR("res_query", MSGERR);
+        if ((original_res_query = dlsym(RTLD_NEXT, "res_query")) == NULL)
+            LOAD_ERROR("res_query", MSGERR);
     }
 
     show_msg(MSGDEBUG, "Got res_query request\n");
 
     /* See comment in close() */
     if (!tsocks_init_complete) {
-      tsocks_init();
+        tsocks_init();
     }
 
     if (original_res_query == NULL) {
@@ -1538,7 +1529,7 @@ int EXPAND_GUTS_NAME(res_query)(RES_QUERY_SIGNATURE, int (*original_res_query)(R
     /* Ensure we force using TCP for DNS queries by calling res_init
        above if it has not already been called.*/
     if (!(_res.options & RES_INIT) || !(_res.options & RES_USEVC))
-      res_init();
+        res_init();
 
     /* Call normal res_query */
     rc = original_res_query(dname, class, type, answer, anslen);
@@ -1559,7 +1550,7 @@ int EXPAND_GUTS_NAME(res_querydomain)(RES_QUERYDOMAIN_SIGNATURE, int (*original_
 
     /* See comment in close() */
     if (!tsocks_init_complete) {
-      tsocks_init();
+        tsocks_init();
     }
 
     if (original_res_querydomain == NULL) {
@@ -1570,7 +1561,7 @@ int EXPAND_GUTS_NAME(res_querydomain)(RES_QUERYDOMAIN_SIGNATURE, int (*original_
     /* Ensure we force using TCP for DNS queries by calling res_init
        above if it has not already been called.*/
     if (!(_res.options & RES_INIT) || !(_res.options & RES_USEVC))
-      res_init();
+        res_init();
 
     /* Call normal res_querydomain */
     rc = original_res_querydomain(name, domain, class, type, answer, anslen);
@@ -1583,15 +1574,15 @@ int EXPAND_GUTS_NAME(res_search)(RES_SEARCH_SIGNATURE, int (*original_res_search
     int rc;
 
     if (!original_res_search) {
-      if ((original_res_search = dlsym(RTLD_NEXT, "res_search")) == NULL)
-        LOAD_ERROR("res_search", MSGERR);
+        if ((original_res_search = dlsym(RTLD_NEXT, "res_search")) == NULL)
+            LOAD_ERROR("res_search", MSGERR);
     }
 
     show_msg(MSGDEBUG, "Got res_search request\n");
 
     /* See comment in close() */
     if (!tsocks_init_complete) {
-      tsocks_init();
+        tsocks_init();
     }
 
     if (original_res_search == NULL) {
@@ -1602,7 +1593,7 @@ int EXPAND_GUTS_NAME(res_search)(RES_SEARCH_SIGNATURE, int (*original_res_search
     /* Ensure we force using TCP for DNS queries by calling res_init
        above if it has not already been called.*/
     if (!(_res.options & RES_INIT) || !(_res.options & RES_USEVC))
-      res_init();
+        res_init();
 
     /* Call normal res_search */
     rc = original_res_search(dname, class, type, answer, anslen);
@@ -1615,15 +1606,15 @@ int EXPAND_GUTS_NAME(res_send)(RES_SEND_SIGNATURE, int (*original_res_send)(RES_
     int rc;
 
     if (!original_res_send) {
-      if ((original_res_send = dlsym(RTLD_NEXT, "res_send")) == NULL)
-        LOAD_ERROR("res_send", MSGERR);
+        if ((original_res_send = dlsym(RTLD_NEXT, "res_send")) == NULL)
+            LOAD_ERROR("res_send", MSGERR);
     }
 
     show_msg(MSGDEBUG, "Got res_send request\n");
 
     /* See comment in close() */
     if (!tsocks_init_complete) {
-      tsocks_init();
+        tsocks_init();
     }
 
     if (original_res_send == NULL) {
@@ -1634,7 +1625,7 @@ int EXPAND_GUTS_NAME(res_send)(RES_SEND_SIGNATURE, int (*original_res_send)(RES_
     /* Ensure we force using TCP for DNS queries by calling res_init
        above if it has not already been called.*/
     if (!(_res.options & RES_INIT) || !(_res.options & RES_USEVC))
-      res_init();
+        res_init();
 
     /* Call normal res_send */
     rc = original_res_send(msg, msglen, answer, anslen);
@@ -1666,7 +1657,7 @@ static int deadpool_init(void)
 
 struct hostent *tsocks_gethostbyname_guts(GETHOSTBYNAME_SIGNATURE, struct hostent *(*original_gethostbyname)(GETHOSTBYNAME_SIGNATURE))
 {
-    if(pool) {
+    if (pool) {
         return our_gethostbyname(pool, name);
     } else {
         return original_gethostbyname(name);
@@ -1675,7 +1666,7 @@ struct hostent *tsocks_gethostbyname_guts(GETHOSTBYNAME_SIGNATURE, struct hosten
 
 struct hostent *tsocks_gethostbyaddr_guts(GETHOSTBYADDR_SIGNATURE, struct hostent *(*original_gethostbyaddr)(GETHOSTBYADDR_SIGNATURE))
 {
-    if(pool) {
+    if (pool) {
         return our_gethostbyaddr(pool, addr, len, type);
     } else {
         return original_gethostbyaddr(addr, len, type);
@@ -1684,7 +1675,7 @@ struct hostent *tsocks_gethostbyaddr_guts(GETHOSTBYADDR_SIGNATURE, struct hosten
 
 int tsocks_getaddrinfo_guts(GETADDRINFO_SIGNATURE, int (*original_getaddrinfo)(GETADDRINFO_SIGNATURE))
 {
-    if(pool) {
+    if (pool) {
         return our_getaddrinfo(pool, node, service, hints, res);
     } else {
         return original_getaddrinfo(node, service, hints, res);
@@ -1693,7 +1684,7 @@ int tsocks_getaddrinfo_guts(GETADDRINFO_SIGNATURE, int (*original_getaddrinfo)(G
 
 struct hostent *tsocks_getipnodebyname_guts(GETIPNODEBYNAME_SIGNATURE, struct hostent *(*original_getipnodebyname)(GETIPNODEBYNAME_SIGNATURE))
 {
-    if(pool) {
+    if (pool) {
         return our_getipnodebyname(pool, name, af, flags, error_num);
     } else {
         return original_getipnodebyname(name, af, flags, error_num);
@@ -1709,7 +1700,7 @@ ssize_t tsocks_sendto_guts(SENDTO_SIGNATURE, ssize_t (*original_sendto)(SENDTO_S
 
     /* See comment in close() */
     if (!tsocks_init_complete) {
-      tsocks_init();
+        tsocks_init();
     }
 
     /* If the real connect doesn't exist, we're stuffed */
@@ -1758,7 +1749,7 @@ ssize_t tsocks_sendmsg_guts(SENDMSG_SIGNATURE, ssize_t (*original_sendmsg)(SENDM
 
     /* See comment in close() */
     if (!tsocks_init_complete) {
-      tsocks_init();
+        tsocks_init();
     }
 
     /* If the real connect doesn't exist, we're stuffed */
