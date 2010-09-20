@@ -184,9 +184,8 @@ void tsocks_init(void)
     pthread_mutex_lock(&tsocks_init_mutex);
 
     /* We only need to be called once */
-    if (tsocks_init_complete) {
+    if (tsocks_init_complete)
         return;
-    }
 
     /* Not strictly true yet, but prevents us getting called while still in progress.*/
     /* This has been observed on Snow Leopard for instance. */
@@ -289,9 +288,8 @@ static int get_config ()
 
     /* Determine the location of the config file */
 #ifdef ALLOW_ENV_CONFIG
-    if (!suid) {
+    if (!suid)
         conffile = getenv("TORSOCKS_CONF_FILE");
-    }
 #endif
 
     /* Read in the config file */
@@ -332,9 +330,8 @@ int tsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIGNA
     struct connreq *newconn;
 
     /* See comment in close() */
-    if (!tsocks_init_complete) {
+    if (!tsocks_init_complete)
         tsocks_init();
-    }
 
     /* If the real connect doesn't exist, we're stuffed */
     if (original_connect == NULL) {
@@ -502,9 +499,8 @@ int tsocks_select_guts(SELECT_SIGNATURE, int (*original_select)(SELECT_SIGNATURE
         return(original_select(n, readfds, writefds, exceptfds, timeout));
     }
 
-    if (!tsocks_init_complete) {
+    if (!tsocks_init_complete)
         tsocks_init();
-    }
 
     show_msg(MSGDEBUG, "Intercepted call to select with %d fds, "
               "0x%08x 0x%08x 0x%08x, timeout %08x\n", n,
@@ -611,11 +607,11 @@ int tsocks_select_guts(SELECT_SIGNATURE, int (*original_select)(SELECT_SIGNATURE
                 continue;
             }
 
-            if (setevents & EXCEPT) {
+            if (setevents & EXCEPT)
                 conn->state = FAILED;
-            } else {
+            else
                 rc = handle_request(conn);
-            }
+
             /* If the connection hasn't failed or completed there is nothing
               * to report to the client */
             if ((conn->state != FAILED) &&
@@ -688,9 +684,8 @@ int tsocks_poll_guts(POLL_SIGNATURE, int (*original_poll)(POLL_SIGNATURE))
     if (!requests)
         return(original_poll(ufds, nfds, timeout));
 
-    if (!tsocks_init_complete) {
+    if (!tsocks_init_complete)
         tsocks_init();
-    }
 
     show_msg(MSGDEBUG, "Intercepted call to poll with %d fds, "
               "0x%08x timeout %d\n", nfds, ufds, timeout);
@@ -850,9 +845,8 @@ int tsocks_close_guts(CLOSE_SIGNATURE, int (*original_close)(CLOSE_SIGNATURE))
       loading symbols now. This is a workaround for a problem I don't
       really understand and have only encountered when using torsocks
       with svn on Fedora 10, so definitely a hack. */
-    if (!tsocks_init_complete) {
+    if (!tsocks_init_complete)
         tsocks_init();
-    }
 
     if (original_close == NULL) {
         show_msg(MSGERR, "Unresolved symbol: close\n");
@@ -898,9 +892,8 @@ int tsocks_getpeername_guts(GETPEERNAME_SIGNATURE,
     int rc;
 
     /* See comment in close() */
-    if (!tsocks_init_complete) {
+    if (!tsocks_init_complete)
         tsocks_init();
-    }
 
     if (original_getpeername == NULL) {
         show_msg(MSGERR, "Unresolved symbol: getpeername\n");
@@ -1107,14 +1100,12 @@ static int send_socks_request(struct connreq *conn)
 
     if (conn->path->type == 4) {
         char *name = get_pool_entry(pool, &(conn->connaddr.sin_addr));
-        if(name != NULL) {
+        if(name != NULL)
             rc = send_socksv4a_request(conn,name);
-        } else {
+        else
             rc = send_socksv4_request(conn);
-        }
-    } else {
+    } else
         rc = send_socksv5_method(conn);
-    }
     return(rc);
 }
 
@@ -1237,9 +1228,8 @@ static int send_socksv5_connect(struct connreq *conn)
     name = get_pool_entry(pool, &(conn->connaddr.sin_addr));
     if(name != NULL) {
         namelen = strlen(name);
-        if(namelen > 255) {  /* "Can't happen" */
+        if(namelen > 255)  /* "Can't happen" */
             name = NULL;
-        }
     }
     if(name != NULL) {
         show_msg(MSGDEBUG, "send_socksv5_connect: found it!\n");
@@ -1481,17 +1471,14 @@ int res_init(void)
 {
     int rc;
 
-    if (!realres_init) {
-        if ((realres_init = dlsym(RTLD_NEXT, "res_init")) == NULL)
-            LOAD_ERROR("res_init", MSGERR);
-    }
+    if (!realres_init && ((realres_init = dlsym(RTLD_NEXT, "res_init")) == NULL))
+        LOAD_ERROR("res_init", MSGERR);
 
     show_msg(MSGDEBUG, "Got res_init request\n");
 
     /* See comment in close() */
-    if (!tsocks_init_complete) {
+    if (!tsocks_init_complete)
         tsocks_init();
-    }
 
     if (realres_init == NULL) {
         show_msg(MSGERR, "Unresolved symbol: res_init\n");
@@ -1509,17 +1496,14 @@ int EXPAND_GUTS_NAME(res_query)(RES_QUERY_SIGNATURE, int (*original_res_query)(R
 {
     int rc;
 
-    if (!original_res_query) {
-        if ((original_res_query = dlsym(RTLD_NEXT, "res_query")) == NULL)
-            LOAD_ERROR("res_query", MSGERR);
-    }
+    if (!original_res_query && ((original_res_query = dlsym(RTLD_NEXT, "res_query")) == NULL))
+        LOAD_ERROR("res_query", MSGERR);
 
     show_msg(MSGDEBUG, "Got res_query request\n");
 
     /* See comment in close() */
-    if (!tsocks_init_complete) {
+    if (!tsocks_init_complete)
         tsocks_init();
-    }
 
     if (original_res_query == NULL) {
         show_msg(MSGERR, "Unresolved symbol: res_query\n");
@@ -1541,17 +1525,15 @@ int EXPAND_GUTS_NAME(res_querydomain)(RES_QUERYDOMAIN_SIGNATURE, int (*original_
 {
     int rc;
 
-    if (!original_res_querydomain) {
-        if ((original_res_querydomain = dlsym(RTLD_NEXT, "res_querydomain")) == NULL)
-            LOAD_ERROR("res_querydoimain", MSGERR);
-    }
+    if (!original_res_querydomain &&
+        ((original_res_querydomain = dlsym(RTLD_NEXT, "res_querydomain")) == NULL))
+        LOAD_ERROR("res_querydoimain", MSGERR);
 
     show_msg(MSGDEBUG, "Got res_querydomain request\n");
 
     /* See comment in close() */
-    if (!tsocks_init_complete) {
+    if (!tsocks_init_complete)
         tsocks_init();
-    }
 
     if (original_res_querydomain == NULL) {
         show_msg(MSGERR, "Unresolved symbol: res_querydomain\n");
@@ -1573,17 +1555,15 @@ int EXPAND_GUTS_NAME(res_search)(RES_SEARCH_SIGNATURE, int (*original_res_search
 {
     int rc;
 
-    if (!original_res_search) {
-        if ((original_res_search = dlsym(RTLD_NEXT, "res_search")) == NULL)
+    if (!original_res_search &&
+        ((original_res_search = dlsym(RTLD_NEXT, "res_search")) == NULL))
             LOAD_ERROR("res_search", MSGERR);
-    }
 
     show_msg(MSGDEBUG, "Got res_search request\n");
 
     /* See comment in close() */
-    if (!tsocks_init_complete) {
+    if (!tsocks_init_complete)
         tsocks_init();
-    }
 
     if (original_res_search == NULL) {
         show_msg(MSGERR, "Unresolved symbol: res_search\n");
@@ -1605,17 +1585,14 @@ int EXPAND_GUTS_NAME(res_send)(RES_SEND_SIGNATURE, int (*original_res_send)(RES_
 {
     int rc;
 
-    if (!original_res_send) {
-        if ((original_res_send = dlsym(RTLD_NEXT, "res_send")) == NULL)
+    if (!original_res_send && ((original_res_send = dlsym(RTLD_NEXT, "res_send")) == NULL))
             LOAD_ERROR("res_send", MSGERR);
-    }
 
     show_msg(MSGDEBUG, "Got res_send request\n");
 
     /* See comment in close() */
-    if (!tsocks_init_complete) {
+    if (!tsocks_init_complete)
         tsocks_init();
-    }
 
     if (original_res_send == NULL) {
         show_msg(MSGERR, "Unresolved symbol: res_send\n");
@@ -1657,38 +1634,30 @@ static int deadpool_init(void)
 
 struct hostent *tsocks_gethostbyname_guts(GETHOSTBYNAME_SIGNATURE, struct hostent *(*original_gethostbyname)(GETHOSTBYNAME_SIGNATURE))
 {
-    if (pool) {
+    if (pool)
         return our_gethostbyname(pool, name);
-    } else {
-        return original_gethostbyname(name);
-    }
+    return original_gethostbyname(name);
 }
 
 struct hostent *tsocks_gethostbyaddr_guts(GETHOSTBYADDR_SIGNATURE, struct hostent *(*original_gethostbyaddr)(GETHOSTBYADDR_SIGNATURE))
 {
-    if (pool) {
+    if (pool)
         return our_gethostbyaddr(pool, addr, len, type);
-    } else {
-        return original_gethostbyaddr(addr, len, type);
-    }
+    return original_gethostbyaddr(addr, len, type);
 }
 
 int tsocks_getaddrinfo_guts(GETADDRINFO_SIGNATURE, int (*original_getaddrinfo)(GETADDRINFO_SIGNATURE))
 {
-    if (pool) {
+    if (pool)
         return our_getaddrinfo(pool, node, service, hints, res);
-    } else {
-        return original_getaddrinfo(node, service, hints, res);
-    }
+    return original_getaddrinfo(node, service, hints, res);
 }
 
 struct hostent *tsocks_getipnodebyname_guts(GETIPNODEBYNAME_SIGNATURE, struct hostent *(*original_getipnodebyname)(GETIPNODEBYNAME_SIGNATURE))
 {
-    if (pool) {
+    if (pool)
         return our_getipnodebyname(pool, name, af, flags, error_num);
-    } else {
-        return original_getipnodebyname(name, af, flags, error_num);
-    }
+    return original_getipnodebyname(name, af, flags, error_num);
 }
 
 ssize_t tsocks_sendto_guts(SENDTO_SIGNATURE, ssize_t (*original_sendto)(SENDTO_SIGNATURE))
@@ -1699,9 +1668,8 @@ ssize_t tsocks_sendto_guts(SENDTO_SIGNATURE, ssize_t (*original_sendto)(SENDTO_S
     unsigned int sock_domain_len = sizeof(sock_domain);
 
     /* See comment in close() */
-    if (!tsocks_init_complete) {
+    if (!tsocks_init_complete)
         tsocks_init();
-    }
 
     /* If the real connect doesn't exist, we're stuffed */
     if (original_sendto == NULL) {
@@ -1748,9 +1716,8 @@ ssize_t tsocks_sendmsg_guts(SENDMSG_SIGNATURE, ssize_t (*original_sendmsg)(SENDM
     unsigned int sock_domain_len = sizeof(sock_domain);
 
     /* See comment in close() */
-    if (!tsocks_init_complete) {
+    if (!tsocks_init_complete)
         tsocks_init();
-    }
 
     /* If the real connect doesn't exist, we're stuffed */
     if (original_sendmsg == NULL) {
