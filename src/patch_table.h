@@ -15,17 +15,10 @@
 	#define RES_FUNCD64	EMPTY_FUNC
 #endif
 
-#ifdef USE_TOR_DNS
 	#define DNS_FUNC	FUNC
 	#define DNS_FUNCD	FUNCD
 	#define DNS_FUNCD32	FUNCD32
 	#define DNS_FUNCD64	FUNCD64
-#else
-	#define DNS_FUNC	EMPTY_FUNC
-	#define DNS_FUNCD	EMPTY_FUNC
-	#define DNS_FUNCD32	EMPTY_FUNC
-	#define DNS_FUNCD64	EMPTY_FUNC
-#endif
 
 #define EMPTY_FUNC(e,r,s,n,b,m)
 

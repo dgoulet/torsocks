@@ -191,7 +191,6 @@ void show_conf(struct parsedfile *config) {
 		}	
 	} 
 
-#ifdef USE_TOR_DNS
     /* Show tordns configuration options */
     printf("=== TorDNS Configuration Options ===\n");
     printf("Tor DNS enabled:        %s\n", 
@@ -202,7 +201,6 @@ void show_conf(struct parsedfile *config) {
         inet_ntoa(config->tordns_deadpool_range->localnet));
     printf("Tor DNS cache size:     %d\n", config->tordns_cache_size);
     printf("\n");
-#endif
 
     return;
 }

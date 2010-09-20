@@ -95,9 +95,7 @@ const char *torsocks_progname = "libtorsocks";         /* Name used in err msgs 
 #if !defined(__APPLE__) && !defined(__darwin__)
 #include <sys/socket.h>
 #endif
-#ifdef USE_TOR_DNS
 #include <resolv.h>
-#endif
 #include <parser.h>
 #include <tsocks.h>
 #include "dead_pool.h"
@@ -108,9 +106,7 @@ const char *torsocks_progname = "libtorsocks";         /* Name used in err msgs 
 #define EXPAND_GUTS_NAME(x) EXPAND_GUTS(x)
 
 /* Global Declarations */
-#ifdef USE_TOR_DNS
 static dead_pool *pool = NULL;
-#endif /*USE_TOR_DNS*/
 
 /* Function prototypes for original functions that we patch */
 #ifdef SUPPORT_RES_API
@@ -169,10 +165,8 @@ static int read_socksv5_method(struct connreq *conn);
 static int read_socksv4_req(struct connreq *conn);
 static int read_socksv5_connect(struct connreq *conn);
 static int read_socksv5_auth(struct connreq *conn);
-#ifdef USE_TOR_DNS
 static int deadpool_init(void);
 static int send_socksv4a_request(struct connreq *conn, const char *onion_host);
-#endif
 
 static pthread_mutex_t tsocks_init_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -230,14 +224,12 @@ void tsocks_init(void)
     realconnect = dlsym(lib, "connect");
     realselect = dlsym(lib, "select");
     realpoll = dlsym(lib, "poll");
-    #ifdef USE_TOR_DNS
     realgethostbyname = dlsym(lib, "gethostbyname");
     realgethostbyaddr = dlsym(lib, "gethostbyaddr");
     realgetaddrinfo = dlsym(lib, "getaddrinfo");
     realgetipnodebyname = dlsym(lib, "getipnodebyname");
     realsendto = dlsym(lib, "sendto");
     realsendmsg = dlsym(lib, "sendmsg");
-    #endif
     dlclose(lib);
     lib = dlopen(LIBC, RTLD_LAZY);
     realclose = dlsym(lib, "close");
@@ -252,11 +244,9 @@ void tsocks_init(void)
     dlclose(lib);
     #endif
 #endif
-#ifdef USE_TOR_DNS
     /* Unfortunately, we can't do this lazily because otherwise our mmap'd
        area won't be shared across fork()s. */
     deadpool_init();
-#endif
     tsocks_init_complete=1;
     pthread_mutex_unlock(&tsocks_init_mutex);
 
@@ -375,7 +365,6 @@ int tsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIGNA
           return(original_connect(__fd, __addr, __len));
     }
 
-#ifdef USE_TOR_DNS
     /* If this a UDP socket  */
     /* then we refuse it, since it is probably a DNS request      */
     if ((sock_type != SOCK_STREAM)) {
@@ -383,7 +372,6 @@ int tsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIGNA
                            "DNS request or other form of leak: rejecting.\n");
         return -1;
     }
-#endif
 
     // /* If we haven't initialized yet, do it now */
     get_config();
@@ -441,14 +429,10 @@ int tsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIGNA
                         "%s\n", __fd, inet_ntoa(connaddr->sin_addr));
 
     /* If the address is local call original_connect */
-#ifdef USE_TOR_DNS
-    if (!(is_local(&config, &(connaddr->sin_addr))) && 
+    if (!(is_local(&config, &(connaddr->sin_addr))) &&
         !is_dead_address(pool, connaddr->sin_addr.s_addr)) {
-#else 
-    if (!(is_local(&config, &(connaddr->sin_addr)))) {
-#endif
-      show_msg(MSGDEBUG, "Connection for socket %d is local\n", __fd);
-      return(original_connect(__fd, __addr, __len));
+        show_msg(MSGDEBUG, "Connection for socket %d is local\n", __fd);
+        return(original_connect(__fd, __addr, __len));
     }
 
    /* Ok, so its not local, we need a path to the net */
@@ -1128,7 +1112,6 @@ static int send_socks_request(struct connreq *conn)
 {
     int rc = 0;
 
-#ifdef USE_TOR_DNS
     if (conn->path->type == 4) {
         char *name = get_pool_entry(pool, &(conn->connaddr.sin_addr));
         if(name != NULL) {
@@ -1136,18 +1119,13 @@ static int send_socks_request(struct connreq *conn)
         } else {
             rc = send_socksv4_request(conn);
         }
-#else
-    if (conn->path->type == 4) {
-        rc = send_socksv4_request(conn);
-#endif
     } else {
         rc = send_socksv5_method(conn);
     }
     return(rc);
 }
 
-#ifdef USE_TOR_DNS
-static int send_socksv4a_request(struct connreq *conn,const char *onion_host) 
+static int send_socksv4a_request(struct connreq *conn,const char *onion_host)
 {
     struct passwd *user;
     struct sockreq *thisreq;
@@ -1189,7 +1167,6 @@ static int send_socksv4a_request(struct connreq *conn,const char *onion_host)
 
     return(0);
 }
-#endif /* USE_TOR_DNS */
 
 static int send_socksv4_request(struct connreq *conn)
 {
@@ -1247,10 +1224,8 @@ static int send_socksv5_method(struct connreq *conn)
 
 static int send_socksv5_connect(struct connreq *conn)
 {
-#ifdef USE_TOR_DNS
     int namelen = 0;
     char *name = NULL;
-#endif
     char constring[] = { 0x05,    /* Version 5 SOCKS */
                           0x01,    /* Connect request */
                           0x00,    /* Reserved        */
@@ -1262,8 +1237,6 @@ static int send_socksv5_connect(struct connreq *conn)
     conn->nextstate = SENTV5CONNECT;
     memcpy(conn->buffer, constring, sizeof(constring));
     conn->datalen = sizeof(constring);
-
-#ifdef USE_TOR_DNS
 
     show_msg(MSGDEBUG, "send_socksv5_connect: looking for: %s\n",
               inet_ntoa(conn->connaddr.sin_addr));
@@ -1285,14 +1258,11 @@ static int send_socksv5_connect(struct connreq *conn)
         conn->datalen += namelen;
     } else {
         show_msg(MSGDEBUG, "send_socksv5_connect: ip address not found\n");
-#endif
         /* Use the raw IP address */
         memcpy(&conn->buffer[conn->datalen], &(conn->connaddr.sin_addr.s_addr),
                 sizeof(conn->connaddr.sin_addr.s_addr));
         conn->datalen += sizeof(conn->connaddr.sin_addr.s_addr);
-#ifdef USE_TOR_DNS
     }
-#endif
     memcpy(&conn->buffer[conn->datalen], &(conn->connaddr.sin_port),
           sizeof(conn->connaddr.sin_port));
     conn->datalen += sizeof(conn->connaddr.sin_port);
@@ -1761,7 +1731,6 @@ ssize_t tsocks_sendto_guts(SENDTO_SIGNATURE, ssize_t (*original_sendto)(SENDTO_S
         return (ssize_t) original_sendto(s, buf, len, flags, to, tolen);
     }
 
-#ifdef USE_TOR_DNS
     /* Get the type of the socket */
     getsockopt(s, SOL_SOCKET, SO_TYPE,
                (void *) &sock_type, &sock_type_len);
@@ -1775,7 +1744,6 @@ ssize_t tsocks_sendto_guts(SENDTO_SIGNATURE, ssize_t (*original_sendto)(SENDTO_S
                            "DNS request or other form of leak: rejecting.\n");
         return -1;
     }
-#endif
 
     return (ssize_t) original_sendto(s, buf, len, flags, to, tolen);
 
@@ -1812,7 +1780,6 @@ ssize_t tsocks_sendmsg_guts(SENDMSG_SIGNATURE, ssize_t (*original_sendmsg)(SENDM
         return (ssize_t) original_sendmsg(s, msg, flags);
     }
 
-#ifdef USE_TOR_DNS
     /* Get the type of the socket */
     getsockopt(s, SOL_SOCKET, SO_TYPE,
                (void *) &sock_type, &sock_type_len);
@@ -1826,7 +1793,6 @@ ssize_t tsocks_sendmsg_guts(SENDMSG_SIGNATURE, ssize_t (*original_sendmsg)(SENDM
                            "DNS request or other form of leak: rejecting.\n");
         return -1;
     }
-#endif
 
     return (ssize_t) original_sendmsg(s, msg, flags);
 }

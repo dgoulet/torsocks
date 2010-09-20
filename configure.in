@@ -180,17 +180,6 @@ if test "${enable_socksdns}" = "yes"; then
   AC_DEFINE([USE_SOCKS_DNS],[],[Description])
 fi
 
-AC_MSG_CHECKING(whether to enable tordns)
-if test "x${enable_tordns}" = "x"; then
-  AC_DEFINE([USE_TOR_DNS],[],[Description])
-  DEADPOOL_O="\${DEADPOOL}.o"
-  AC_MSG_RESULT(yes)
-else 
-  DEADPOOL_O=""
-  AC_MSG_RESULT(no)
-fi
-AC_SUBST(DEADPOOL_O)
-
 if test "x${enable_envconf}" = "x"; then
   AC_DEFINE([ALLOW_ENV_CONFIG],[],[Description])
 fi
