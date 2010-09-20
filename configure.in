@@ -189,10 +189,6 @@ if test "${enable_oldmethod}" = "yes"; then
   oldmethod="yes"
 fi
 
-if test "x${enable_debug}" != "x"; then
-  AC_DEFINE([ALLOW_MSG_OUTPUT],[],[Description])
-fi
-
 AC_DEFINE([HOSTNAMES],[0],[Description])
 
 if test "x${enable_hostnames}" = "xyes"; then

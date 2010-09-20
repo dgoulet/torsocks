@@ -255,24 +255,19 @@ void tsocks_init(void)
 static int get_environment()
 {
     static int done = 0;
-#ifdef ALLOW_MSG_OUTPUT
     int loglevel = MSGERR;
     char *logfile = NULL;
     char *env;
-#endif
+
     if (done)
         return(0);
 
    /* Determine the logging level */
-#ifndef ALLOW_MSG_OUTPUT
-    set_log_options(-1, (char *)stderr, 0);
-#else
     if ((env = getenv("TORSOCKS_DEBUG")))
         loglevel = atoi(env);
     if (((env = getenv("TORSOCKS_DEBUG_FILE"))) && !suid)
         logfile = env;
     set_log_options(loglevel, logfile, 1);
-#endif
 
     done = 1;
 
