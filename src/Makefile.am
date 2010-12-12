@@ -1,7 +1,7 @@
 # Makefile used by configure to create real Makefile
 
 LIBS = -ldl -lc -lresolv
-libdir = @prefix@/lib/torsocks
+libdir = @libdir@/torsocks
 
 # Install helper programs
 #bin_PROGRAMS = validateconf inspectsocks saveme
