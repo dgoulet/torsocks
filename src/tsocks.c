@@ -349,10 +349,23 @@ int tsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIGNA
 
     show_msg(MSGDEBUG, "sockopt: %i \n", sock_type);
 
+    /* If the address is local refuse it. We do this because it could
+       be a TCP DNS request to a local DNS server.*/
+    if (!(is_local(&config, &(connaddr->sin_addr))) &&
+        !is_dead_address(pool, connaddr->sin_addr.s_addr)) {
+        char buf[16];
+        inet_ntop(AF_INET, &(connaddr->sin_addr), buf, sizeof(buf));
+        show_msg(MSGERR, "connect: Connection is to a local address (%s), may be a "
+                         "TCP DNS request to a local DNS server so have to reject to be safe. "
+                         "Please report a bug to http://code.google.com/p/torsocks/issues/entry if "
+                         "this is preventing a program from working properly with torsocks.\n", buf);
+        return -1;
+    }
+
     /* If this isn't an INET socket we can't  */
     /* handle it, just call the real connect now        */
     if ((connaddr->sin_family != AF_INET)) {
-        show_msg(MSGDEBUG, "Connection isn't a TCP stream ignoring\n");
+        show_msg(MSGDEBUG, "connect: Connection isn't IPv4, ignoring\n");
         return(original_connect(__fd, __addr, __len));
     }
 
@@ -418,13 +431,6 @@ int tsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIGNA
 
     show_msg(MSGDEBUG, "Got connection request for socket %d to "
                         "%s\n", __fd, inet_ntoa(connaddr->sin_addr));
-
-    /* If the address is local call original_connect */
-    if (!(is_local(&config, &(connaddr->sin_addr))) &&
-        !is_dead_address(pool, connaddr->sin_addr.s_addr)) {
-        show_msg(MSGDEBUG, "Connection for socket %d is local\n", __fd);
-        return(original_connect(__fd, __addr, __len));
-    }
 
     /* Ok, so its not local, we need a path to the net */
     pick_server(&config, &path, &(connaddr->sin_addr), ntohs(connaddr->sin_port));
