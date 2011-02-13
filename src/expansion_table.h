@@ -1,6 +1,6 @@
 /***************************************************************************
  *                                                                         *
- *   Copyright (C) 2010 alex@ohmantics.net                                 *
+ *   Copyright (C) 2010 Alex Rosenberg <alex@ohmantics.net>                *
  *   Copyright (C) 2011 Robert Hogan <robert@roberthogan.net>              *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -76,7 +76,12 @@
 /*RES_FUNC  (ERR,    int,                RES_INIT_,          res_init,                      res_init,            "res_init") */
 RES_FUNC    (ERR,    int,                RES_QUERY_,         res_query,                     res_query,           "res_query")
 RES_FUNC    (ERR,    int,                RES_SEARCH_,        res_search,                    res_search,          "res_search")
+#if defined(__APPLE__) || defined(__darwin__)
 RES_FUNC    (ERR,    int,                RES_SEND_,          res_send,                      res_send,            "res_send")
+#else
+/* It is a bit of a mystery why this is required on Linux. See http://code.google.com/p/torsocks/issues/detail?id=3 */
+RES_FUNC    (ERR,    int,                RES_SEND_,          res_send,                      res_send,            "__res_send")
+#endif
 RES_FUNC    (ERR,    int,                RES_QUERYDOMAIN_,   res_querydomain,               res_querydomain,     "res_querydomain")
 
 DNS_FUNC    (ERR,    struct hostent *,   GETHOSTBYNAME_,     gethostbyname,                 gethostbyname,       "gethostbyname")
