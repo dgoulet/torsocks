@@ -113,7 +113,7 @@ static dead_pool *pool = NULL;
 int (*realres_init)(void);
 #endif
 #define PATCH_TABLE_EXPANSION(e,r,s,n,b,m) r (*real##n)(s##SIGNATURE);
-#include "patch_table.h"
+#include "expansion_table.h"
 #undef PATCH_TABLE_EXPANSION
 #undef DARWIN_EXPANSION
 
@@ -133,14 +133,14 @@ int res_init(void);
 
 #define PATCH_TABLE_EXPANSION(e,r,s,n,b,m) r n(s##SIGNATURE);
 #define DARWIN_EXPANSION(e,r,s,n,b,m)      r n(s##SIGNATURE) __asm("_" m);
-#include "patch_table.h"
+#include "expansion_table.h"
 #undef PATCH_TABLE_EXPANSION
 #undef DARWIN_EXPANSION
 
 /* Private Function Prototypes */
 /* no tsocks_res_init_guts */
 #define PATCH_TABLE_EXPANSION(e,r,s,n,b,m) r tsocks_##b##_guts(s##SIGNATURE, r (*original_##b)(s##SIGNATURE));
-#include "patch_table.h"
+#include "expansion_table.h"
 #undef PATCH_TABLE_EXPANSION
 
 
@@ -215,7 +215,7 @@ void tsocks_init(void)
         LOAD_ERROR("res_init", MSGERR);
     #endif
     #define PATCH_TABLE_EXPANSION(e,r,s,n,b,m)  if ((real##n = dlsym(RTLD_NEXT, m)) == NULL) LOAD_ERROR(m, MSG##e);
-    #include "patch_table.h"
+    #include "expansion_table.h"
     #undef PATCH_TABLE_EXPANSION
 #else
     lib = dlopen(LIBCONNECT, RTLD_LAZY);
@@ -311,7 +311,7 @@ static int get_config ()
      } \
      return tsocks_##b##_guts(s##ARGNAMES, real##n); \
    }
-#include "patch_table.h"
+#include "expansion_table.h"
 #undef PATCH_TABLE_EXPANSION
 
 int tsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIGNATURE))
