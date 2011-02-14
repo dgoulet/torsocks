@@ -22,7 +22,7 @@
 
 #ifndef _TORSOCKS_H
 
-#define _TORSOCKS_H	1
+#define _TORSOCKS_H 1
 
 #include <parser.h>
 

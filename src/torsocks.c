@@ -69,13 +69,14 @@ const char *torsocks_progname = "libtorsocks";         /* Name used in err msgs 
 #include <sys/socket.h>
 #endif
 #include <resolv.h>
-#include <parser.h>
-#include <torsocks.h>
+
+#include "parser.h"
+#include "torsocks.h"
 #include "dead_pool.h"
 
 /* Some function names are macroized on Darwin. Allow those names
    to expand accordingly. */
-#define EXPAND_GUTS(x) tsocks_##x##_guts
+#define EXPAND_GUTS(x) torsocks_##x##_guts
 #define EXPAND_GUTS_NAME(x) EXPAND_GUTS(x)
 
 /* Global Declarations */
@@ -94,10 +95,10 @@ static struct parsedfile config;
 static struct connreq *requests = NULL;
 static int suid = 0;
 static char *conffile = NULL;
-static volatile int tsocks_init_complete = 0;
+static volatile int torsocks_init_complete = 0;
 
 /* Exported Function Prototypes */
-void __attribute__ ((constructor)) tsocks_init(void);
+void __attribute__ ((constructor)) torsocks_init(void);
 
 /* Function prototypes for our patches */
 #ifdef SUPPORT_RES_API
@@ -111,8 +112,8 @@ int res_init(void);
 #undef DARWIN_EXPANSION
 
 /* Private Function Prototypes */
-/* no tsocks_res_init_guts */
-#define PATCH_TABLE_EXPANSION(e,r,s,n,b,m) r tsocks_##b##_guts(s##SIGNATURE, r (*original_##b)(s##SIGNATURE));
+/* no torsocks_res_init_guts */
+#define PATCH_TABLE_EXPANSION(e,r,s,n,b,m) r torsocks_##b##_guts(s##SIGNATURE, r (*original_##b)(s##SIGNATURE));
 #include "expansion_table.h"
 #undef PATCH_TABLE_EXPANSION
 
@@ -141,9 +142,9 @@ static int read_socksv5_auth(struct connreq *conn);
 static int deadpool_init(void);
 static int send_socksv4a_request(struct connreq *conn, const char *onion_host);
 
-static pthread_mutex_t tsocks_init_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t torsocks_init_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-void tsocks_init(void)
+void torsocks_init(void)
 {
 #define LOAD_ERROR(s,l) { \
     char *error; \
@@ -153,22 +154,22 @@ void tsocks_init(void)
                      (error)?error:"not found"); \
     dlerror(); \
     }
-    pthread_mutex_lock(&tsocks_init_mutex);
+    pthread_mutex_lock(&torsocks_init_mutex);
 
     /* We only need to be called once */
-    if (tsocks_init_complete)
+    if (torsocks_init_complete)
         return;
 
     /* Not strictly true yet, but prevents us getting called while still in progress.*/
     /* This has been observed on Snow Leopard for instance. */
-    tsocks_init_complete = 1;
+    torsocks_init_complete = 1;
 
-    show_msg(MSGWARN, "In tsocks_init \n");
+    show_msg(MSGWARN, "In torsocks_init \n");
 
     get_environment();
     get_config();
 
-    show_msg(MSGWARN, "In tsocks_init after env/config\n");
+    show_msg(MSGWARN, "In torsocks_init after env/config\n");
 
 #ifdef USE_OLD_DLSYM
     void *lib;
@@ -222,10 +223,10 @@ void tsocks_init(void)
         exit(1);
     }
 
-    tsocks_init_complete=1;
-    pthread_mutex_unlock(&tsocks_init_mutex);
+    torsocks_init_complete=1;
+    pthread_mutex_unlock(&torsocks_init_mutex);
 
-    show_msg(MSGWARN, "Exit tsocks_init \n");
+    show_msg(MSGWARN, "Exit torsocks_init \n");
 }
 
 static int get_environment()
@@ -274,7 +275,7 @@ static int get_config ()
 }
 
 /* Patch trampoline functions */
-/* no tsocks_res_init_guts */
+/* no torsocks_res_init_guts */
 #define PATCH_TABLE_EXPANSION(e,r,s,n,b,m) \
    r n(s##SIGNATURE) { \
      if (!real##n) { \
@@ -282,12 +283,12 @@ static int get_config ()
        if ((real##n = dlsym(RTLD_NEXT, m)) == NULL) \
          LOAD_ERROR(m, MSG##e); \
      } \
-     return tsocks_##b##_guts(s##ARGNAMES, real##n); \
+     return torsocks_##b##_guts(s##ARGNAMES, real##n); \
    }
 #include "expansion_table.h"
 #undef PATCH_TABLE_EXPANSION
 
-int tsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIGNATURE))
+int torsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIGNATURE))
 {
     struct sockaddr_in *connaddr;
     struct sockaddr_in peer_address;
@@ -301,8 +302,8 @@ int tsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIGNA
     struct connreq *newconn;
 
     /* See comment in close() */
-    if (!tsocks_init_complete)
-        tsocks_init();
+    if (!torsocks_init_complete)
+        torsocks_init();
 
     /* If the real connect doesn't exist, we're stuffed */
     if (original_connect == NULL) {
@@ -364,7 +365,7 @@ int tsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIGNA
              * to have the same fd as a request we haven't had the chance
              * to delete yet, so we delete it here. */
             show_msg(MSGDEBUG, "Call to connect received on old "
-                                "tsocks request for socket %d but to "
+                                "torsocks request for socket %d but to "
                                 "new destination, deleting old request\n",
                       newconn->sockid);
             kill_socks_request(newconn);
@@ -460,7 +461,7 @@ int tsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIGNA
     }
 }
 
-int tsocks_select_guts(SELECT_SIGNATURE, int (*original_select)(SELECT_SIGNATURE))
+int torsocks_select_guts(SELECT_SIGNATURE, int (*original_select)(SELECT_SIGNATURE))
 {
     int nevents = 0;
     int rc = 0;
@@ -476,8 +477,8 @@ int tsocks_select_guts(SELECT_SIGNATURE, int (*original_select)(SELECT_SIGNATURE
         return(original_select(n, readfds, writefds, exceptfds, timeout));
     }
 
-    if (!tsocks_init_complete)
-        tsocks_init();
+    if (!torsocks_init_complete)
+        torsocks_init();
 
     show_msg(MSGDEBUG, "Intercepted call to select with %d fds, "
               "0x%08x 0x%08x 0x%08x, timeout %08x\n", n,
@@ -647,7 +648,7 @@ int tsocks_select_guts(SELECT_SIGNATURE, int (*original_select)(SELECT_SIGNATURE
     return(nevents);
 }
 
-int tsocks_poll_guts(POLL_SIGNATURE, int (*original_poll)(POLL_SIGNATURE))
+int torsocks_poll_guts(POLL_SIGNATURE, int (*original_poll)(POLL_SIGNATURE))
 {
     int nevents = 0;
     int rc = 0;
@@ -661,8 +662,8 @@ int tsocks_poll_guts(POLL_SIGNATURE, int (*original_poll)(POLL_SIGNATURE))
     if (!requests)
         return(original_poll(ufds, nfds, timeout));
 
-    if (!tsocks_init_complete)
-        tsocks_init();
+    if (!torsocks_init_complete)
+        torsocks_init();
 
     show_msg(MSGDEBUG, "Intercepted call to poll with %d fds, "
               "0x%08x timeout %d\n", nfds, ufds, timeout);
@@ -806,7 +807,7 @@ int tsocks_poll_guts(POLL_SIGNATURE, int (*original_poll)(POLL_SIGNATURE))
     return(nevents);
 }
 
-int tsocks_close_guts(CLOSE_SIGNATURE, int (*original_close)(CLOSE_SIGNATURE))
+int torsocks_close_guts(CLOSE_SIGNATURE, int (*original_close)(CLOSE_SIGNATURE))
 {
     int rc;
     struct connreq *conn;
@@ -822,8 +823,8 @@ int tsocks_close_guts(CLOSE_SIGNATURE, int (*original_close)(CLOSE_SIGNATURE))
       loading symbols now. This is a workaround for a problem I don't
       really understand and have only encountered when using torsocks
       with svn on Fedora 10, so definitely a hack. */
-    if (!tsocks_init_complete)
-        tsocks_init();
+    if (!torsocks_init_complete)
+        torsocks_init();
 
     if (original_close == NULL) {
         show_msg(MSGERR, "Unresolved symbol: close\n");
@@ -862,15 +863,15 @@ int tsocks_close_guts(CLOSE_SIGNATURE, int (*original_close)(CLOSE_SIGNATURE))
  * PP, Sat, 27 Mar 2004 11:30:23 +0100
  */
 
-int tsocks_getpeername_guts(GETPEERNAME_SIGNATURE,
+int torsocks_getpeername_guts(GETPEERNAME_SIGNATURE,
                             int (*original_getpeername)(GETPEERNAME_SIGNATURE))
 {
     struct connreq *conn;
     int rc;
 
     /* See comment in close() */
-    if (!tsocks_init_complete)
-        tsocks_init();
+    if (!torsocks_init_complete)
+        torsocks_init();
 
     if (original_getpeername == NULL) {
         show_msg(MSGERR, "Unresolved symbol: getpeername\n");
@@ -1454,8 +1455,8 @@ int res_init(void)
     show_msg(MSGDEBUG, "Got res_init request\n");
 
     /* See comment in close() */
-    if (!tsocks_init_complete)
-        tsocks_init();
+    if (!torsocks_init_complete)
+        torsocks_init();
 
     if (realres_init == NULL) {
         show_msg(MSGERR, "Unresolved symbol: res_init\n");
@@ -1479,8 +1480,8 @@ int EXPAND_GUTS_NAME(res_query)(RES_QUERY_SIGNATURE, int (*original_res_query)(R
     show_msg(MSGDEBUG, "Got res_query request\n");
 
     /* See comment in close() */
-    if (!tsocks_init_complete)
-        tsocks_init();
+    if (!torsocks_init_complete)
+        torsocks_init();
 
     if (original_res_query == NULL) {
         show_msg(MSGERR, "Unresolved symbol: res_query\n");
@@ -1509,8 +1510,8 @@ int EXPAND_GUTS_NAME(res_querydomain)(RES_QUERYDOMAIN_SIGNATURE, int (*original_
     show_msg(MSGDEBUG, "Got res_querydomain request\n");
 
     /* See comment in close() */
-    if (!tsocks_init_complete)
-        tsocks_init();
+    if (!torsocks_init_complete)
+        torsocks_init();
 
     if (original_res_querydomain == NULL) {
         show_msg(MSGERR, "Unresolved symbol: res_querydomain\n");
@@ -1539,8 +1540,8 @@ int EXPAND_GUTS_NAME(res_search)(RES_SEARCH_SIGNATURE, int (*original_res_search
     show_msg(MSGDEBUG, "Got res_search request\n");
 
     /* See comment in close() */
-    if (!tsocks_init_complete)
-        tsocks_init();
+    if (!torsocks_init_complete)
+        torsocks_init();
 
     if (original_res_search == NULL) {
         show_msg(MSGERR, "Unresolved symbol: res_search\n");
@@ -1568,8 +1569,8 @@ int EXPAND_GUTS_NAME(res_send)(RES_SEND_SIGNATURE, int (*original_res_send)(RES_
     show_msg(MSGDEBUG, "Got res_send request\n");
 
     /* See comment in close() */
-    if (!tsocks_init_complete)
-        tsocks_init();
+    if (!torsocks_init_complete)
+        torsocks_init();
 
     if (original_res_send == NULL) {
         show_msg(MSGERR, "Unresolved symbol: res_send\n");
@@ -1614,43 +1615,43 @@ static int deadpool_init(void)
     return 1;
 }
 
-struct hostent *tsocks_gethostbyname_guts(GETHOSTBYNAME_SIGNATURE, struct hostent *(*original_gethostbyname)(GETHOSTBYNAME_SIGNATURE))
+struct hostent *torsocks_gethostbyname_guts(GETHOSTBYNAME_SIGNATURE, struct hostent *(*original_gethostbyname)(GETHOSTBYNAME_SIGNATURE))
 {
     if (pool)
         return our_gethostbyname(pool, name);
     return original_gethostbyname(name);
 }
 
-struct hostent *tsocks_gethostbyaddr_guts(GETHOSTBYADDR_SIGNATURE, struct hostent *(*original_gethostbyaddr)(GETHOSTBYADDR_SIGNATURE))
+struct hostent *torsocks_gethostbyaddr_guts(GETHOSTBYADDR_SIGNATURE, struct hostent *(*original_gethostbyaddr)(GETHOSTBYADDR_SIGNATURE))
 {
     if (pool)
         return our_gethostbyaddr(pool, addr, len, type);
     return original_gethostbyaddr(addr, len, type);
 }
 
-int tsocks_getaddrinfo_guts(GETADDRINFO_SIGNATURE, int (*original_getaddrinfo)(GETADDRINFO_SIGNATURE))
+int torsocks_getaddrinfo_guts(GETADDRINFO_SIGNATURE, int (*original_getaddrinfo)(GETADDRINFO_SIGNATURE))
 {
     if (pool)
         return our_getaddrinfo(pool, node, service, hints, res);
     return original_getaddrinfo(node, service, hints, res);
 }
 
-struct hostent *tsocks_getipnodebyname_guts(GETIPNODEBYNAME_SIGNATURE, struct hostent *(*original_getipnodebyname)(GETIPNODEBYNAME_SIGNATURE))
+struct hostent *torsocks_getipnodebyname_guts(GETIPNODEBYNAME_SIGNATURE, struct hostent *(*original_getipnodebyname)(GETIPNODEBYNAME_SIGNATURE))
 {
     if (pool)
         return our_getipnodebyname(pool, name, af, flags, error_num);
     return original_getipnodebyname(name, af, flags, error_num);
 }
 
-ssize_t tsocks_sendto_guts(SENDTO_SIGNATURE, ssize_t (*original_sendto)(SENDTO_SIGNATURE))
+ssize_t torsocks_sendto_guts(SENDTO_SIGNATURE, ssize_t (*original_sendto)(SENDTO_SIGNATURE))
 {
     int sock_type = -1;
     unsigned int sock_type_len = sizeof(sock_type);
     struct sockaddr_in *connaddr;
 
     /* See comment in close() */
-    if (!tsocks_init_complete)
-        tsocks_init();
+    if (!torsocks_init_complete)
+        torsocks_init();
 
     /* If the real sendto doesn't exist, we're stuffed */
     if (original_sendto == NULL) {
@@ -1686,15 +1687,15 @@ ssize_t tsocks_sendto_guts(SENDTO_SIGNATURE, ssize_t (*original_sendto)(SENDTO_S
     return (ssize_t) original_sendto(s, buf, len, flags, to, tolen);
 }
 
-ssize_t tsocks_sendmsg_guts(SENDMSG_SIGNATURE, ssize_t (*original_sendmsg)(SENDMSG_SIGNATURE))
+ssize_t torsocks_sendmsg_guts(SENDMSG_SIGNATURE, ssize_t (*original_sendmsg)(SENDMSG_SIGNATURE))
 {
     int sock_type = -1;
     unsigned int sock_type_len = sizeof(sock_type);
     struct sockaddr_in *connaddr;
 
     /* See comment in close() */
-    if (!tsocks_init_complete)
-        tsocks_init();
+    if (!torsocks_init_complete)
+        torsocks_init();
 
     /* If the real sendmsg doesn't exist, we're stuffed */
     if (original_sendmsg == NULL) {

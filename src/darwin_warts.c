@@ -52,7 +52,7 @@ typedef struct fd_set fd_set;
 struct timeval;
 
 int (*realselect)(SELECT_SIGNATURE);
-int tsocks_select_guts(SELECT_SIGNATURE, int (*original_select)(SELECT_SIGNATURE));
+int torsocks_select_guts(SELECT_SIGNATURE, int (*original_select)(SELECT_SIGNATURE));
 
 int select(SELECT_SIGNATURE) {
   if (!realselect) {
@@ -60,7 +60,7 @@ int select(SELECT_SIGNATURE) {
 	if ((realselect = dlsym(RTLD_NEXT, "select")) == NULL)
 	  LOAD_ERROR("select", MSGERR);
   }
-  return tsocks_select_guts(SELECT_ARGNAMES, realselect);
+  return torsocks_select_guts(SELECT_ARGNAMES, realselect);
 }
 
 #endif /* 10.6 */
