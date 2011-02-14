@@ -4,12 +4,12 @@ AC_CONFIG_HEADER(config.h)
 
 AM_INIT_AUTOMAKE(torsocks, 0.1)
 
-dnl Our default prefix is /usr/ since most people will be using tsocks
+dnl Our default prefix is /usr/ since most people will be using torsocks
 dnl on Linux systems and that /usr/local/ stuff annoys them
 dnl AC_PREFIX_DEFAULT(/usr)
 
 dnl if libdir hasn't been set by the user default it to /lib since
-dnl tsocks needs to be on the root partition if put in the
+dnl torsocks needs to be on the root partition if put in the
 dnl /etc/ld.so.preload file
 dnl test "$libdir" = "\${exec_prefix}/lib" && libdir="/lib"
 
@@ -19,13 +19,13 @@ AC_ARG_ENABLE(socksdns,
 AC_ARG_ENABLE(tordns,
 [  --disable-tordns         don't override name lookup calls to use SOCKS ])   
 AC_ARG_ENABLE(debug,
-[  --disable-debug         disable ALL error messages from tsocks ])
+[  --disable-debug         disable ALL error messages from torsocks ])
 AC_ARG_ENABLE(oldmethod,
 [  --enable-oldmethod      use the old method to override connect ])
 AC_ARG_ENABLE(hostnames,
 [  --enable-hostnames      enable hostname lookups for socks servers ])
 AC_ARG_ENABLE(envconf,
-[  --disable-envconf       do not allow TSOCKS_CONF_FILE to specify configuration file ])
+[  --disable-envconf       do not allow TORSOCKS_CONF_FILE to specify configuration file ])
 
 dnl -----------------------------------
 dnl Get hostname and other information.
@@ -108,11 +108,11 @@ AC_CHECK_FUNC(inet_aton, AC_DEFINE([HAVE_INET_ATON],[],[Description]), [
                                    LIBS="${LIBS} -lnsl" ], [
 		AC_MSG_ERROR("Neither inet_aton or inet_addr present")])])])
 
-dnl Look for gethostbyname (needed by tsocks and inspectsocks)
+dnl Look for gethostbyname (needed by torsocks)
 AC_CHECK_FUNC(gethostbyname, AC_DEFINE([HAVE_GETHOSTBYNAME],[],[Description]), [
   AC_CHECK_LIB(xnet, gethostbyname, AC_DEFINE([HAVE_GETHOSTBYNAME],[],[Description]), [
 	       AC_MSG_ERROR(["gethostbyname not found, name lookups in " \
-		      "tsocks and inspectsocks disabled"])])])
+		      "torsocks disabled"])])])
 
 dnl The simple programs (saveme and inspectsocks) have no further 
 dnl requirements, so save the libs needed here and use them in the
@@ -539,7 +539,7 @@ NAMES='s, msg, flags'
 AC_DEFINE_UNQUOTED(SENDMSG_SIGNATURE, [${PROTO}], [Description])
 AC_DEFINE_UNQUOTED([SENDMSG_ARGNAMES],[${NAMES}],[Argument names])
 
-dnl Output the special librarys (libdl etc needed for tsocks)
+dnl Output the special librarys (libdl etc needed for torsocks)
 SPECIALLIBS=${LIBS}
 AC_SUBST(SPECIALLIBS)
 LIBS=${SIMPLELIBS}
