@@ -1,9 +1,7 @@
 /***************************************************************************
  *                                                                         *
- * $Id: common.c,v 1.2 2008-07-06 15:17:35 hoganrobert Exp $                            *
- *                                                                         *
- *   Copyright (C) 2008 by Robert Hogan                                    *
- *   robert@roberthogan.net                                                *
+ *   Copyright (C) 2000-2008 Shaun Clowes <delius@progsoc.org>             *
+ *   Copyright (C) 2008-2011 Robert Hogan <robert@roberthogan.net>         *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -24,11 +22,6 @@
  * Copyright (c) 2003, Roger Dingledine                                    *
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.              *
  * Copyright (c) 2007-2008, The Tor Project, Inc.                          *
- *                                                                         *
- ***************************************************************************
- *                                                                         *
- *   This is a modified version of a source file from the tsocks project.  *
- *   Original copyright notice from tsocks source file follows:            *
  *                                                                         *
  ***************************************************************************/
 /* 

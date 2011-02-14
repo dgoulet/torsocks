@@ -1,9 +1,7 @@
 /***************************************************************************
  *                                                                         *
- * $Id: dead_pool.h,v 1.4 2008-07-06 15:29:10 hoganrobert Exp $            *
- *                                                                         *
- *   Copyright (C) 2008 by Robert Hogan                                    *
- *   robert@roberthogan.net                                                *
+ *   Copyright (C) 2005 Total Information Security Ltd.                    *
+ *   Copyright (C) 2008-2011 Robert Hogan <robert@roberthogan.net>         *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -19,12 +17,6 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************
- *                                                                         *
- *   This is a modified version of a source file from the TIA tor-dns   .  *
- *   patch for tsocks. (See the patches directory for more info.)          *
- *   The original source file contained no copyright notice.               *
- *                                                                         *
  ***************************************************************************/
 
 #ifndef _DEAD_POOL_H
