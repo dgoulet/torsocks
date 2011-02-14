@@ -294,7 +294,7 @@ static int handle_endpath(struct parsedfile *config, int lineno, int nowords) {
 
     /* We could perform some checking on the validty of data in */
     /* the completed path here, but thats what verifyconf is    */
-    /* designed to do, no point in weighing down libtsocks      */
+    /* designed to do, no point in weighing down libtorsocks      */
 
     return(0);
 }
@@ -366,7 +366,7 @@ static int handle_server(struct parsedfile *config, int lineno, char *value) {
     ip = strsplit(NULL, &value, " ");
 
     /* We don't verify this ip/hostname at this stage, */
-    /* its resolved immediately before use in tsocks.c */
+    /* its resolved immediately before use in torsocks.c */
     if (currentcontext->address == NULL)
         currentcontext->address = strdup(ip);
     else {

@@ -18,7 +18,7 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-/* torsocks.h - Structures used by tsocks to form SOCKS requests */
+/* torsocks.h - Structures used by torsocks to form SOCKS requests */
 
 #ifndef _TORSOCKS_H
 

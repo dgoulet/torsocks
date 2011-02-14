@@ -754,7 +754,7 @@ our_getipnodebyname(dead_pool *pool, const char *name, int af, int flags,
            service their request. */
         if((flags & AI_V4MAPPED) == 0) {
             show_msg(MSGWARN, "getipnodebyname: asked for V6 addresses only, "
-                     "but tsocks can't handle that\n");
+                     "but torsocks can't handle that\n");
             *error_num = NO_RECOVERY;
             return NULL;
         } else {
