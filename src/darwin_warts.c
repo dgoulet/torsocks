@@ -56,9 +56,9 @@ int torsocks_select_guts(SELECT_SIGNATURE, int (*original_select)(SELECT_SIGNATU
 
 int select(SELECT_SIGNATURE) {
   if (!realselect) {
-	dlerror();
-	if ((realselect = dlsym(RTLD_NEXT, "select")) == NULL)
-	  LOAD_ERROR("select", MSGERR);
+      dlerror();
+      if ((realselect = dlsym(RTLD_NEXT, "select")) == NULL)
+          LOAD_ERROR("select", MSGERR);
   }
   return torsocks_select_guts(SELECT_ARGNAMES, realselect);
 }

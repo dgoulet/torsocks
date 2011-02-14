@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+
 #include "common.h"
 #include "dead_pool.h"
 
@@ -137,7 +138,7 @@ init_pool(unsigned int pool_size, struct in_addr deadrange_base,
     return newpool;
 }
 
-int 
+int
 is_dead_address(dead_pool *pool, uint32_t addr) 
 {
     uint32_t haddr = ntohl(addr);
@@ -156,7 +157,7 @@ get_next_dead_address(dead_pool *pool, uint32_t *result)
     }
 }
 
-int 
+int
 store_pool_entry(dead_pool *pool, char *hostname, struct in_addr *addr)
 {
   int position = pool->write_pos;

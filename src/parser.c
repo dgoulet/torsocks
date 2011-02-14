@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <config.h>
+
 #include "common.h"
 #include "parser.h"
 
@@ -277,7 +278,7 @@ static int handle_path(struct parsedfile *config, int lineno, int nowords, char 
         config->paths = newserver;
         currentcontext = newserver;
     }
- 
+
     return(0);
 }
 
@@ -406,7 +407,7 @@ static int handle_port(struct parsedfile *config, int lineno, char *value) {
             currentcontext->port = 0;
         }
     }
-    
+
     return(0);
 }
 
@@ -425,7 +426,7 @@ static int handle_defuser(struct parsedfile *config, int lineno, char *value) {
     } else {
         currentcontext->defuser = strdup(value);
     }
-    
+
     return(0);
 }
 
@@ -444,7 +445,7 @@ static int handle_defpass(struct parsedfile *config, int lineno, char *value) {
     } else {
         currentcontext->defpass = strdup(value);
     }
-    
+
     return(0);
 }
 
@@ -472,7 +473,7 @@ static int handle_type(struct parsedfile *config, int lineno, char *value) {
             currentcontext->type = 0;
         }
     }
-    
+
     return(0);
 }
 
@@ -486,7 +487,7 @@ static int handle_flag(char *value)
         return 0;
     } else {
         return -1;
-    }    
+    }
 }
 
 static int handle_tordns_enabled(struct parsedfile *config, int lineno,

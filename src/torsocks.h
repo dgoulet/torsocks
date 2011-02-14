@@ -24,7 +24,7 @@
 
 #define _TORSOCKS_H 1
 
-#include <parser.h>
+#include "parser.h"
 
 /* Structure representing a socks connection request */
 struct sockreq {
