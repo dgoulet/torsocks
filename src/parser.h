@@ -1,9 +1,7 @@
 /***************************************************************************
  *                                                                         *
- * $Id: parser.h,v 1.3 2008-10-03 19:37:29 hoganrobert Exp $                            *
- *                                                                         *
- *   Copyright (C) 2008 by Robert Hogan                                    *
- *   robert@roberthogan.net                                                *
+ *   Copyright (C) 2000-2008 Shaun Clowes <delius@progsoc.org>             *
+ *   Copyright (C) 2008-2011 Robert Hogan <robert@roberthogan.net>         *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -19,32 +17,27 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************
- *                                                                         *
- *   This is a modified version of a source file from the tsocks project.  *
- *   Original copyright notice from tsocks source file follows:            *
- *   (Source file contained no copyright information.)                     *
  ***************************************************************************/
 
-/* parser.h - Structures, functions and global variables for the 
-   tsocks parsing routines                                       */
+/* parser.h - Structures, functions and global variables for the
+   torsocks parsing routines                                       */
 
 #ifndef _PARSER_H
 
-#define _PARSER_H	1
+#define _PARSER_H 1
 
 /* Structure definitions */
 
 /* Structure representing one server specified in the config */
 struct serverent {
-	int lineno; /* Line number in conf file this path started on */
-	char *address; /* Address/hostname of server */
-	int port; /* Port number of server */
-	int type; /* Type of server (4/5) */
-	char *defuser; /* Default username for this socks server */
-	char *defpass; /* Default password for this socks server */
-	struct netent *reachnets; /* Linked list of nets from this server */
-	struct serverent *next; /* Pointer to next server entry */
+    int lineno; /* Line number in conf file this path started on */
+    char *address; /* Address/hostname of server */
+    int port; /* Port number of server */
+    int type; /* Type of server (4/5) */
+    char *defuser; /* Default username for this socks server */
+    char *defpass; /* Default password for this socks server */
+    struct netent *reachnets; /* Linked list of nets from this server */
+    struct serverent *next; /* Pointer to next server entry */
 };
 
 /* Structure representing a network */
