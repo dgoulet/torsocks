@@ -70,7 +70,7 @@ const char *torsocks_progname = "libtorsocks";         /* Name used in err msgs 
 #endif
 #include <resolv.h>
 #include <parser.h>
-#include <tsocks.h>
+#include <torsocks.h>
 #include "dead_pool.h"
 
 /* Some function names are macroized on Darwin. Allow those names

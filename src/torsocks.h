@@ -18,11 +18,11 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-/* tsocks.h - Structures used by tsocks to form SOCKS requests */
+/* torsocks.h - Structures used by tsocks to form SOCKS requests */
 
-#ifndef _TSOCKS_H
+#ifndef _TORSOCKS_H
 
-#define _TSOCKS_H	1
+#define _TORSOCKS_H	1
 
 #include <parser.h>
 
