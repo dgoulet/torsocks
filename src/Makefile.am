@@ -3,17 +3,6 @@
 LIBS = -ldl -lc -lresolv
 libdir = @libdir@/torsocks
 
-# Install helper programs
-#bin_PROGRAMS = validateconf inspectsocks saveme
-#validateconf_SOURCES = validateconf.c common.c parser.c
-#validateconf_CFLAGS = $(AM_CFLAGS)
-
-#inspectsocks_SOURCES = inspectsocks.c common.c
-#inspectsocks_CFLAGS = $(AM_CFLAGS)
-
-#saveme_SOURCES = saveme.c
-#saveme_CFLAGS = $(AM_CFLAGS)
-
 # Install configuration file
 usewithtorconfdir = $(CONFDIR)/
 usewithtorconf_DATA = torsocks.conf
