@@ -96,34 +96,32 @@ set_uint32(char *cp, uint32_t v)
   memcpy(cp,&v,4);
 }
 
-
-
 unsigned int resolve_ip(char *host, int showmsg, int allownames) {
-	struct hostent *new;
-	unsigned int	hostaddr;
-	struct in_addr *ip;
+    struct hostent *new;
+    unsigned int    hostaddr;
+    struct in_addr *ip;
 
-	if ((hostaddr = inet_addr(host)) == (unsigned int) -1) {
-		/* We couldn't convert it as a numerical ip so */
-		/* try it as a dns name                        */
-		if (allownames) {
-			#ifdef HAVE_GETHOSTBYNAME
-			if ((new = gethostbyname(host)) == (struct hostent *) 0) {
-			#endif
-				return(0);
-			#ifdef HAVE_GETHOSTBYNAME
-			} else {
-				ip = ((struct in_addr *) * new->h_addr_list);
-				hostaddr = ip -> s_addr;
-				if (showmsg) 
-					printf("Connecting to %s...\n", inet_ntoa(*ip));
-			}
-			#endif
-		} else
-			return(0);
-	}
+    if ((hostaddr = inet_addr(host)) == (unsigned int) -1) {
+        /* We couldn't convert it as a numerical ip so */
+        /* try it as a dns name                        */
+        if (allownames) {
+            #ifdef HAVE_GETHOSTBYNAME
+            if ((new = gethostbyname(host)) == (struct hostent *) 0) {
+            #endif
+                return(0);
+            #ifdef HAVE_GETHOSTBYNAME
+            } else {
+                ip = ((struct in_addr *) * new->h_addr_list);
+                hostaddr = ip -> s_addr;
+                if (showmsg)
+                    printf("Connecting to %s...\n", inet_ntoa(*ip));
+            }
+            #endif
+        } else
+            return(0);
+    }
 
-	return (hostaddr);
+    return (hostaddr);
 }
 
 /* Set logging options, the options are as follows:             */

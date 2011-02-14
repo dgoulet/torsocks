@@ -423,7 +423,7 @@ int tsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIGNA
                               "the server has not been "
                               "specified for this path\n",
                               path->lineno);
-    } else if ((res = resolve_ip(path->address, 0, HOSTNAMES)) == -1) {
+    } else if ((res = resolve_ip(path->address, 0, 0)) == -1) {
         show_msg(MSGERR, "The SOCKS server (%s) listed in the configuration "
                         "file which needs to be used for this connection "
                         "is invalid\n", path->address);

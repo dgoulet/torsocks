@@ -14,16 +14,10 @@ dnl /etc/ld.so.preload file
 dnl test "$libdir" = "\${exec_prefix}/lib" && libdir="/lib"
 
 dnl Arguments we allow
-AC_ARG_ENABLE(socksdns,
-[  --enable-socksdns       force dns lookups to use tcp ])
-AC_ARG_ENABLE(tordns,
-[  --disable-tordns         don't override name lookup calls to use SOCKS ])   
 AC_ARG_ENABLE(debug,
 [  --disable-debug         disable ALL error messages from torsocks ])
 AC_ARG_ENABLE(oldmethod,
 [  --enable-oldmethod      use the old method to override connect ])
-AC_ARG_ENABLE(hostnames,
-[  --enable-hostnames      enable hostname lookups for socks servers ])
 AC_ARG_ENABLE(envconf,
 [  --disable-envconf       do not allow TORSOCKS_CONF_FILE to specify configuration file ])
 
@@ -176,10 +170,6 @@ AC_EGREP_CPP(yes,
   ])    
 ])
 
-if test "${enable_socksdns}" = "yes"; then
-  AC_DEFINE([USE_SOCKS_DNS],[],[Description])
-fi
-
 if test "x${enable_envconf}" = "x"; then
   AC_DEFINE([ALLOW_ENV_CONFIG],[],[Description])
 fi
@@ -187,22 +177,6 @@ fi
 if test "${enable_oldmethod}" = "yes"; then
   AC_DEFINE([USE_OLD_DLSYM],[],[Description])
   oldmethod="yes"
-fi
-
-AC_DEFINE([HOSTNAMES],[0],[Description])
-
-if test "x${enable_hostnames}" = "xyes"; then
-  AC_DEFINE([HOSTNAMES],[1],[Description])
-fi
-
-if test "${enable_socksdns}" = "yes" -a \
-        "x${enable_hostnames}" = "xyes" ; then
-  AC_MSG_ERROR("--enable-socksdns is not valid with --enable-hostnames")
-fi
-
-if test "x${enable_tordns}" = "x" -a \
-        "x${enable_hostnames}" = "xyes" ; then
-  AC_MSG_ERROR("--enable-tordns is not valid with --enable-hostnames")
 fi
 
 dnl If we have to use the old method of overriding connect (i.e no
