@@ -26,7 +26,7 @@
  ***************************************************************************/
 /* 
 
-    commmon.c    - Common routines for the tsocks package 
+    commmon.c    - Common routines for the torsocks package 
 
 */
 
@@ -61,9 +61,9 @@ int logstamp = 0;         /* Timestamp (and pid stamp) messages */
 uint16_t
 get_uint16(const char *cp)
 {
-  uint16_t v;
-  memcpy(&v,cp,2);
-  return v;
+    uint16_t v;
+    memcpy(&v,cp,2);
+    return v;
 }
 /**
  * Read a 32-bit value beginning at <b>cp</b>.  Equivalent to
@@ -73,9 +73,9 @@ get_uint16(const char *cp)
 uint32_t
 get_uint32(const char *cp)
 {
-  uint32_t v;
-  memcpy(&v,cp,4);
-  return v;
+    uint32_t v;
+    memcpy(&v,cp,4);
+    return v;
 }
 /**
  * Set a 16-bit value beginning at <b>cp</b> to <b>v</b>. Equivalent to
@@ -84,7 +84,7 @@ get_uint32(const char *cp)
 void
 set_uint16(char *cp, uint16_t v)
 {
-  memcpy(cp,&v,2);
+    memcpy(cp,&v,2);
 }
 /**
  * Set a 32-bit value beginning at <b>cp</b> to <b>v</b>. Equivalent to
@@ -93,7 +93,7 @@ set_uint16(char *cp, uint16_t v)
 void
 set_uint32(char *cp, uint32_t v)
 {
-  memcpy(cp,&v,4);
+    memcpy(cp,&v,4);
 }
 
 unsigned int resolve_ip(char *host, int showmsg, int allownames) {
@@ -204,16 +204,16 @@ void show_msg(int level, const char *fmt, ...) {
     if (logstamp) {
         fprintf(logfile, "(%d)", getpid());
     }
-    
+
     fputs(": ", logfile);
-      
+
     va_start(ap, fmt);
 
     /* Save errno */
     saveerr = errno;
 
     vfprintf(logfile, fmt, ap);
-    
+
     fflush(logfile);
 
     errno = saveerr;
