@@ -1,6 +1,5 @@
 # Makefile used by configure to create real Makefile
 
-LIBS = -ldl -lc -lresolv
 libdir = @libdir@/torsocks
 
 # Install configuration file

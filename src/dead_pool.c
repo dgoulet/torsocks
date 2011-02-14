@@ -752,6 +752,10 @@ our_getipnodebyname(dead_pool *pool, const char *name, int af, int flags,
         /* Caller has requested an AF_INET6 address, and is not prepared to
            accept IPv4-mapped IPV6 addresses. There's nothing we can do to
            service their request. */
+#ifdef OPENBSD
+        /* OpenBSD doesn't support the AI_V4MAPPED flag, so just return. */
+        return NULL;
+#else
         if((flags & AI_V4MAPPED) == 0) {
             show_msg(MSGWARN, "getipnodebyname: asked for V6 addresses only, "
                      "but torsocks can't handle that\n");
@@ -760,6 +764,7 @@ our_getipnodebyname(dead_pool *pool, const char *name, int af, int flags,
         } else {
             want_4in6 = 1;
         }
+#endif
     }
 
     pos = store_pool_entry(pool, (char *)name, &pool_addr);

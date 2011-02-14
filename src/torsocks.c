@@ -147,7 +147,7 @@ static pthread_mutex_t torsocks_init_mutex = PTHREAD_MUTEX_INITIALIZER;
 void torsocks_init(void)
 {
 #define LOAD_ERROR(s,l) { \
-    char *error; \
+    const char *error; \
     error = dlerror(); \
     show_msg(l, "The symbol %s() was not found in any shared " \
                      "library. The error reported was: %s!\n", s, \

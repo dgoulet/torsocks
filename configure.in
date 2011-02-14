@@ -518,6 +518,9 @@ SPECIALLIBS=${LIBS}
 AC_SUBST(SPECIALLIBS)
 LIBS=${SIMPLELIBS}
 
+AC_SEARCH_LIBS(dlopen, [dl])
+AC_SEARCH_LIBS(inet_aton, [resolv])
+
 dnl Linker checks for Mac OSX, which uses DYLD_INSERT_LIBRARIES
 dnl instead of LD_PRELOAD
 case "$host_os" in
@@ -559,6 +562,15 @@ darwin*)
 *)
     SHLIB_EXT="so"
     LD_PRELOAD="LD_PRELOAD"
+    ;;
+esac
+
+dnl OpenBSD needs -lpthread. It also doesn't support AI_V4MAPPED.
+case $host in
+*-*-openbsd*)
+  AC_DEFINE(OPENBSD, 1, "Define to handle OpenBSD")
+  AC_SEARCH_LIBS(pthread_create, [pthread])
+  AC_SEARCH_LIBS(pthread_detach, [pthread])
     ;;
 esac
 
