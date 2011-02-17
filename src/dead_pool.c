@@ -100,7 +100,7 @@ init_pool(unsigned int pool_size, struct in_addr deadrange_base,
         return NULL;
     }
 
-    show_msg(MSGWARN, "init_pool: sockshost %s \n", sockshost);
+    show_msg(MSGDEBUG, "init_pool: sockshost %s \n", sockshost);
 
     /* Initialize the dead_pool structure */
 #ifdef HAVE_INET_ATON
@@ -590,7 +590,7 @@ our_gethostbyaddr(dead_pool *pool, const void *_addr, socklen_t len, int type)
   he.h_addrtype  = type;
   he.h_addr_list = addrs;
 
-  show_msg(MSGDEBUG, "our_gethostbyaddr: resolved '%s' to: '%s'\n",
+  show_msg(MSGTEST, "our_gethostbyaddr: resolved '%s' to: '%s'\n",
            inet_ntoa(*((struct in_addr *)he.h_addr)), result_hostname);
 
   return &he;
@@ -605,7 +605,7 @@ our_gethostbyname(dead_pool *pool, const char *name)
   static struct hostent he;
   static char *addrs[2];
 
-  show_msg(MSGDEBUG, "our_gethostbyname: '%s' requested\n", name);
+  show_msg(MSGTEST, "our_gethostbyname: '%s' requested\n", name);
 
   pos = store_pool_entry(pool,(char *) name, &addr);
   if(pos == -1) {
@@ -735,6 +735,7 @@ our_getaddrinfo(dead_pool *pool, const char *node, const char *service,
         ret = realgetaddrinfo(node, service, hints, res);
     }
 
+    show_msg(MSGTEST, "our_getaddrinfo: '%s' requested\n", service);
     return ret;
 }
 

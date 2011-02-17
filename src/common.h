@@ -64,8 +64,9 @@ unsigned int resolve_ip(char *, int, int);
 #define MSGNONE   -1
 #define MSGERR    0
 #define MSGWARN   1
-#define MSGNOTICE 2
-#define MSGDEBUG  2
+#define MSGTEST  2
+#define MSGNOTICE 3
+#define MSGDEBUG  3
 
 /* Required by some BSDs */
 #ifndef  MAP_ANONYMOUS

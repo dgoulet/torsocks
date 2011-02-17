@@ -140,12 +140,10 @@ void torsocks_init(void)
     /* This has been observed on Snow Leopard for instance. */
     torsocks_init_complete = 1;
 
-    show_msg(MSGWARN, "In torsocks_init \n");
+    show_msg(MSGDEBUG, "In torsocks_init \n");
 
     get_environment();
     get_config();
-
-    show_msg(MSGWARN, "In torsocks_init after env/config\n");
 
 #ifdef USE_OLD_DLSYM
     void *lib;
@@ -202,7 +200,7 @@ void torsocks_init(void)
     torsocks_init_complete=1;
     pthread_mutex_unlock(&torsocks_init_mutex);
 
-    show_msg(MSGWARN, "Exit torsocks_init \n");
+    show_msg(MSGDEBUG, "Exit torsocks_init \n");
 }
 
 static int get_environment()
@@ -220,7 +218,7 @@ static int get_environment()
         loglevel = atoi(env);
     if (((env = getenv("TORSOCKS_DEBUG_FILE"))) && !suid)
         logfile = env;
-    set_log_options(loglevel, logfile, 1);
+    set_log_options(loglevel, logfile, (loglevel == MSGTEST) ? 0 : 1);
 
     done = 1;
 
@@ -287,7 +285,7 @@ int torsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIG
         return(-1);
     }
 
-    show_msg(MSGDEBUG, "Got connection request\n");
+    show_msg(MSGTEST, "Got connection request\n");
 
     connaddr = (struct sockaddr_in *) __addr;
 
@@ -456,6 +454,7 @@ int torsocks_select_guts(SELECT_SIGNATURE, int (*original_select)(SELECT_SIGNATU
     if (!torsocks_init_complete)
         torsocks_init();
 
+    show_msg(MSGTEST, "Intercepted call to select\n");
     show_msg(MSGDEBUG, "Intercepted call to select with %d fds, "
               "0x%08x 0x%08x 0x%08x, timeout %08x\n", n,
               readfds, writefds, exceptfds, timeout);
@@ -641,6 +640,7 @@ int torsocks_poll_guts(POLL_SIGNATURE, int (*original_poll)(POLL_SIGNATURE))
     if (!torsocks_init_complete)
         torsocks_init();
 
+    show_msg(MSGTEST, "Intercepted call to poll\n");
     show_msg(MSGDEBUG, "Intercepted call to poll with %d fds, "
               "0x%08x timeout %d\n", nfds, ufds, timeout);
 
@@ -807,6 +807,7 @@ int torsocks_close_guts(CLOSE_SIGNATURE, int (*original_close)(CLOSE_SIGNATURE))
         return(-1);
     }
 
+    show_msg(MSGTEST, "Got call to close()\n");
     show_msg(MSGDEBUG, "Call to close(%d)\n", fd);
 
     rc = original_close(fd);
@@ -854,6 +855,7 @@ int torsocks_getpeername_guts(GETPEERNAME_SIGNATURE,
         return(-1);
     }
 
+    show_msg(MSGTEST, "Intercepted call to getpeername\n");
     show_msg(MSGDEBUG, "Call to getpeername for fd %d\n", __fd);
 
 
@@ -882,7 +884,7 @@ int res_init(void)
     if (!realres_init && ((realres_init = dlsym(RTLD_NEXT, "res_init")) == NULL))
         LOAD_ERROR("res_init", MSGERR);
 
-    show_msg(MSGDEBUG, "Got res_init request\n");
+    show_msg(MSGTEST, "Got res_init request\n");
 
     /* See comment in close() */
     if (!torsocks_init_complete)
@@ -907,7 +909,7 @@ int EXPAND_GUTS_NAME(res_query)(RES_QUERY_SIGNATURE, int (*original_res_query)(R
     if (!original_res_query && ((original_res_query = dlsym(RTLD_NEXT, "res_query")) == NULL))
         LOAD_ERROR("res_query", MSGERR);
 
-    show_msg(MSGDEBUG, "Got res_query request\n");
+    show_msg(MSGTEST, "Got res_query request\n");
 
     /* See comment in close() */
     if (!torsocks_init_complete)
@@ -967,7 +969,7 @@ int EXPAND_GUTS_NAME(res_search)(RES_SEARCH_SIGNATURE, int (*original_res_search
         ((original_res_search = dlsym(RTLD_NEXT, "res_search")) == NULL))
             LOAD_ERROR("res_search", MSGERR);
 
-    show_msg(MSGDEBUG, "Got res_search request\n");
+    show_msg(MSGTEST, "Got res_search request\n");
 
     /* See comment in close() */
     if (!torsocks_init_complete)
@@ -996,7 +998,7 @@ int EXPAND_GUTS_NAME(res_send)(RES_SEND_SIGNATURE, int (*original_res_send)(RES_
     if (!original_res_send && ((original_res_send = dlsym(RTLD_NEXT, "res_send")) == NULL))
             LOAD_ERROR("res_send", MSGERR);
 
-    show_msg(MSGDEBUG, "Got res_send request\n");
+    show_msg(MSGTEST, "Got res_send request\n");
 
     /* See comment in close() */
     if (!torsocks_init_complete)
@@ -1089,7 +1091,7 @@ ssize_t torsocks_sendto_guts(SENDTO_SIGNATURE, ssize_t (*original_sendto)(SENDTO
         return(-1);
     }
 
-    show_msg(MSGDEBUG, "Got sendto request\n");
+    show_msg(MSGTEST, "Got sendto request\n");
 
     /* Get the type of the socket */
     getsockopt(s, SOL_SOCKET, SO_TYPE,
@@ -1133,7 +1135,7 @@ ssize_t torsocks_sendmsg_guts(SENDMSG_SIGNATURE, ssize_t (*original_sendmsg)(SEN
         return(-1);
     }
 
-    show_msg(MSGDEBUG, "Got sendmsg request\n");
+    show_msg(MSGTEST, "Got sendmsg request\n");
 
     /* Get the type of the socket */
     getsockopt(s, SOL_SOCKET, SO_TYPE,

@@ -1,2 +1,3 @@
-This folder contains some simple test utilties for various libc function that
-libtorsocks is expected to hook.
+To run the tests:
+$./run_tests.sh
+

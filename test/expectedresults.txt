@@ -1,0 +1,120 @@
+libtorsocks: The symbol getipnodebyname() was not found in any shared library. The error reported was: not found!
+libtorsocks: The symbol getipnodebyname() was not found in any shared library. The error reported was: not found!
+libtorsocks: The symbol getipnodebyname() was not found in any shared library. The error reported was: not found!
+libtorsocks: our_getaddrinfo: 'www.torproject.org' requested
+libtorsocks: Got sendmsg request
+libtorsocks: sendmsg: Connection is a UDP or ICMP stream, may be a DNS request or other form of leak: rejecting.
+libtorsocks: Got sendto request
+libtorsocks: sendto: Connection is a UDP or ICMP stream, may be a DNS request or other form of leak: rejecting.
+libtorsocks: Got sendto request
+libtorsocks: sendto: Connection is a UDP or ICMP stream, may be a DNS request or other form of leak: rejecting.
+libtorsocks: Got connection request
+libtorsocks: connect: Connection is a UDP or ICMP stream, may be a DNS request or other form of leak: rejecting.
+libtorsocks: our_gethostbyaddr: resolved '38.229.70.16' to: 'vescum.torproject.org'
+libtorsocks: our_gethostbyname: 'www.torproject.org' requested
+libtorsocks: Got connection request
+libtorsocks: connect: Connection is to a local address (192.168.1.1), may be a TCP DNS request to a local DNS server so have to reject to be safe. Please report a bug to http://code.google.com/p/torsocks/issues/entry if this is preventing a program from working properly with torsocks.
+libtorsocks: Got connection request
+libtorsocks: Intercepted call to getpeername
+libtorsocks: Got res_init request
+libtorsocks: Got connection request
+libtorsocks: Intercepted call to getpeername
+libtorsocks: Got connection request
+libtorsocks: Intercepted call to getpeername
+libtorsocks: Got connection request
+libtorsocks: Intercepted call to getpeername
+libtorsocks: Got connection request
+libtorsocks: Intercepted call to getpeername
+libtorsocks: Got res_init request
+libtorsocks: Got connection request
+libtorsocks: connect: Connection is to a local address (192.168.1.1), may be a TCP DNS request to a local DNS server so have to reject to be safe. Please report a bug to http://code.google.com/p/torsocks/issues/entry if this is preventing a program from working properly with torsocks.
+libtorsocks: Got connection request
+libtorsocks: connect: Connection is to a local address (192.168.1.1), may be a TCP DNS request to a local DNS server so have to reject to be safe. Please report a bug to http://code.google.com/p/torsocks/issues/entry if this is preventing a program from working properly with torsocks.
+libtorsocks: Got connection request
+libtorsocks: connect: Connection is to a local address (192.168.1.1), may be a TCP DNS request to a local DNS server so have to reject to be safe. Please report a bug to http://code.google.com/p/torsocks/issues/entry if this is preventing a program from working properly with torsocks.
+libtorsocks: Got connection request
+libtorsocks: connect: Connection is to a local address (192.168.1.1), may be a TCP DNS request to a local DNS server so have to reject to be safe. Please report a bug to http://code.google.com/p/torsocks/issues/entry if this is preventing a program from working properly with torsocks.
+libtorsocks: Got connection request
+libtorsocks: connect: Connection is to a local address (192.168.1.1), may be a TCP DNS request to a local DNS server so have to reject to be safe. Please report a bug to http://code.google.com/p/torsocks/issues/entry if this is preventing a program from working properly with torsocks.
+socket: Operation not permitted
+
+----------------------getaddrinfo() TEST-----------------
+
+getaddrinfo: Servname not supported for ai_socktype
+
+----------------------UDP TEST----------------------
+
+
+----------------------udp sendmsg() TEST-------------------
+
+sendmsg() returned ret=-1 wb=0
+
+----------------------udp sendto() TEST--------------------
+
+sendto() returned ret=-1 wb=0
+
+----------------------udp connect() TEST-------------------
+
+Connect returned ret=-1
+
+----------------------udp send() TEST----------------------
+
+Note: no interception by torsocks expected as send() requires a socket in a connected state.
+send() returned ret=-1 wb=0
+
+----------------------gethostbyaddr() TEST-----------------
+
+vescum.torproject.org -> 38.229.70.16
+
+----------------------gethostbyname() TEST-----------------
+
+www.torproject.org -> 38.229.70.16
+
+---------------------- local connect() TEST----------------------
+
+
+---------------------- internet connect() TEST----------------------
+
+
+---------------------- internet res_init() TEST----------------------
+
+nameserver for test: 8.8.8.8
+
+---------------------- internet res_query() TEST----------------------
+
+return code: 102
+
+---------------------- internet res_search() TEST----------------------
+
+return code: 102
+
+--------------- internet res_querydomain() TEST----------------------
+
+return code: -1
+
+---------------------- internet res_send() TEST----------------------
+
+return code: -1
+
+---------------------- local res_init() TEST----------------------
+
+nameserver for test: 192.168.1.1
+
+---------------------- local res_query() TEST----------------------
+
+return code: -1
+
+---------------------- local res_search() TEST----------------------
+
+return code: -1
+
+--------------- local res_querydomain() TEST----------------------
+
+return code: -1
+
+---------------------- local res_send() TEST----------------------
+
+return code: -1
+
+----------------icmp() TEST----------------------------
+
