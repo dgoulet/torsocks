@@ -519,7 +519,7 @@ AC_SUBST(SPECIALLIBS)
 LIBS=${SIMPLELIBS}
 
 AC_SEARCH_LIBS(dlopen, [dl])
-AC_SEARCH_LIBS(inet_aton, [resolv])
+AC_SEARCH_LIBS(res_query, [resolv])
 
 dnl Linker checks for Mac OSX, which uses DYLD_INSERT_LIBRARIES
 dnl instead of LD_PRELOAD
