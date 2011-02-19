@@ -25,11 +25,11 @@ torsocksconfmanpage_DATA = torsocks.conf.5
 
 # Install main library to $(prefix)/lib/tor (must match torsocks.in)
 lib_LTLIBRARIES = libtorsocks.la
-libtorsocks_la_SOURCES = torsocks.c common.c parser.c dead_pool.c darwin_warts.c
+libtorsocks_la_SOURCES = torsocks.c common.c parser.c dead_pool.c darwin_warts.c socks.c
 libtorsocks_la_LDFLAGS = -version-info 1:0:0
 #libtorsocks_la_CFLAGS = -nostartfiles
 
-DISTCLEANFILES=parser.lo dead_pool.lo common.lo libtorsocks.lo tsocks.lo \
+DISTCLEANFILES=parser.lo dead_pool.lo common.lo libtorsocks.lo torsocks.lo darwin_warts.lo socks.lo\
 			   config.cache config.log config.h Makefile \
 			   aclocal.m4 config.status usewithtor torsocks \
 			   autom4te.cache .libs .deps 
