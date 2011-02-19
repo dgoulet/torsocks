@@ -18,6 +18,7 @@
 # *   Free Software Foundation, Inc.,                                       *
 #*   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
 # ***************************************************************************
+export TORSOCKS_DEBUG=2
 TORSOCKS="`which torsocks`"
 
 if [ ! -x "$TORSOCKS" ]; then
@@ -40,3 +41,4 @@ else
   echo "Tests failed. Please post this output to http://code.google.com/p/torsocks/issues/entry"
 fi
 rm -f /tmp/newresults.txt
+export TORSOCKS_DEBUG=
