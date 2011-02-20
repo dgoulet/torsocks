@@ -590,8 +590,9 @@ our_gethostbyaddr(dead_pool *pool, const void *_addr, socklen_t len, int type)
   he.h_addrtype  = type;
   he.h_addr_list = addrs;
 
-  show_msg(MSGTEST, "our_gethostbyaddr: resolved '%s' to: '%s'\n",
-           inet_ntoa(*((struct in_addr *)he.h_addr)), result_hostname);
+  if (result_hostname)
+      show_msg(MSGTEST, "our_gethostbyaddr: resolved '%s' to: '%s'\n",
+              inet_ntoa(*((struct in_addr *)he.h_addr)), result_hostname);
 
   return &he;
 
