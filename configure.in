@@ -521,6 +521,8 @@ LIBS=${SIMPLELIBS}
 AC_SEARCH_LIBS(dlopen, [dl])
 AC_SEARCH_LIBS(res_query, [resolv])
 
+TESTLDFLAGS="$LDFLAGS"
+
 dnl Linker checks for Mac OSX, which uses DYLD_INSERT_LIBRARIES
 dnl instead of LD_PRELOAD
 case "$host_os" in
@@ -575,6 +577,16 @@ case $host in
 *-*-freebsd*)
   AC_DEFINE(FREEBSD, 1, "Define to handle FreeBSD")
     ;;
+*-*-darwin*)
+  dnl Needed to compile tests.
+  dnl See https://bugs.g10code.com/gnupg/issue1292:
+  dnl "On OS X (at least in 10.6 and I believe starting at 10.3) the DNS resolution
+  dnl services fail to compile.  This is a result of the addition of BIND9 compatible
+  dnl resolution libraries on OS X that are being picked up by the configure script
+  dnl instead of -lresolv causing the tests for useable resolution services to fail
+  dnl thus disabling features like pka auto lookup."
+  LIBS="-lresolv $LIBS"
+    ;;
 esac
 
 AC_SUBST(SHLIB_EXT)
@@ -615,5 +627,8 @@ AC_ENABLE_STATIC
 
 AC_CONFIG_FILES([src/usewithtor src/torsocks src/torsocks.conf.5 src/torsocks.8 src/usewithtor.1 src/torsocks.1])
 
-AC_OUTPUT(Makefile src/Makefile test/Makefile)
+AC_OUTPUT(Makefile src/Makefile)
 
+dnl Dump any LDFLAGS that were only required for linking libtorsocks, such as -dynamiclib on OSX.
+LDFLAGS="$TESTLDFLAGS"
+AC_OUTPUT(test/Makefile)

@@ -37,6 +37,9 @@
 #include <arpa/inet.h>
 #endif
 #include <arpa/nameser.h>
+#if defined(__APPLE__) || defined(__darwin__)
+#include <arpa/nameser_compat.h>
+#endif
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 #include <pthread.h>
@@ -80,7 +83,7 @@ static int icmp_test()
     char datagram[400];
     struct sockaddr_in dest;
     struct ip *iphdr=(struct ip *) datagram;
-#if defined(OPENBSD) || defined(FREEBSD)
+#if defined(OPENBSD) || defined(FREEBSD) ||defined(__APPLE__) || defined(__darwin__)
     struct icmp *icmphdr=(struct icmp *)(iphdr +1);
 #else
     struct icmphdr *icmphdr=(struct icmphdr *)(iphdr +1);
@@ -112,7 +115,7 @@ static int icmp_test()
     iphdr->ip_dst.s_addr=dest.sin_addr.s_addr;
     iphdr->ip_sum=csum((unsigned short *)datagram,iphdr->ip_len >> 1);
 
-#if defined(OPENBSD) || defined(FREEBSD)
+#if defined(OPENBSD) || defined(FREEBSD) ||defined(__APPLE__) || defined(__darwin__)
     icmphdr->icmp_type=130;
     icmphdr->icmp_code=0;
     icmphdr->icmp_cksum=htons(0xc3b0);
@@ -264,7 +267,7 @@ static int res_tests(char *ip, char *test) {
        See: http://sourceware.org/ml/libc-help/2009-11/msg00013.html */
     printf("\n---------------------- %s res_query() TEST----------------------\n\n", test);
     snprintf((char *)host, 127, "www.google.com");
-#ifndef OPENBSD
+#if !defined(OPENBSD) && !defined(__APPLE__) && !defined(__darwin__)
     ret = res_nquery(&_res, (char *) host, C_IN, T_TXT, dnsreply, sizeof( dnsreply ));
 #else
     ret = res_query((char *) host, C_IN, T_TXT, dnsreply, sizeof( dnsreply ));
@@ -273,7 +276,7 @@ static int res_tests(char *ip, char *test) {
 
     printf("\n---------------------- %s res_search() TEST----------------------\n\n", test);
     memset( dnsreply, '\0', sizeof( dnsreply ));
-#ifndef OPENBSD
+#if !defined(OPENBSD) && !defined(__APPLE__) && !defined(__darwin__)
     ret = res_nsearch(&_res, (char *) host, C_IN, T_TXT, dnsreply, sizeof( dnsreply ));
 #else
     ret = res_search((char *) host, C_IN, T_TXT, dnsreply, sizeof( dnsreply ));
@@ -282,7 +285,7 @@ static int res_tests(char *ip, char *test) {
 
     printf("\n--------------- %s res_querydomain() TEST----------------------\n\n", test);
     memset( dnsreply, '\0', sizeof( dnsreply ));
-#ifndef OPENBSD
+#if !defined(OPENBSD) && !defined(__APPLE__) && !defined(__darwin__)
     ret = res_nquerydomain(&_res,  "www.google.com", "google.com", C_IN, T_TXT, dnsreply, sizeof( dnsreply ));
 #else
     ret = res_querydomain("www.google.com", "google.com", C_IN, T_TXT, dnsreply, sizeof( dnsreply ));
@@ -291,7 +294,7 @@ static int res_tests(char *ip, char *test) {
 
     printf("\n---------------------- %s res_send() TEST----------------------\n\n", test);
     memset( dnsreply, '\0', sizeof( dnsreply ));
-#ifndef OPENBSD
+#if !defined(OPENBSD) && !defined(__APPLE__) && !defined(__darwin__)
     ret = res_nsend(&_res,  host, 32, dnsreply, sizeof( dnsreply ));
 #else
     ret = res_send(host, 32, dnsreply, sizeof( dnsreply ));
