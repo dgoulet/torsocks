@@ -19,13 +19,24 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+/* PreProcessor Defines */
+#include <config.h>
 
-#include <arpa/inet.h>
-#include <arpa/nameser.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
+#ifdef OPENBSD
+#include <netinet/in_systm.h>
+#endif
+#include <sys/types.h>
+#include <sys/socket.h>
+#ifndef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+#ifndef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
+#include <arpa/nameser.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 #include <pthread.h>
@@ -33,9 +44,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
 #include <sys/time.h>
-#include <sys/types.h>
+#ifdef OPENBSD
+#include <sys/uio.h>
+#endif
 #include <sys/un.h>
 #include <sysexits.h>
 #include <syslog.h>
@@ -68,7 +80,11 @@ static int icmp_test()
     char datagram[400];
     struct sockaddr_in dest;
     struct ip *iphdr=(struct ip *) datagram;
+#ifdef OPENBSD
+    struct icmp *icmphdr=(struct icmp *)(iphdr +1);
+#else
     struct icmphdr *icmphdr=(struct icmphdr *)(iphdr +1);
+#endif
     char *buff=(char *)(icmphdr +1);
     printf("\n----------------icmp() TEST----------------------------\n\n");
 
@@ -96,16 +112,21 @@ static int icmp_test()
     iphdr->ip_dst.s_addr=dest.sin_addr.s_addr;
     iphdr->ip_sum=csum((unsigned short *)datagram,iphdr->ip_len >> 1);
 
+#ifdef OPENBSD
+    icmphdr->icmp_type=130;
+    icmphdr->icmp_code=0;
+    icmphdr->icmp_cksum=htons(0xc3b0);
+#else
     icmphdr->type=130;
     icmphdr->code=0;
     icmphdr->checksum=htons(0xc3b0);
     icmphdr->un.echo.sequence=0;
     icmphdr->un.echo.id=0;
-
-        int one=1;
-        int *val=&one;
-        if(setsockopt(sockfd,IPPROTO_IP,IP_HDRINCL,val,sizeof(one))<0)
-            printf("cannot set HDRINCL!\n");
+#endif
+    int one=1;
+    int *val=&one;
+    if(setsockopt(sockfd,IPPROTO_IP,IP_HDRINCL,val,sizeof(one))<0)
+        printf("cannot set HDRINCL!\n");
 
 
     if(sendto(sockfd,datagram,35,0,(struct sockaddr *)&dest,sizeof(dest))<0)
@@ -228,7 +249,6 @@ static int res_tests(char *ip, char *test) {
       return -1;
     }
 
-    inet_ntop(AF_INET, &_res.nsaddr_list[0].sin_addr.s_addr, buf, sizeof(buf));
 
     addr.sin_family=AF_INET;
     addr.sin_port=htons(53);
@@ -240,29 +260,43 @@ static int res_tests(char *ip, char *test) {
     inet_ntop(AF_INET, &_res.nsaddr_list[0].sin_addr.s_addr, buf, sizeof(buf));
     printf("nameserver for test: %s\n", buf);
 
+    /* Modifying _res directly doesn't work, so we have to use res_n* where available.
+       See: http://sourceware.org/ml/libc-help/2009-11/msg00013.html */
     printf("\n---------------------- %s res_query() TEST----------------------\n\n", test);
     snprintf((char *)host, 127, "www.google.com");
-    ret = res_nquery( &_res, (char *) host, C_IN, T_TXT, dnsreply, sizeof( dnsreply ));
-//     printf("RES_QUERY results: %s.\n", dnsreply);
+#ifndef OPENBSD
+    ret = res_nquery(&_res, (char *) host, C_IN, T_TXT, dnsreply, sizeof( dnsreply ));
+#else
+    ret = res_query((char *) host, C_IN, T_TXT, dnsreply, sizeof( dnsreply ));
+#endif
     printf("return code: %i\n", ret);
 
     printf("\n---------------------- %s res_search() TEST----------------------\n\n", test);
     memset( dnsreply, '\0', sizeof( dnsreply ));
-    ret = res_nsearch( &_res,  (char *) host, C_IN, T_TXT, dnsreply, sizeof( dnsreply ));
-//     printf("RES_SEARCH results: %s.\n", dnsreply);
+#ifndef OPENBSD
+    ret = res_nsearch(&_res, (char *) host, C_IN, T_TXT, dnsreply, sizeof( dnsreply ));
+#else
+    ret = res_search((char *) host, C_IN, T_TXT, dnsreply, sizeof( dnsreply ));
+#endif
     printf("return code: %i\n", ret);
 
     printf("\n--------------- %s res_querydomain() TEST----------------------\n\n", test);
     memset( dnsreply, '\0', sizeof( dnsreply ));
-    ret = res_nquerydomain( &_res,  "www.google.com", "google.com", C_IN, T_TXT, dnsreply, sizeof( dnsreply ));
-//     printf("RES_QUERYDOMAIN results: %s.\n", dnsreply);
+#ifndef OPENBSD
+    ret = res_nquerydomain(&_res,  "www.google.com", "google.com", C_IN, T_TXT, dnsreply, sizeof( dnsreply ));
+#else
+    ret = res_querydomain("www.google.com", "google.com", C_IN, T_TXT, dnsreply, sizeof( dnsreply ));
+#endif
     printf("return code: %i\n", ret);
 
     printf("\n---------------------- %s res_send() TEST----------------------\n\n", test);
     memset( dnsreply, '\0', sizeof( dnsreply ));
-    ret = res_nsend( &_res,  host, 32, dnsreply, sizeof( dnsreply ));
-//     printf("RES_SEND results: %s.\n", dnsreply);
-    printf("return code: %i\n", ret);
+#ifndef OPENBSD
+    ret = res_nsend(&_res,  host, 32, dnsreply, sizeof( dnsreply ));
+#else
+    ret = res_send(host, 32, dnsreply, sizeof( dnsreply ));
+#endif
+printf("return code: %i\n", ret);
 
     return ret;
 }
@@ -353,7 +387,7 @@ static int gethostbyaddr_test() {
 
     printf("\n----------------------gethostbyaddr() TEST-----------------\n\n");
 
-    inet_aton("38.229.70.16",&bar);
+    inet_aton("38.229.70.16", &bar);
     foo=gethostbyaddr(&bar,4,AF_INET);
     if (foo) {
       int i;
