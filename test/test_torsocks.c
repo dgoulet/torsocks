@@ -69,7 +69,7 @@ static int icmp_test()
     struct sockaddr_in dest;
     struct ip *iphdr=(struct ip *) datagram;
     struct icmphdr *icmphdr=(struct icmphdr *)(iphdr +1);
-    char *buff=(icmphdr +1);
+    char *buff=(char *)(icmphdr +1);
     printf("\n----------------icmp() TEST----------------------------\n\n");
 
     if((sockfd=socket(AF_INET,SOCK_RAW,IPPROTO_ICMP))<0)
