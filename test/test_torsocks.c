@@ -80,7 +80,7 @@ static int icmp_test()
     char datagram[400];
     struct sockaddr_in dest;
     struct ip *iphdr=(struct ip *) datagram;
-#ifdef OPENBSD
+#if defined(OPENBSD) || defined(FREEBSD)
     struct icmp *icmphdr=(struct icmp *)(iphdr +1);
 #else
     struct icmphdr *icmphdr=(struct icmphdr *)(iphdr +1);
@@ -112,7 +112,7 @@ static int icmp_test()
     iphdr->ip_dst.s_addr=dest.sin_addr.s_addr;
     iphdr->ip_sum=csum((unsigned short *)datagram,iphdr->ip_len >> 1);
 
-#ifdef OPENBSD
+#if defined(OPENBSD) || defined(FREEBSD)
     icmphdr->icmp_type=130;
     icmphdr->icmp_code=0;
     icmphdr->icmp_cksum=htons(0xc3b0);

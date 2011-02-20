@@ -572,6 +572,9 @@ case $host in
   AC_SEARCH_LIBS(pthread_create, [pthread])
   AC_SEARCH_LIBS(pthread_detach, [pthread])
     ;;
+*-*-freebsd*)
+  AC_DEFINE(FREEBSD, 1, "Define to handle FreeBSD")
+    ;;
 esac
 
 AC_SUBST(SHLIB_EXT)
