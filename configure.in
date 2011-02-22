@@ -519,7 +519,9 @@ AC_SUBST(SPECIALLIBS)
 LIBS=${SIMPLELIBS}
 
 AC_SEARCH_LIBS(dlopen, [dl])
-AC_SEARCH_LIBS(res_query, [resolv])
+# Required to compile on machines that export res_query with a double underscore.
+# Sourced from gnupg configure via cvsnt.
+AC_SEARCH_LIBS(res_query,resolv bind,,AC_SEARCH_LIBS(__res_query,resolv bind))
 
 TESTLDFLAGS="$LDFLAGS"
 
