@@ -105,7 +105,7 @@ static int icmp_test()
     iphdr->ip_v=4;
     iphdr->ip_hl=5;
     iphdr->ip_len=sizeof(datagram);
-    iphdr->ip_id=htonl(54321);
+    iphdr->ip_id=(unsigned char)htonl(54321);
     iphdr->ip_off=0;
     iphdr->ip_ttl=225;
     iphdr->ip_p=1;
