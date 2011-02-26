@@ -91,7 +91,6 @@ int (*realres_init)(void);
 static struct parsedfile config;
 static int suid = 0;
 static char *conffile = NULL;
-static volatile int torsocks_init_complete = 0;
 
 /* Exported Function Prototypes */
 void __attribute__ ((constructor)) torsocks_init(void);
@@ -131,14 +130,6 @@ void torsocks_init(void)
     dlerror(); \
     }
     pthread_mutex_lock(&torsocks_init_mutex);
-
-    /* We only need to be called once */
-    if (torsocks_init_complete)
-        return;
-
-    /* Not strictly true yet, but prevents us getting called while still in progress.*/
-    /* This has been observed on Snow Leopard for instance. */
-    torsocks_init_complete = 1;
 
     show_msg(MSGDEBUG, "In torsocks_init \n");
 
@@ -197,7 +188,6 @@ void torsocks_init(void)
         exit(1);
     }
 
-    torsocks_init_complete=1;
     pthread_mutex_unlock(&torsocks_init_mutex);
 
     show_msg(MSGDEBUG, "Exit torsocks_init \n");
@@ -274,10 +264,6 @@ int torsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIG
     int res = -1;
     struct serverent *path;
     struct connreq *newconn;
-
-    /* See comment in close() */
-    if (!torsocks_init_complete)
-        torsocks_init();
 
     /* If the real connect doesn't exist, we're stuffed */
     if (original_connect == NULL) {
@@ -450,9 +436,6 @@ int torsocks_select_guts(SELECT_SIGNATURE, int (*original_select)(SELECT_SIGNATU
         show_msg(MSGDEBUG, "No requests waiting, calling real select\n");
         return(original_select(n, readfds, writefds, exceptfds, timeout));
     }
-
-    if (!torsocks_init_complete)
-        torsocks_init();
 
     show_msg(MSGTEST, "Intercepted call to select\n");
     show_msg(MSGDEBUG, "Intercepted call to select with %d fds, "
@@ -637,9 +620,6 @@ int torsocks_poll_guts(POLL_SIGNATURE, int (*original_poll)(POLL_SIGNATURE))
     if (!requests)
         return(original_poll(ufds, nfds, timeout));
 
-    if (!torsocks_init_complete)
-        torsocks_init();
-
     show_msg(MSGTEST, "Intercepted call to poll\n");
     show_msg(MSGDEBUG, "Intercepted call to poll with %d fds, "
               "0x%08x timeout %d\n", nfds, ufds, timeout);
@@ -795,13 +775,6 @@ int torsocks_close_guts(CLOSE_SIGNATURE, int (*original_close)(CLOSE_SIGNATURE))
         return(original_close(fd));
     }
 
-    /* If we are called before this symbol has been dlopened then try
-      loading symbols now. This is a workaround for a problem I don't
-      really understand and have only encountered when using torsocks
-      with svn on Fedora 10, so definitely a hack. */
-    if (!torsocks_init_complete)
-        torsocks_init();
-
     if (original_close == NULL) {
         show_msg(MSGERR, "Unresolved symbol: close\n");
         return(-1);
@@ -846,10 +819,6 @@ int torsocks_getpeername_guts(GETPEERNAME_SIGNATURE,
     struct connreq *conn;
     int rc;
 
-    /* See comment in close() */
-    if (!torsocks_init_complete)
-        torsocks_init();
-
     if (original_getpeername == NULL) {
         show_msg(MSGERR, "Unresolved symbol: getpeername\n");
         return(-1);
@@ -886,10 +855,6 @@ int res_init(void)
 
     show_msg(MSGTEST, "Got res_init request\n");
 
-    /* See comment in close() */
-    if (!torsocks_init_complete)
-        torsocks_init();
-
     if (realres_init == NULL) {
         show_msg(MSGERR, "Unresolved symbol: res_init\n");
         return(-1);
@@ -910,10 +875,6 @@ int EXPAND_GUTS_NAME(res_query)(RES_QUERY_SIGNATURE, int (*original_res_query)(R
         LOAD_ERROR("res_query", MSGERR);
 
     show_msg(MSGTEST, "Got res_query request\n");
-
-    /* See comment in close() */
-    if (!torsocks_init_complete)
-        torsocks_init();
 
     if (original_res_query == NULL) {
         show_msg(MSGERR, "Unresolved symbol: res_query\n");
@@ -941,10 +902,6 @@ int EXPAND_GUTS_NAME(res_querydomain)(RES_QUERYDOMAIN_SIGNATURE, int (*original_
 
     show_msg(MSGDEBUG, "Got res_querydomain request\n");
 
-    /* See comment in close() */
-    if (!torsocks_init_complete)
-        torsocks_init();
-
     if (original_res_querydomain == NULL) {
         show_msg(MSGERR, "Unresolved symbol: res_querydomain\n");
         return(-1);
@@ -971,10 +928,6 @@ int EXPAND_GUTS_NAME(res_search)(RES_SEARCH_SIGNATURE, int (*original_res_search
 
     show_msg(MSGTEST, "Got res_search request\n");
 
-    /* See comment in close() */
-    if (!torsocks_init_complete)
-        torsocks_init();
-
     if (original_res_search == NULL) {
         show_msg(MSGERR, "Unresolved symbol: res_search\n");
         return(-1);
@@ -999,10 +952,6 @@ int EXPAND_GUTS_NAME(res_send)(RES_SEND_SIGNATURE, int (*original_res_send)(RES_
             LOAD_ERROR("res_send", MSGERR);
 
     show_msg(MSGTEST, "Got res_send request\n");
-
-    /* See comment in close() */
-    if (!torsocks_init_complete)
-        torsocks_init();
 
     if (original_res_send == NULL) {
         show_msg(MSGERR, "Unresolved symbol: res_send\n");
@@ -1081,10 +1030,6 @@ ssize_t torsocks_sendto_guts(SENDTO_SIGNATURE, ssize_t (*original_sendto)(SENDTO
     unsigned int sock_type_len = sizeof(sock_type);
     struct sockaddr_in *connaddr;
 
-    /* See comment in close() */
-    if (!torsocks_init_complete)
-        torsocks_init();
-
     /* If the real sendto doesn't exist, we're stuffed */
     if (original_sendto == NULL) {
         show_msg(MSGERR, "Unresolved symbol: sendto\n");
@@ -1124,10 +1069,6 @@ ssize_t torsocks_sendmsg_guts(SENDMSG_SIGNATURE, ssize_t (*original_sendmsg)(SEN
     int sock_type = -1;
     unsigned int sock_type_len = sizeof(sock_type);
     struct sockaddr_in *connaddr;
-
-    /* See comment in close() */
-    if (!torsocks_init_complete)
-        torsocks_init();
 
     /* If the real sendmsg doesn't exist, we're stuffed */
     if (original_sendmsg == NULL) {
