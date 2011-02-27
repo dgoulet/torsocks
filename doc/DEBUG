@@ -1,4 +1,0 @@
-gdb ./gethostbyaddr
-set environment LD_PRELOAD /home/robert/Development/torsocks-svn/torsocks/debug/src/.libs/libtorsocks.so
-b our_gethostbyaddr
-run

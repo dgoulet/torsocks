@@ -1,0 +1,8 @@
+You can set breakpoints in libtorsocks using the following technique. Say you
+want to debug torsocks when it's wrapping a program called gethostbyaddr, that
+calls gethostbyaddr():
+
+gdb ./gethostbyaddr
+set environment LD_PRELOAD /path/to/libtorsocks.so
+b our_gethostbyaddr
+run
