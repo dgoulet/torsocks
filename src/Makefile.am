@@ -2,26 +2,9 @@
 
 libdir = @libdir@/torsocks
 
-# Install configuration file
-usewithtorconfdir = $(CONFDIR)/
-usewithtorconf_DATA = torsocks.conf
-
 # Install invocation scripts
 bin_SCRIPTS = torsocks usewithtor
 INSTALL_SCRIPT = $(install_sh) -c -m 755
-
-# Install man pages
-torsocksmanpagedir = $(mandir)/man1
-torsocksmanpage_DATA = torsocks.1
-
-torsocks8manpagedir = $(mandir)/man8
-torsocks8manpage_DATA = torsocks.8
-
-usewithtormanpagedir = $(mandir)/man1
-usewithtormanpage_DATA = usewithtor.1
-
-torsocksconfmanpagedir = $(mandir)/man5
-torsocksconfmanpage_DATA = torsocks.conf.5
 
 # Install main library to $(prefix)/lib/tor (must match torsocks.in)
 lib_LTLIBRARIES = libtorsocks.la

@@ -634,10 +634,10 @@ AC_SUBST(LIBTOOL_DEPS)
 AC_ENABLE_SHARED
 AC_ENABLE_STATIC
 
-AC_CONFIG_FILES([src/usewithtor src/torsocks src/torsocks.conf.5 src/torsocks.8 src/usewithtor.1 src/torsocks.1])
+AC_CONFIG_FILES([src/usewithtor src/torsocks doc/torsocks.conf.5 doc/torsocks.8 doc/usewithtor.1 doc/torsocks.1])
 
 dnl Output the Makefile for libtorsocks
-AC_OUTPUT(Makefile src/Makefile)
+AC_OUTPUT(Makefile src/Makefile doc/Makefile)
 
 dnl Output the Makefile for test/test_torsocks.
 dnl Dump any LDFLAGS that were only required for linking libtorsocks, such as -dynamiclib on OSX.
