@@ -548,9 +548,10 @@ AC_DEFINE_UNQUOTED([SENDMSG_ARGNAMES],[${NAMES}],[Argument names])
 
 # This variable is used for the LDFLAGS in test/Makefile.am
 TESTLDFLAGS="$LDFLAGS"
+AC_SUBST(TESTLDFLAGS)
 
 # Version information for libtorsocks
-LDFLAGS="$LDFLAGS -version-info 1:0:0"
+TORSOCKSLDFLAGS="$LDFLAGS -version-info 1:0:0"
 
 dnl Linker checks for Mac OSX, which uses DYLD_INSERT_LIBRARIES
 dnl instead of LD_PRELOAD
@@ -558,10 +559,10 @@ case "$host_os" in
 darwin*)
     dnl Check if the linker accepts -dynamiclib; necessary on Mac OS X
     AC_MSG_CHECKING(if the linker accepts -dynamiclib)
-    OLDLDFLAGS="$LDFLAGS"
-    LDFLAGS="$LDFLAGS -dynamiclib"
+    OLDLDFLAGS="$TORSOCKSLDFLAGS"
+    TORSOCKSLDFLAGS="$TORSOCKSLDFLAGS -dynamiclib"
     AC_TRY_COMPILE(,,AC_MSG_RESULT(yes),[
-       LDFLAGS="$OLDLDFLAGS"
+       TORSOCKSLDFLAGS="$OLDLDFLAGS"
        AC_MSG_RESULT(no)])
 
     # dnl Check if the linker accepts -multiply_defined suppress; necessary on Mac OS X
@@ -574,17 +575,17 @@ darwin*)
 
     dnl Check if the linker accepts -single_module; necessary on Mac OS X
     AC_MSG_CHECKING(if the linker accepts -single_module)
-    OLDLDFLAGS="$LDFLAGS"
+    OLDLDFLAGS="$TORSOCKSLDFLAGS"
     SHLIB_EXT="so"
     LD_PRELOAD="LD_PRELOAD"
-    LDFLAGS="$LDFLAGS -single_module"
+    TORSOCKSLDFLAGS="$TORSOCKSLDFLAGS -single_module"
     AC_TRY_COMPILE(,,
        [
           SHLIB_EXT="dylib"
           LD_PRELOAD="DYLD_INSERT_LIBRARIES"
           AC_MSG_RESULT(yes)
        ], [
-          LDFLAGS="$OLDLDFLAGS"
+          TORSOCKSLDFLAGS="$OLDLDFLAGS"
           AC_MSG_RESULT(no)
        ]
     )
@@ -598,6 +599,7 @@ esac
 
 AC_SUBST(SHLIB_EXT)
 AC_SUBST(LD_PRELOAD)
+AC_SUBST(TORSOCKSLDFLAGS)
 
 ##############################################################################
 # 7. Determine where the install should write the default configuration
@@ -639,5 +641,5 @@ AC_ENABLE_SHARED
 AC_ENABLE_STATIC
 
 AC_CONFIG_FILES([src/usewithtor src/torsocks doc/torsocks.conf.5 doc/torsocks.8 doc/usewithtor.1 doc/torsocks.1])
-AC_CONFIG_FILES(Makefile src/Makefile doc/Makefile)
-#AC_OUTPUT
+AC_CONFIG_FILES(Makefile src/Makefile doc/Makefile test/Makefile)
+AC_OUTPUT
