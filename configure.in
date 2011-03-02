@@ -546,7 +546,11 @@ AC_DEFINE_UNQUOTED([SENDMSG_ARGNAMES],[${NAMES}],[Argument names])
 #    we need to use DYLD_INSERT_LIBRARIES.
 ##############################################################################
 
+# This variable is used for the LDFLAGS in test/Makefile.am
 TESTLDFLAGS="$LDFLAGS"
+
+# Version information for libtorsocks
+LDFLAGS="$LDFLAGS -version-info 1:0:0"
 
 dnl Linker checks for Mac OSX, which uses DYLD_INSERT_LIBRARIES
 dnl instead of LD_PRELOAD
@@ -636,10 +640,4 @@ AC_ENABLE_STATIC
 
 AC_CONFIG_FILES([src/usewithtor src/torsocks doc/torsocks.conf.5 doc/torsocks.8 doc/usewithtor.1 doc/torsocks.1])
 AC_CONFIG_FILES(Makefile src/Makefile doc/Makefile)
-AC_OUTPUT
-
-dnl Output the Makefile for test/test_torsocks.
-dnl Dump any LDFLAGS that were only required for linking libtorsocks, such as -dynamiclib on OSX.
-LDFLAGS="$TESTLDFLAGS"
-AC_CONFIG_FILES(test/Makefile)
-AC_OUTPUT
+#AC_OUTPUT
