@@ -30,7 +30,7 @@
 #
 # @prefix@/bin/torsocks program [program arguments...]
 #
-# This form sets the users @LD_PRELOAD@ environment variable so that torsocks(8)
+# This form sets the users @LDPRELOAD@ environment variable so that torsocks(8)
 # will be loaded to socksify the application then executes the specified 
 # program (with the provided arguments). The following simple example might 
 # be used to telnet to www.foo.org via a torsocks.conf(5) configured socks server:
@@ -38,7 +38,7 @@
 # @prefix@/bin/torsocks telnet www.foo.org
 #
 # The second form allows for torsocks(8) to be switched on and off for a
-# session (that is, it adds and removes torsocks from the @LD_PRELOAD@ environment
+# session (that is, it adds and removes torsocks from the @LDPRELOAD@ environment
 # variable). This form must be _sourced_ into the user's existing session
 # (and will only work with bourne shell users):
 #
@@ -52,7 +52,7 @@
 # telnet www.foo.org
 # source @prefix@/bin/torsocks off
 #
-# The third form creates a new shell with @LD_PRELOAD@ set and is achieved
+# The third form creates a new shell with @LDPRELOAD@ set and is achieved
 # simply by running the script with no arguments 
 # 
 # @prefix@/bin/torsocks
@@ -80,12 +80,12 @@ SHLIB="${LIBDIR}/${LIB_NAME}.${SHLIB_EXT}"
 
 case "$1" in
   on)
-    if [ -z "$@LD_PRELOAD@" ]
+    if [ -z "$@LDPRELOAD@" ]
       then
-        export @LD_PRELOAD@="${SHLIB}"
+        export @LDPRELOAD@="${SHLIB}"
       else
-        echo $@LD_PRELOAD@ | grep -q "${SHLIB}" || \
-        export @LD_PRELOAD@="${SHLIB} $@LD_PRELOAD@"
+        echo $@LDPRELOAD@ | grep -q "${SHLIB}" || \
+        export @LDPRELOAD@="${SHLIB} $@LDPRELOAD@"
     fi
     # FIXME: This env variable is only meaningful on Mac OSX, so it would be better
     #        not to set it at all on other platforms.
@@ -94,29 +94,29 @@ case "$1" in
   off)
     #replace '/' with '\/' in @prefix@
     # escprefix=`echo '@prefix@' |sed 's/\\//\\\\\//g'`
-    # export @LD_PRELOAD@=`echo -n $@LD_PRELOAD@ | sed "s/$escprefix\/lib\/torsocks\/libtorsocks.so \?//"`
-    export @LD_PRELOAD@=`echo -n $@LD_PRELOAD@ | sed "s#@prefix@/lib/torsocks/libtorsocks\.@SHLIB_EXT@ *##"`
-    if [ -z "$@LD_PRELOAD@" ]
+    # export @LDPRELOAD@=`echo -n $@LDPRELOAD@ | sed "s/$escprefix\/lib\/torsocks\/libtorsocks.so \?//"`
+    export @LDPRELOAD@=`echo -n $@LDPRELOAD@ | sed "s#@prefix@/lib/torsocks/libtorsocks\.@SHLIB_EXT@ *##"`
+    if [ -z "$@LDPRELOAD@" ]
       then
-        unset @LD_PRELOAD@
+        unset @LDPRELOAD@
         # FIXME: This env variable is only meaningful on Mac OSX, so it would be better
         #        not to set it at all on other platforms.
         unset DYLD_FORCE_FLAT_NAMESPACE=1
     fi
   ;;
   show|sh)
-    echo "@LD_PRELOAD@=\"$@LD_PRELOAD@\""
+    echo "@LDPRELOAD@=\"$@LDPRELOAD@\""
   ;;
   -h|-?)
       echo "$0: Please see torsocks(1) or read comment at top of $0"
    ;;
   *)
-    if [ -z "$@LD_PRELOAD@" ]
+    if [ -z "$@LDPRELOAD@" ]
     then
-      export @LD_PRELOAD@="${SHLIB}"
+      export @LDPRELOAD@="${SHLIB}"
     else
-      echo $@LD_PRELOAD@ | grep -q "${SHLIB}" || \
-      export @LD_PRELOAD@="${SHLIB} $@LD_PRELOAD@"
+      echo $@LDPRELOAD@ | grep -q "${SHLIB}" || \
+      export @LDPRELOAD@="${SHLIB} $@LDPRELOAD@"
     fi
     export DYLD_FORCE_FLAT_NAMESPACE=1
 

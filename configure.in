@@ -577,12 +577,12 @@ darwin*)
     AC_MSG_CHECKING(if the linker accepts -single_module)
     OLDLDFLAGS="$TORSOCKSLDFLAGS"
     SHLIB_EXT="so"
-    LD_PRELOAD="LD_PRELOAD"
+    LDPRELOAD="LD_PRELOAD"
     TORSOCKSLDFLAGS="$TORSOCKSLDFLAGS -single_module"
     AC_TRY_COMPILE(,,
        [
           SHLIB_EXT="dylib"
-          LD_PRELOAD="DYLD_INSERT_LIBRARIES"
+          LDPRELOAD="DYLD_INSERT_LIBRARIES"
           AC_MSG_RESULT(yes)
        ], [
           TORSOCKSLDFLAGS="$OLDLDFLAGS"
@@ -593,12 +593,12 @@ darwin*)
     ;;
 *)
     SHLIB_EXT="so"
-    LD_PRELOAD="LD_PRELOAD"
+    LDPRELOAD="LD_PRELOAD"
     ;;
 esac
 
 AC_SUBST(SHLIB_EXT)
-AC_SUBST(LD_PRELOAD)
+AC_SUBST(LDPRELOAD)
 AC_SUBST(TORSOCKSLDFLAGS)
 
 ##############################################################################
