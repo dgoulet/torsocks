@@ -33,7 +33,6 @@
 #include <config.h>
 #include <stdio.h>
 #include <netdb.h>
-#include <common.h>
 #include <stdarg.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -43,6 +42,8 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+
+#include "common.h"
 
 /* Globals */
 int loglevel = MSGERR;    /* The default logging level is to only log

@@ -62,7 +62,6 @@ const char *torsocks_progname = "libtorsocks";         /* Name used in err msgs 
 #include <pwd.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <common.h>
 #include <pthread.h>
 #include <stdarg.h>
 #if !defined(__APPLE__) && !defined(__darwin__)
@@ -70,9 +69,10 @@ const char *torsocks_progname = "libtorsocks";         /* Name used in err msgs 
 #endif
 #include <resolv.h>
 
+#include "common.h"
+#include "dead_pool.h"
 #include "parser.h"
 #include "socks.h"
-#include "dead_pool.h"
 
 /* Some function names are macroized on Darwin. Allow those names
    to expand accordingly. */

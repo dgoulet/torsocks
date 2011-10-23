@@ -57,7 +57,6 @@ From 'man compat' in OSX:
 #include <pwd.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <common.h>
 #include <pthread.h>
 #include <stdarg.h>
 #if !defined(__APPLE__) && !defined(__darwin__)
@@ -65,9 +64,10 @@ From 'man compat' in OSX:
 #endif
 #include <resolv.h>
 
+#include "common.h"
+#include "dead_pool.h"
 #include "parser.h"
 #include "socks.h"
-#include "dead_pool.h"
 
 static int connect_server(struct connreq *conn);
 static int send_socks_request(struct connreq *conn);
