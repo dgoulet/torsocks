@@ -103,7 +103,7 @@ struct connreq {
 #define READWRITEEXCEPT (READ|WRITE|EXCEPT)
 
 /* Global Declarations */
-static dead_pool *pool = NULL;
+extern dead_pool *pool;
 static struct connreq *requests = NULL;
 
 struct connreq *new_socks_request(int sockid, struct sockaddr_in *connaddr,

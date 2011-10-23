@@ -82,6 +82,9 @@ static int read_socksv5_connect(struct connreq *conn);
 static int read_socksv5_auth(struct connreq *conn);
 static int send_socksv4a_request(struct connreq *conn, const char *onion_host);
 
+
+dead_pool *pool = NULL;
+
 struct connreq *new_socks_request(int sockid, struct sockaddr_in *connaddr,
                                          struct sockaddr_in *serveraddr,
                                          struct serverent *path)
