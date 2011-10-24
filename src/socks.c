@@ -84,6 +84,7 @@ static int send_socksv4a_request(struct connreq *conn, const char *onion_host);
 
 
 dead_pool *pool = NULL;
+struct connreq *requests = NULL;
 
 struct connreq *new_socks_request(int sockid, struct sockaddr_in *connaddr,
                                          struct sockaddr_in *serveraddr,

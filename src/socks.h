@@ -104,7 +104,7 @@ struct connreq {
 
 /* Global Declarations */
 extern dead_pool *pool;
-static struct connreq *requests = NULL;
+extern struct connreq *requests;
 
 struct connreq *new_socks_request(int sockid, struct sockaddr_in *connaddr,
                                          struct sockaddr_in *serveraddr,
