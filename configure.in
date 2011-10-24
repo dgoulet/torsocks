@@ -9,7 +9,7 @@ AC_INIT()
 AC_CONFIG_HEADER(config.h)
 
 # Automake initialization
-AM_INIT_AUTOMAKE(torsocks, 0.1)
+AM_INIT_AUTOMAKE(torsocks, 1.2)
 
 # Get hostname and other information.
 AC_CANONICAL_HOST
