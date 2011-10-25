@@ -417,6 +417,12 @@ int torsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIG
         if ((newconn->state == FAILED) || (newconn->state == DONE))
             kill_socks_request(newconn);
         errno = rc;
+        /* We may get either of these if there are no bytes to read from 
+           the non-blocking connection in handle_request(). Since we are 
+           wrapping connect() here we can't return EWOULDBLOCK/EAGAIN
+           so override it with something the client will accept.*/
+        if (errno == EWOULDBLOCK || errno == EAGAIN)
+            errno = EINPROGRESS;
         return((rc ? -1 : 0));
     }
 }
