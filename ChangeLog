@@ -1,3 +1,158 @@
+Torsocks 1.2
+2011-10-28 Robert Hogan <robert@roberthogan.net>
+
+    o Issue 32: Irssi locks connecting to hidden service
+      
+      During connect() we can end up getting a EWOULDBLOCK/EAGAIN while
+      talking to the SOCKS proxy. This seems to happen when attempting
+      to read a SOCKSV4 connect response from Tor when using the command
+      'torsocks irssi -c 4eiruntyxxbgfv7o.onion' for example.
+      
+      EWOULDBLOCK isn't a valid error during connect(), so if we get it
+      don't return it to the client - use EINPROGRESS instead.
+      
+      Diagnosed and patched by: foobi...@gmail.com
+
+
+    o Issue 27: Fix build system so 'make dist' works
+      
+      "The current build system fails when trying to create a tarball using 'make dist'.
+      There are two problems here:
+      
+      When creating a tarball for distribution with 'make dist', the header files at
+      src/*.h are not included and so the build fails.  These should be listed in
+      libtorsocks_la_SOURCES.
+      
+      Similarly, not having the prefix dist_ for the installation directories in doc/
+      means that these will not be included in the distribution tarball.  Also, there
+      is no need to define custom *manpagedirs as the build system is man page aware."
+      
+      Patch by Anthony Basile <blueness@gentoo.org>
+
+    o Issue 29: tordns no worky? - Part 2
+      
+      This was a regression caused by splitting tsocks.c into socks.c and
+      torsocks.c. The 'requests' and 'pool' variables were declared static in the socks.h
+      header file with the result that the values were no longer shared between
+      source files.
+      
+      Patch from foobi..@gmail.com
+
+    o Issue 30: libtorsocks.so sanity check
+      
+      "Currently if libtorsocks.so doesn't exist, torsocks will happily proceed without it,
+      and not use tor."
+      
+      Check for libtorsocks.so and bail out if it isn't found.
+
+    o Issue 25: Building within a sandbox environment fails
+      
+      When building in a sandbox environment, the build system's substitution variable,
+      @LD_PRELOAD@ is confused with the environment variable LD_PRELOAD and build fails
+      with an error that it cannot load ld.so.
+      
+      By Renaming @LD_PRELOAD@ to @LDPRELOAD@, we disambiguate the two.
+      
+      Patch by: Athony Basile (blueness@gentoo.org)
+
+    o Issue 26: common.h is a local header and should be included using #include "common.h"
+      
+      Patch by: Anthony G Basile (blueness@gentoo.org)
+
+    o Clean up the build:
+        Remove some cruft from Makefile.am
+        Use $TORSOCKSLDFLAGS for libtorsocks and $TESTLDFLAGS
+          for test/test_torsocks.
+        Only run config.status once at configure time
+        Add missing doc/Makefile.am
+        Move patches directory to docs and update DEBUG readme
+        Move man pages and configuration files to docs folder
+        Clean up and comment configure.in
+        Fix compile warning on some versions of gcc. Seen on 
+          i686-apple-darwin10-gcc-4.2.1 (GCC) 4.2.1 (Apple Inc. build 5659)
+        Fix build on systems that export res_query a strange way
+            Reported by starslights.
+        Replace Makefile.cvs with autogen.sh
+        Fix copyright notice
+        Fix -lresolv on linux builds again
+        Use @libdir@ instead of @prefix@ in src/Makefile.am
+          Patch from Hicham Haouari.
+          Fixes build for Fedora 64-bit.
+
+    o Clean up the source tree:
+        Add documentation to 'make dist'
+        Fix funny malloc statement
+        Split SOCKS functions into separate file
+        Tidy up the file copyrights
+        More renaming of tsocks to torsocks
+        More whitespace cleanups
+        Whitespace cleanup in parser.h
+        Tidy up copyright in parser.h
+        Rename functions from tsocks* to torsocks*
+        Whitespace cleanups in common.c
+        Rename tsocks.h to torsocks.h
+        Rename tsocks.c to torsocks.c
+
+    o Remove the supplementary utilities inspectsocks, saveme and validateconf
+      as they've been disabled for some time now. They can be restored by popular demand if
+      necessary.
+
+    o Remove check that init() has been called
+      I think the pthread_mutex takes care of this problem now.
+
+    o Fix segfault    
+      Occurred when tor not running, torsocks run in debug/test mode, and
+      gethostbyaddr() fails.
+
+    o Add a rudimentary test suite
+        Make tests compile and run on OSX
+        Compile and run tests on FreeBSD
+        Make tests compile and run on OpenBSD
+
+    o Compile and (apparently) work on OpenBSD
+
+    o Remove socksdns, tordns and hostnames configure options.
+      
+      These options are defunct:
+      1. socksdns (force dns lookups to use tcp)
+          torsocks does this by default, no reason to make it optional.
+      2. tordns (force dns lookups through tor)
+          torsocks does this by default, option has been a no-op for a
+          long time.
+      3. hostnames (resolve name of socks server if required)
+          potentially useful, but not really a good idea for tor.
+
+
+    o Fix 'symbol res_send() was not found in any shared library'
+      
+      Solution found by Nicolas Pouillard (nicolas.pouillard@gmail.com).
+      However I am still not clear why this is necessary for just this
+      symbol on Linux.
+      
+      To test that it works:
+      cd test/
+      gcc -fPIC  -g -O2 -Wall -I. -o resinit resinit.c -lc -lresolv
+      cd ..
+      export TORSOCKS_DEBUG=2
+      torsocks test/resinit
+      Expected result:
+      12:45:33 libtorsocks(21307): Got res_send request
+      
+      http://code.google.com/p/torsocks/issues/detail?id=3
+
+    o Rename and clean up whitespace in the signature expansion header
+
+    o Refuse connections to local network addresses.
+      If a DNS request is made to a DNS server on a local network over
+      TCP we need to reject it. So for now, reject all attempts to connect
+      to servers on the local network using torsocks. If torsocks is used
+      with programs that expect to use local network services - this will
+      probably break them. I'm not aware of any.
+
+    o Prevent execution of suid/sgid programs by torsocks
+      We already do this in usewithtor. Closes off
+      http://code.google.com/p/torsocks/issues/detail?id=5
+
 Torsocks 1.1
 2010-12-12 Robert Hogan <robert@roberthogan.net>
     o Handle wildcard addresses in getaddrinfo calls. Reported by Mike Perry.
