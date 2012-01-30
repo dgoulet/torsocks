@@ -63,6 +63,11 @@
 # Tamas Szerb <toma@rulez.org>
 # Modified by Robert Hogan <robert@roberthogan.net> April 16th 2006
 
+not_found () {
+    echo "ERROR: $1 cannot be found in PATH." >&2
+    exit 1
+}
+
 set_id () {
     echo "ERROR: $1 is set${2}id. torsocks will not work on a set${2}id executable." >&2
     exit 1
@@ -133,7 +138,9 @@ case "$1" in
 
     if [ $# -gt 0 ]
     then
-      if [ -u `which "$1"` ]; then
+      if ! which "$1" >/dev/null 2>&1; then
+          not_found $1
+      elif [ -u `which "$1"` ]; then
           set_id $1 u
       elif [ -g `which "$1"` ]; then
           set_id $1 g
