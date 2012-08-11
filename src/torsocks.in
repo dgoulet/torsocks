@@ -68,11 +68,6 @@ set_id () {
     exit 1
 }
 
-if [ $# = 0 ] ; then
-   echo "$0: insufficient arguments"
-   exit
-fi
-
 LIBDIR="@prefix@/lib/torsocks"
 LIB_NAME="libtorsocks"
 SHLIB_EXT="@SHLIB_EXT@"
