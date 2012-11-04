@@ -124,9 +124,9 @@ void torsocks_init(void)
 #define LOAD_ERROR(s,l) { \
     const char *error; \
     error = dlerror(); \
-    show_msg(l, "The symbol %s() was not found in any shared " \
-                     "library. The error reported was: %s!\n", s, \
-                     (error)?error:"not found"); \
+    if (error) \
+        show_msg(l, "The symbol %s() was not found in any shared " \
+            "library. The error reported was: %s!\n", s, error); \
     dlerror(); \
     }
     pthread_mutex_lock(&torsocks_init_mutex);
