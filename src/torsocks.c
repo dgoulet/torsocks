@@ -150,10 +150,11 @@ void torsocks_init(void)
     dlerror();
 #ifndef USE_OLD_DLSYM
     #ifdef SUPPORT_RES_API
-    if ((realres_init = dlsym(RTLD_NEXT, "res_init")) == NULL)
+    if (((realres_init = dlsym(RTLD_NEXT, "res_init")) == NULL) &&
+        ((realres_init = dlsym(RTLD_NEXT, "__res_init")) == NULL))
         LOAD_ERROR("res_init", MSGERR);
     #endif
-    #define PATCH_TABLE_EXPANSION(e,r,s,n,b,m)  if ((real##n = dlsym(RTLD_NEXT, m)) == NULL) LOAD_ERROR(m, MSG##e);
+    #define PATCH_TABLE_EXPANSION(e,r,s,n,b,m)  if (((real##n = dlsym(RTLD_NEXT, m)) == NULL) && ((real##n = dlsym(RTLD_NEXT, "__" m)) == NULL)) LOAD_ERROR(m, MSG##e);
     #include "expansion_table.h"
     #undef PATCH_TABLE_EXPANSION
 #else
@@ -856,7 +857,8 @@ int res_init(void)
 {
     int rc;
 
-    if (!realres_init && ((realres_init = dlsym(RTLD_NEXT, "res_init")) == NULL))
+    if (!realres_init && ((realres_init = dlsym(RTLD_NEXT, "res_init")) == NULL) &&
+                         ((realres_init = dlsym(RTLD_NEXT, "__res_init")) == NULL))
         LOAD_ERROR("res_init", MSGERR);
 
     show_msg(MSGTEST, "Got res_init request\n");
@@ -877,7 +879,8 @@ int EXPAND_GUTS_NAME(res_query)(RES_QUERY_SIGNATURE, int (*original_res_query)(R
 {
     int rc;
 
-    if (!original_res_query && ((original_res_query = dlsym(RTLD_NEXT, "res_query")) == NULL))
+    if (!original_res_query && ((original_res_query = dlsym(RTLD_NEXT, "res_query")) == NULL) &&
+                               ((original_res_query = dlsym(RTLD_NEXT, "__res_query")) == NULL))
         LOAD_ERROR("res_query", MSGERR);
 
     show_msg(MSGTEST, "Got res_query request\n");
@@ -903,7 +906,8 @@ int EXPAND_GUTS_NAME(res_querydomain)(RES_QUERYDOMAIN_SIGNATURE, int (*original_
     int rc;
 
     if (!original_res_querydomain &&
-        ((original_res_querydomain = dlsym(RTLD_NEXT, "res_querydomain")) == NULL))
+        ((original_res_querydomain = dlsym(RTLD_NEXT, "res_querydomain")) == NULL) &&
+        ((original_res_querydomain = dlsym(RTLD_NEXT, "__res_querydomain")) == NULL))
         LOAD_ERROR("res_querydoimain", MSGERR);
 
     show_msg(MSGDEBUG, "Got res_querydomain request\n");
@@ -929,7 +933,8 @@ int EXPAND_GUTS_NAME(res_search)(RES_SEARCH_SIGNATURE, int (*original_res_search
     int rc;
 
     if (!original_res_search &&
-        ((original_res_search = dlsym(RTLD_NEXT, "res_search")) == NULL))
+        ((original_res_search = dlsym(RTLD_NEXT, "res_search")) == NULL) &&
+        ((original_res_search = dlsym(RTLD_NEXT, "__res_search")) == NULL))
             LOAD_ERROR("res_search", MSGERR);
 
     show_msg(MSGTEST, "Got res_search request\n");
@@ -954,7 +959,8 @@ int EXPAND_GUTS_NAME(res_send)(RES_SEND_SIGNATURE, int (*original_res_send)(RES_
 {
     int rc;
 
-    if (!original_res_send && ((original_res_send = dlsym(RTLD_NEXT, "res_send")) == NULL))
+    if (!original_res_send && ((original_res_send = dlsym(RTLD_NEXT, "res_send")) == NULL)
+                           && ((original_res_send = dlsym(RTLD_NEXT, "__res_send")) == NULL))
             LOAD_ERROR("res_send", MSGERR);
 
     show_msg(MSGTEST, "Got res_send request\n");
