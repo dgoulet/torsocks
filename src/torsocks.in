@@ -78,6 +78,12 @@ LIB_NAME="libtorsocks"
 SHLIB_EXT="@SHLIB_EXT@"
 SHLIB="${LIBDIR}/${LIB_NAME}.${SHLIB_EXT}"
 
+# Check for libtorsocks and if set the 64bit variant
+if [ ! -f $SHLIB ]; then
+   LIBDIR="@prefix@/lib64/torsocks"
+   SHLIB="${LIBDIR}/${LIB_NAME}.${SHLIB_EXT}"
+fi
+
 # Ensure libtorsocks exists,
 if [ ! -f $SHLIB ]; then
    echo "$0: $SHLIB does not exist! Try re-installing torsocks."
