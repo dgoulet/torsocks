@@ -111,7 +111,7 @@ case "$1" in
   -h|-?)
       echo "$0: Please see torsocks(1) or read comment at top of $0"
    ;;
-  --shell|shell)
+  --shell)
     if [ -z "$@LDPRELOAD@" ]
     then
       export @LDPRELOAD@="${SHLIB}"

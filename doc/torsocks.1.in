@@ -10,7 +10,7 @@ transparently allow an application to use a SOCKS proxy. Basically a renamed, pa
 .br
 or
 .B torsocks
-.RB [on|off]
+.RB [on|off|--shell]
 .br
 or
 .B torsocks
@@ -55,6 +55,8 @@ Example:
 .IP \fB[show|sh]
 show the current value of the LD_PRELOAD variable
 .IP \fB<without\ any\ argument>
+create a new shell with LD_PRELOAD including torsocks(8).
+.IP \fB[--shell]
 create a new shell with LD_PRELOAD including torsocks(8).
 .PP
 .SH AUTHOR
