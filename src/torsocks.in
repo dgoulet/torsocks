@@ -111,6 +111,18 @@ case "$1" in
   -h|-?)
       echo "$0: Please see torsocks(1) or read comment at top of $0"
    ;;
+  --shell|shell)
+    if [ -z "$@LDPRELOAD@" ]
+    then
+      export @LDPRELOAD@="${SHLIB}"
+    else
+      echo $@LDPRELOAD@ | grep -q "${SHLIB}" || \
+      export @LDPRELOAD@="${SHLIB} $@LDPRELOAD@"
+    fi
+    export DYLD_FORCE_FLAT_NAMESPACE=1
+    echo "torsocks: new torified shell coming right up..."
+    ${SHELL:-/bin/sh}
+  ;;
   *)
     if [ -z "$@LDPRELOAD@" ]
     then
