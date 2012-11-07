@@ -6,6 +6,8 @@ XXX XXX
       Added '--shell' as the documented way to spawn a shell with torsocks
       This removes the never working documented case where torsocks without
       arguments was supposed to spawn a shell.
+    o Issue 48: Typos in manpage
+      Updated man page to fix typos. 
 
 Torsocks 1.2
 2011-10-28 Robert Hogan <robert@roberthogan.net>
