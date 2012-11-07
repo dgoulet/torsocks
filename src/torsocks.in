@@ -123,6 +123,7 @@ case "$1" in
 
     if [ $# = 0 ]
     then
+      echo "torsocks: new torified shell coming right up..."
       ${SHELL:-/bin/sh}
     fi
 
