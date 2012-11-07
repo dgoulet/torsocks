@@ -296,6 +296,13 @@ int torsocks_connect_guts(CONNECT_SIGNATURE, int (*original_connect)(CONNECT_SIG
         return -1;
     }
 
+    /* If this is an INET6, we'll refuse it. */
+    if ((connaddr->sin_family == AF_INET6)) {
+       show_msg(MSGERR, "connect: Connection is IPv6: rejecting.\n");
+       errno = EAFNOSUPPORT;
+       return -1;
+    }
+
     /* If this isn't an INET socket we can't  */
     /* handle it, just call the real connect now        */
     if ((connaddr->sin_family != AF_INET)) {
