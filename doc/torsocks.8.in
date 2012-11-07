@@ -43,9 +43,9 @@ with the SOCKS server and passes the connection back to the calling
 program. 
 
 .BR torsocks
-is designed for use in machines which are firewalled from then
-internet. It avoids the need to recompile applications like lynx or
-telnet so they can use SOCKS to reach the internet. It behaves much like
+is designed for use in machines which are firewalled from the
+Internet. It avoids the need to recompile applications like lynx or
+telnet so they can use SOCKS to reach the Internet. It behaves much like
 the SOCKSified TCP/IP stacks seen on other platforms.
 
 .SS ARGUMENTS
