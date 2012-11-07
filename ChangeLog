@@ -8,6 +8,8 @@ XXX XXX
       arguments was supposed to spawn a shell.
     o Issue 48: Typos in manpage
       Updated man page to fix typos. 
+    o Issue 37: Torsocks lets through tcp6 connections to tcp4 hosts
+      Explicitly fail closed on connect() calls of AF_INET6 type
 
 Torsocks 1.2
 2011-10-28 Robert Hogan <robert@roberthogan.net>
