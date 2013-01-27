@@ -32,17 +32,11 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <dlfcn.h>
+#include <string.h>
+#include <errno.h>
 #include "common.h"
-
-#define LOAD_ERROR(s,l) { \
-    char *error; \
-    error = dlerror(); \
-    show_msg(l, "The symbol %s() was not found in any shared " \
-                     "library. The error reported was: %s!\n", s, \
-                     (error)?error:"not found"); \
-    dlerror(); \
-    }
 
 #define SELECT_SIGNATURE int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout
 #define SELECT_ARGNAMES n, readfds, writefds, exceptfds, timeout
@@ -56,9 +50,7 @@ int torsocks_select_guts(SELECT_SIGNATURE, int (*original_select)(SELECT_SIGNATU
 
 int select(SELECT_SIGNATURE) {
   if (!realselect) {
-      dlerror();
-      if ((realselect = dlsym(RTLD_NEXT, "select")) == NULL)
-          LOAD_ERROR("select", MSGERR);
+    torsocks_find_library("select", MSGERR, realselect);
   }
   return torsocks_select_guts(SELECT_ARGNAMES, realselect);
 }

@@ -47,6 +47,34 @@
 #define PREDICT_UNLIKELY(exp) (exp)
 #endif
 
+/** Try to find the symbol that is either m or __m.
+ * If one of them exists, in that order, then save its address in r,
+ * otherwise we want to print a message at log level l stating that
+ * we could not find it.
+ */
+#define torsocks_find_library(m,l,r) \
+  do { \
+    char * dl_error_msg = ""; \
+    char * dl_error_msg2 = ""; \
+    dlerror(); \
+    if ((r = dlsym(RTLD_NEXT, m)) == NULL) { \
+      dl_error_msg = dlerror(); \
+      if (dl_error_msg != NULL) { \
+        dl_error_msg = strdup(dl_error_msg); \
+      } \
+      if ((r = dlsym(RTLD_NEXT, "__" m)) == NULL) { \
+        dl_error_msg2 = dlerror(); \
+        show_msg(l, "WARNING: The symbol %s() was not found in any shared " \
+          "library with the reported error: %s!\n" \
+          "  Also, we failed to find the symbol %s() with the reported error:" \
+          " %s\n", m, (dl_error_msg ? dl_error_msg : "Not Found"), \
+          "__"m, (dl_error_msg2 ? dl_error_msg2 : "Not Found")); \
+      } \
+      if (dl_error_msg) \
+        free(dl_error_msg); \
+    } \
+  } while (0)
+
 uint16_t get_uint16(const char *cp) ATTR_PURE ATTR_NONNULL((1));
 uint32_t get_uint32(const char *cp) ATTR_PURE ATTR_NONNULL((1));
 void set_uint16(char *cp, uint16_t v) ATTR_NONNULL((1));

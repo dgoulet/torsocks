@@ -21,6 +21,13 @@ XXX XXX
       We now look for torsocks in /usr/lib and then /usr/lib64
       We assume that the first found is the correct one.
 
+    o Issue 3: "... not found in any shared library. ..."
+      
+      This issue is extensively covered in the following bug report:
+      http://code.google.com/p/torsocks/issues/detail?id=3
+      
+      Fixes provided by Lunar, Anthony Basile and Matthew Finkel
+
 Torsocks 1.2
 2011-10-28 Robert Hogan <robert@roberthogan.net>
 
