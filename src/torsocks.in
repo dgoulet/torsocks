@@ -96,6 +96,7 @@ case "$1" in
     # FIXME: This env variable is only meaningful on Mac OSX, so it would be better
     #        not to set it at all on other platforms.
     export DYLD_FORCE_FLAT_NAMESPACE=1
+    ${SHELL:-/bin/sh}
   ;;
   off)
     #replace '/' with '\/' in @prefix@
