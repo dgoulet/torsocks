@@ -1,0 +1,12 @@
+language: c
+before_script: ./autogen.sh
+compiler:
+  - clang
+  - gcc
+branches:
+  only:
+    - master
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq autotools-dev debhelper pkg-config autotools hardening-wrapper
+script: ./configure && make
