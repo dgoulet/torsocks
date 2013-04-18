@@ -8,5 +8,5 @@ branches:
     - master
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -qq autotools-dev debhelper pkg-config autotools hardening-wrapper
+  - sudo apt-get install -qq autotools-dev pkg-config hardening-wrapper automake autoconf
 script: ./configure && make
