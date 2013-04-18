@@ -1,3 +1,9 @@
+Torsocks 1.4
+XXX
+    o Added .travis.yml for travis-ci integration:
+
+      https://travis-ci.org/ioerror/torsocks
+
 Torsocks 1.3
 2013-02-11 Jacob Appelbaum <jacob@appelbaum.net>
 
