@@ -619,7 +619,7 @@ if test "x$CONFDIR" = "x"; then
   CONFDIR=`eval echo $sysconfdir`
 fi
 AC_SUBST(CONFDIR)
-AH_TEMPLATE([CONFDIR],[torsock's configuration directory])
+AH_TEMPLATE([CONFDIR],[torsocks configuration directory])
 AC_DEFINE_UNQUOTED(CONFDIR,"$CONFDIR")
 
 AC_ARG_WITH(conf,
@@ -644,6 +644,9 @@ AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 AC_ENABLE_SHARED
 AC_ENABLE_STATIC
+
+DEFAULT_INCLUDES="-I\$(top_srcdir) -I\$(top_builddir) -I\$(top_builddir)/src -I\$(top_builddir)/include -include config.h"
+AC_SUBST(DEFAULT_INCLUDES)
 
 AC_CONFIG_FILES([
 	Makefile
