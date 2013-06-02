@@ -1,0 +1,113 @@
+#! /bin/sh
+# ***************************************************************************
+# *                                                                         *
+# *   Copyright (C) 2008-2011 Robert Hogan <robert@roberthogan.net>         *
+# *                                                                         *
+# *   This program is free software; you can redistribute it and/or modify  *
+# *   it under the terms of the GNU General Public License as published by  *
+# *   the Free Software Foundation; either version 2 of the License, or     *
+# *   (at your option) any later version.                                   *
+# *                                                                         *
+# *   This program is distributed in the hope that it will be useful,       *
+# *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+# *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+# *   GNU General Public License for more details.                          *
+# *                                                                         *
+# *   You should have received a copy of the GNU General Public License     *
+# *   along with this program; if not, write to the                         *
+# *   Free Software Foundation, Inc.,                                       *
+#*   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+# ***************************************************************************
+# *                                                                         *
+# *   This is a modified version of a source file from the Tor project.     *
+# *   Original copyright notice from tsocks source file follows:            *
+# ***************************************************************************
+
+# Wrapper script for use of the tsocks(8) transparent socksification library
+# See the tsocks(1) and torify(1) manpages.
+
+# Copyright (c) 2004, 2006 Peter Palfrader
+# Modified by Jacob Appelbaum <jacob@appelbaum.net> April 16th 2006
+# Modified by Marcus Griep <marcus@griep.us> June 16 2009
+# May be distributed under the same terms as Tor itself
+
+
+# Define and ensure we have tsocks
+# XXX: what if we don't have which?
+TORSOCKS="`which torsocks`"
+PROG=
+VERBOSE=
+
+usage () {
+	echo "Usage: $0 [-hv] <command> [<options>...]"
+}
+
+not_found () {
+	echo "ERROR: $1 cannot be found in PATH." >&2
+	exit 1
+}
+
+set_id () {
+	echo "ERROR: $1 is set${2}id. usewithtor will not work on a set${2}id executable." >&2
+	exit 1
+}
+
+# Check for any argument list
+if [ "$#" = 0 ]; then
+	usage >&2
+	exit 1
+fi
+
+while [ "$1" ]; do
+	case "$1" in
+		-h|--h*)
+			usage
+			exit 0
+			;;
+		-v|--v*)
+			VERBOSE=YesPlease
+			shift
+			;;
+		*)
+			break;
+	esac
+done
+
+if ! which "$1" >/dev/null 2>&1; then
+	not_found $1
+elif [ -u `which "$1"` ]; then
+	set_id $1 u
+elif [ -g `which "$1"` ]; then
+	set_id $1 g
+fi
+
+if [ -x "$TORSOCKS" ]; then
+	PROG=torsocks
+else
+	echo "$0: Unable to find torsocks in PATH." >&2
+	echo "    Perhaps you haven't installed it?" >&2
+	exit 1
+fi
+
+if [ "$VERBOSE" ]; then
+	echo "We're armed with the following torsocks: $TORSOCKS"
+	echo "We're attempting to use $PROG for all tor action."
+fi
+
+if [ "$PROG" = "torsocks" ]; then
+	# Define our torsocks config file
+	TORSOCKS_CONF_FILE="@CONFDIR@/torsocks.conf"
+	export TORSOCKS_CONF_FILE
+
+	# Check that we've got a torsocks config file
+	if [ -r "$TORSOCKS_CONF_FILE" ]; 	then
+		exec torsocks "$@"
+	else
+		echo "$0: Missing torsocks configuration file \"$TORSOCKS_CONF_FILE\" - torsocks will use defaults sensible for Tor." >&2
+		exec torsocks "$@"
+	fi
+fi
+
+# We should have hit an exec. If we get here, we didn't exec
+echo "$0: failed to exec $PROG $@" >&2
+exit 1

@@ -1,0 +1,167 @@
+#!/bin/sh
+# ***************************************************************************
+# *                                                                         *
+# *                                                                         *
+# *   Copyright (C) 2008 by Robert Hogan                                    *
+# *   robert@roberthogan.net                                                *
+# *   Copyright (C) 2012 by Jacob Appelbaum <jacob@torproject.org>          *
+# *                                                                         *
+# *   This program is free software; you can redistribute it and/or modify  *
+# *   it under the terms of the GNU General Public License as published by  *
+# *   the Free Software Foundation; either version 2 of the License, or     *
+# *   (at your option) any later version.                                   *
+# *                                                                         *
+# *   This program is distributed in the hope that it will be useful,       *
+# *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+# *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+# *   GNU General Public License for more details.                          *
+# *                                                                         *
+# *   You should have received a copy of the GNU General Public License     *
+# *   along with this program; if not, write to the                         *
+# *   Free Software Foundation, Inc.,                                       *
+#*   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+# ***************************************************************************
+# *                                                                         *
+# *   This is a modified version of a source file from the Tor project.     *
+# *   Original copyright information follows:                               *
+# ***************************************************************************
+# Wrapper script for use of the torsocks(8) transparent socksification library
+#
+# There are three forms of usage for this script:
+#
+# @prefix@/bin/torsocks program [program arguments...]
+#
+# This form sets the users @LDPRELOAD@ environment variable so that torsocks(8)
+# will be loaded to socksify the application then executes the specified 
+# program (with the provided arguments). The following simple example might 
+# be used to telnet to www.foo.org via a torsocks.conf(5) configured socks server:
+#
+# @prefix@/bin/torsocks telnet www.foo.org
+#
+# The second form allows for torsocks(8) to be switched on and off for a
+# session (that is, it adds and removes torsocks from the @LDPRELOAD@ environment
+# variable). This form must be _sourced_ into the user's existing session
+# (and will only work with bourne shell users):
+#
+# . @prefix@/bin/torsocks on
+# telnet www.foo.org 
+# . @prefix@/bin/torsocks off
+# 
+# Or
+# 
+# source @prefix@/bin/torsocks on
+# telnet www.foo.org
+# source @prefix@/bin/torsocks off
+#
+# The third form creates a new shell with @LDPRELOAD@ set and is achieved
+# simply by running the script with no arguments 
+# 
+# @prefix@/bin/torsocks
+#
+# When finished the user can simply terminate the shell with 'exit'
+# 
+# This script is originally from the debian torsocks package by
+# Tamas Szerb <toma@rulez.org>
+# Modified by Robert Hogan <robert@roberthogan.net> April 16th 2006
+
+not_found () {
+    echo "ERROR: $1 cannot be found in PATH." >&2
+    exit 1
+}
+
+set_id () {
+    echo "ERROR: $1 is set${2}id. torsocks will not work on a set${2}id executable." >&2
+    exit 1
+}
+
+if [ $# = 0 ] ; then
+   echo "$0: insufficient arguments"
+   exit
+fi
+
+LIBDIR="@prefix@/lib/torsocks"
+LIB_NAME="libtorsocks"
+SHLIB_EXT="@SHLIB_EXT@"
+SHLIB="${LIBDIR}/${LIB_NAME}.${SHLIB_EXT}"
+
+# Check for libtorsocks and if set the 64bit variant
+if [ ! -f $SHLIB ]; then
+   LIBDIR="@prefix@/lib64/torsocks"
+   SHLIB="${LIBDIR}/${LIB_NAME}.${SHLIB_EXT}"
+fi
+
+# Ensure libtorsocks exists,
+if [ ! -f $SHLIB ]; then
+   echo "$0: $SHLIB does not exist! Try re-installing torsocks."
+   exit
+fi
+
+case "$1" in
+  on)
+    if [ -z "$@LDPRELOAD@" ]
+      then
+        export @LDPRELOAD@="${SHLIB}"
+      else
+        echo $@LDPRELOAD@ | grep -q "${SHLIB}" || \
+        export @LDPRELOAD@="${SHLIB} $@LDPRELOAD@"
+    fi
+    # FIXME: This env variable is only meaningful on Mac OSX, so it would be better
+    #        not to set it at all on other platforms.
+    export DYLD_FORCE_FLAT_NAMESPACE=1
+  ;;
+  off)
+    #replace '/' with '\/' in @prefix@
+    # escprefix=`echo '@prefix@' |sed 's/\\//\\\\\//g'`
+    # export @LDPRELOAD@=`echo -n $@LDPRELOAD@ | sed "s/$escprefix\/lib\/torsocks\/libtorsocks.so \?//"`
+    export @LDPRELOAD@=`echo -n $@LDPRELOAD@ | sed "s#@prefix@/lib/torsocks/libtorsocks\.@SHLIB_EXT@ *##"`
+    if [ -z "$@LDPRELOAD@" ]
+      then
+        unset @LDPRELOAD@
+        # FIXME: This env variable is only meaningful on Mac OSX, so it would be better
+        #        not to set it at all on other platforms.
+        unset DYLD_FORCE_FLAT_NAMESPACE=1
+    fi
+  ;;
+  show|sh)
+    echo "@LDPRELOAD@=\"$@LDPRELOAD@\""
+  ;;
+  -h|-?)
+      echo "$0: Please see torsocks(1) or read comment at top of $0"
+   ;;
+  --shell)
+    if [ -z "$@LDPRELOAD@" ]
+    then
+      export @LDPRELOAD@="${SHLIB}"
+    else
+      echo $@LDPRELOAD@ | grep -q "${SHLIB}" || \
+      export @LDPRELOAD@="${SHLIB} $@LDPRELOAD@"
+    fi
+    export DYLD_FORCE_FLAT_NAMESPACE=1
+    echo "torsocks: new torified shell coming right up..."
+    ${SHELL:-/bin/sh}
+  ;;
+  *)
+    if [ -z "$@LDPRELOAD@" ]
+    then
+      export @LDPRELOAD@="${SHLIB}"
+    else
+      echo $@LDPRELOAD@ | grep -q "${SHLIB}" || \
+      export @LDPRELOAD@="${SHLIB} $@LDPRELOAD@"
+    fi
+    export DYLD_FORCE_FLAT_NAMESPACE=1
+
+    if [ $# -gt 0 ]
+    then
+      if ! which "$1" >/dev/null 2>&1; then
+          not_found $1
+      elif [ -u `which "$1"` ]; then
+          set_id $1 u
+      elif [ -g `which "$1"` ]; then
+          set_id $1 g
+      fi
+      exec "$@"
+    fi
+  ;;
+esac
+
+#EOF
