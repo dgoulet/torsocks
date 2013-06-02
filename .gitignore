@@ -32,6 +32,8 @@ missing
 stamp-h1
 tags
 
+config/*
+
 doc/torsocks.1
 doc/torsocks.8
 doc/torsocks.conf.5
