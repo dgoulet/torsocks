@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2000-2008 - Shaun Clowes <delius@progsoc.org> 
- * 				 2008-2011 - Robert Hogan <robert@roberthogan.net>
- * 				 	  2013 - David Goulet <dgoulet@ev0ke.net>
+ * Copyright (C) 2013 - David Goulet <dgoulet@ev0ke.net>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License, version 2 only, as
@@ -17,91 +15,180 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
 
+#include "defaults.h"
+#include "macros.h"
 
-#include "log.h"
+static struct log_config {
+	FILE *fp;
+	char *filepath;
+	/* Add time or not to the log entry. */
+	enum log_time_status time_status;
+} logconfig;
 
-/* Set logging options, the options are as follows:             */
-/*  level - This sets the logging threshold, messages with      */
-/*          a higher level (i.e lower importance) will not be   */
-/*          output. For example, if the threshold is set to     */
-/*          MSGWARN a call to log a message of level MSGDEBUG   */
-/*          would be ignored. This can be set to -1 to disable  */
-/*          messages entirely                                   */
-/*  filename - This is a filename to which the messages should  */
-/*             be logged instead of to standard error           */
-/*  timestamp - This indicates that messages should be prefixed */
-/*              with timestamps (and the process id)            */
-void set_log_options(int level, char *filename, int timestamp)
+/*
+ * The default logging level is to only log error messages.
+ */
+int tsocks_loglevel = DEFAULT_LOG_LEVEL;
+
+/*
+ * Add a special formatted timestamp at the beginning of the given buffer.
+ *
+ * On success, return the number of bytes written else, return 0.
+ */
+static size_t add_time_to_log(char *buf, size_t len)
 {
-	loglevel = level;
-	if (loglevel < MSGERR)
-		loglevel = MSGNONE;
+	time_t now;
+	const struct tm *tm;
 
-	if (filename) {
-		strncpy(logfilename, filename, sizeof(logfilename));
-		logfilename[sizeof(logfilename) - 1] = '\0';
-	}
+	assert(buf);
 
-	logstamp = timestamp;
+	/* Get time stamp. */
+	time(&now);
+	tm = localtime(&now);
+	return strftime(buf, len, "[%b %d %H:%M:%S] ", tm);
 }
 
-void show_msg(int level, const char *fmt, ...)
+/*
+ * Log function taking a format and variable number of arguments fitting the
+ * given format.
+ */
+static void _log_write(char *buf, size_t len)
 {
+    int ret;
+
+    assert(buf);
+	assert(logconfig.fp);
+
+	/* Make sure buffer is NULL terminated. */
+	buf[len - 1] = '\0';
+
+    ret = fprintf(logconfig.fp, "%s", buf);
+    if (ret < 0) {
+        fprintf(stderr, "[tsocks] logging failed. Stopping logging.\n");
+        log_destroy();
+        goto end;
+    }
+
+    /*
+     * On a write failure we stop the logging but a flush failure is not that
+     * critical.
+     */
+    (void) fflush(logconfig.fp);
+
+end:
+    return;
+}
+
+/*
+ * Log messages using the logconfig configuration.
+ */
+ATTR_HIDDEN
+void log_print(const char *fmt, ...)
+{
+	int ret;
+	size_t written = 0;
 	va_list ap;
-	int saveerr;
-	extern char *torsocks_progname;
-	char timestring[20];
-	time_t timestamp;
+	/* This is a hard limit for the size of the line. */
+	char buf[4096];
 
-	if ((loglevel == MSGNONE) || (level > loglevel))
-		return;
+	assert(fmt);
 
-	if (!logfile) {
-		if (logfilename[0]) {
-			logfile = fopen(logfilename, "a");
-			if (logfile == NULL) {
-				logfile = stderr;
-				show_msg(MSGERR, "Could not open log file, %s, %s\n", 
-						logfilename, strerror(errno));
-			}
-		} else
-			logfile = stderr;
+	if (!logconfig.fp) {
+		goto end;
 	}
 
-	if (logstamp) {
-		timestamp = time(NULL);
-		strftime(timestring, sizeof(timestring),  "%H:%M:%S", 
-				localtime(&timestamp));
-		fprintf(logfile, "%s ", timestring);
-	}
-
-	fputs(torsocks_progname, logfile);
-
-	if (logstamp) {
-		fprintf(logfile, "(%d)", getpid());
-	}
-
-	fputs(": ", logfile);
-
+	memset(buf, 0, sizeof(buf));
 	va_start(ap, fmt);
 
-	/* Save errno */
-	saveerr = errno;
+	if (logconfig.time_status == LOG_TIME_ADD) {
+		written = add_time_to_log(buf, sizeof(buf));
+	}
 
-	vfprintf(logfile, fmt, ap);
+	ret = vsnprintf(buf + written, sizeof(buf) - written, fmt, ap);
+	if (ret < 0) {
+		perror("[tsocks] vsnprintf log");
+		goto error;
+	}
 
-	fflush(logfile);
+	_log_write(buf, sizeof(buf));
 
-	errno = saveerr;
-
+error:
 	va_end(ap);
+end:
+	return;
 }
 
+/*
+ * Initialize logconfig.
+ *
+ * Return 0 on success or else a negative errno value.
+ */
+ATTR_HIDDEN
+int log_init(int level, const char *filepath, enum log_time_status t_status)
+{
+	int ret = 0;
+
+	/* Reset logconfig. Useful if this is call multiple times. */
+	memset(&logconfig, 0, sizeof(logconfig));
+
+	if (level < MSGNONE || level > MSGDEBUG) {
+		fprintf(stderr, "[tsocks] Unknown loglevel %d\n", level);
+		ret = -ENOENT;
+		goto error;
+	}
+
+	if (filepath) {
+		logconfig.fp = fopen(filepath, "a");
+		if (!logconfig.fp) {
+			fprintf(stderr, "[tsocks] Unable to open log file %s\n", filepath);
+			ret = -errno;
+			goto error;
+		}
+
+		logconfig.filepath = strdup(filepath);
+		if (!logconfig.filepath) {
+			perror("[tsocks] log init strdup");
+			ret = -errno;
+			fclose(logconfig.fp);
+			goto error;
+		}
+	} else {
+		/* The default output is stderr if no filepath is given. */
+		fileno(stderr);
+		if (errno != EBADF) {
+			logconfig.fp = stderr;
+		}
+	}
+
+	tsocks_loglevel = level;
+	logconfig.time_status = t_status;
+
+error:
+	return ret;
+}
+
+/*
+ * Cleanup the logconfig data structure.
+ */
+ATTR_HIDDEN
+void log_destroy(void)
+{
+	free(logconfig.filepath);
+	if (logconfig.fp) {
+		int ret;
+
+		ret = fclose(logconfig.fp);
+		if (ret) {
+			perror("[tsocks] fclose log destroy");
+		}
+	}
+}

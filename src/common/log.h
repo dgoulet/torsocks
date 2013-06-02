@@ -20,21 +20,83 @@
 #ifndef TORSOCKS_LOG_H
 #define TORSOCKS_LOG_H
 
-#define MSGNONE   -1
-#define MSGERR    0
-#define MSGWARN   1
-#define MSGTEST  2
-#define MSGNOTICE 3
-#define MSGDEBUG  3
+#include <sys/types.h>
+#include <unistd.h>
 
-int loglevel = MSGERR;    /* The default logging level is to only log
-							 error messages */
-char logfilename[256];    /* Name of file to which log messages should
-							 be redirected */
-FILE *logfile;     /* File to which messages should be logged */
-int logstamp;         /* Timestamp (and pid stamp) messages */
+#include "compat.h"
 
-void set_log_options(int level, char *filename, int timestamp);
-void show_msg(int level, const char *fmt, ...);
+/* Stringify the expansion of a define */
+#define XSTR(d) STR(d)
+#define STR(s) #s
+
+#define MSGNONE		0x1
+#define MSGERR		0x2
+#define MSGWARN		0x3
+#define MSGNOTICE	0x4
+#define MSGDEBUG	0x5
+
+/*
+ * Used during logging initialization whether or not to add the time or
+ * suppress it from a log entry.
+ */
+enum log_time_status {
+	LOG_TIME_NONE	= 0,
+	LOG_TIME_ADD	= 1,
+};
+
+extern int tsocks_loglevel;
+
+void log_print(const char *fmt, ...);
+int log_init(int level, const char *filepath, enum log_time_status t_status);
+void log_destroy(void);
+
+#define __tsocks_print(level, fmt, args...) \
+	do { \
+		if (level != MSGNONE && level <= tsocks_loglevel) { \
+			log_print(fmt, ## args); \
+		} \
+	} while (0)
+
+#define _ERRMSG(msg, type, fmt, args...) __tsocks_print(type, msg \
+		" torsocks[%ld]: " fmt " (in %s() at " __FILE__ ":" XSTR(__LINE__) ")\n", \
+		(long) getpid(), ## args, __func__)
+
+#define MSG(fmt, args...) __tsocks_print(MSGNOTICE, fmt "\n", ## args)
+#define ERR(fmt, args...) _ERRMSG("ERROR", MSGERR, fmt, ## args)
+#define WARN(fmt, args...) _ERRMSG("Warning", MSGWARN, fmt, ## args)
+#define DBG(fmt, args...) _ERRMSG("DEBUG", MSGDEBUG, fmt, ## args)
+
+/*
+ * Local wrapper used by the PERROR() call below. Should NOT be used outside of
+ * this scope.
+ */
+#define _PERROR(fmt, args...) _ERRMSG("PERROR", MSGERR, fmt, ## args)
+
+#if !defined(__linux__) || ((_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && !defined(_GNU_SOURCE))
+
+/*
+ * Version using XSI strerror_r.
+ */
+#define PERROR(call, args...) \
+	do { \
+		char buf[200]; \
+		strerror_r(errno, buf, sizeof(buf)); \
+		_PERROR(call ": %s", ## args, buf); \
+	} while(0);
+
+#else /* _POSIX_C_SOURCE */
+
+/*
+ * Version using GNU strerror_r, for linux with appropriate defines.
+ */
+#define PERROR(call, args...) \
+	do { \
+		char *buf; \
+		char tmp[200]; \
+		buf = strerror_r(errno, tmp, sizeof(tmp)); \
+		_PERROR(call ": %s", ## args, buf); \
+	} while(0);
+
+#endif /* _POSIX_C_SOURCE */
 
 #endif /* TORSOCKS_LOG_H */

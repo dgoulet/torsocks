@@ -58,9 +58,8 @@ static int check_server(struct config_server_entry *server)
 static int handle_endpath(struct config_parsed *config, int lineno, int nowords) {
 
 	if (nowords != 1) {
-		show_msg(MSGERR, "Badly formed path close statement on line "
-				"%d in configuration file (should look like "
-				"\"}\")\n", lineno);
+		ERR("Badly formed path close statement on line  %d in configuration"
+				"file (should look like \"}\")\n", lineno);
 	} else {
 		currentcontext = &(config->default_server);
 	}
@@ -112,7 +111,7 @@ int make_config_network_entry(char *value, struct config_network_entry **ent) {
 		exit(1);
 	}
 
-	show_msg(MSGDEBUG, "New network entry for %s going to 0x%08x\n", ip, *ent);
+	DBG("New network entry for %s going to 0x%08x\n", ip, *ent);
 
 	if (!start_port)
 		(*ent)->start_port = 0;
@@ -174,46 +173,46 @@ static int handle_reaches(int lineno, char *value) {
 	rc = make_config_network_entry(value, &ent);
 	switch(rc) {
 		case 1:
-			show_msg(MSGERR, "Local network specification (%s) is not validly "
+			ERR("Local network specification (%s) is not validly "
 					"constructed in reach statement on line "
 					"%d in configuration "
 					"file\n", value, lineno);
 			return(0);
 			break;
 		case 2:
-			show_msg(MSGERR, "IP in reach statement "
+			ERR("IP in reach statement "
 					"network specification (%s) is not valid on line "
 					"%d in configuration file\n", value, lineno);
 			return(0);
 			break;
 		case 3:
-			show_msg(MSGERR, "SUBNET in reach statement "
+			ERR("SUBNET in reach statement "
 					"network specification (%s) is not valid on "
 					"line %d in configuration file\n", value,
 					lineno);
 			return(0);
 			break;
 		case 4:
-			show_msg(MSGERR, "IP (%s) & ", inet_ntoa(ent->local_ip));
-			show_msg(MSGERR, "SUBNET (%s) != IP on line %d in "
+			ERR("IP (%s) & ", inet_ntoa(ent->local_ip));
+			ERR("SUBNET (%s) != IP on line %d in "
 					"configuration file, ignored\n",
 					inet_ntoa(ent->local_net), lineno);
 			return(0);
 			break;
 		case 5:
-			show_msg(MSGERR, "Start port in reach statement "
+			ERR("Start port in reach statement "
 					"network specification (%s) is not valid on line "
 					"%d in configuration file\n", value, lineno);
 			return(0);
 			break;
 		case 6:
-			show_msg(MSGERR, "End port in reach statement "
+			ERR("End port in reach statement "
 					"network specification (%s) is not valid on line "
 					"%d in configuration file\n", value, lineno);
 			return(0);
 			break;
 		case 7:
-			show_msg(MSGERR, "End port in reach statement "
+			ERR("End port in reach statement "
 					"network specification (%s) is less than the start "
 					"port on line %d in configuration file\n", value, 
 					lineno);
@@ -239,11 +238,11 @@ static int handle_server(struct config_parsed *config, int lineno, char *value) 
 		currentcontext->address = strdup(ip);
 	else {
 		if (currentcontext == &(config->default_server))
-			show_msg(MSGERR, "Only one default SOCKS server "
+			ERR("Only one default SOCKS server "
 					"may be specified at line %d in "
 					"configuration file\n", lineno);
 		else
-			show_msg(MSGERR, "Only one SOCKS server may be specified "
+			ERR("Only one SOCKS server may be specified "
 					"per path on line %d in configuration "
 					"file. (Path begins on line %d)\n",
 					lineno, currentcontext->lineno);
@@ -256,11 +255,11 @@ static int handle_port(struct config_parsed *config, int lineno, char *value) {
 
 	if (currentcontext->port != 0) {
 		if (currentcontext == &(config->default_server))
-			show_msg(MSGERR, "Server port may only be specified "
+			ERR("Server port may only be specified "
 					"once for default server, at line %d "
 					"in configuration file\n", lineno);
 		else
-			show_msg(MSGERR, "Server port may only be specified "
+			ERR("Server port may only be specified "
 					"once per path on line %d in configuration "
 					"file. (Path begins on line %d)\n",
 					lineno, currentcontext->lineno);
@@ -269,7 +268,7 @@ static int handle_port(struct config_parsed *config, int lineno, char *value) {
 		currentcontext->port = (unsigned short int)
 			(strtol(value, (char **)NULL, 10));
 		if ((errno != 0) || (currentcontext->port == 0)) {
-			show_msg(MSGERR, "Invalid server port number "
+			ERR("Invalid server port number "
 					"specified in configuration file "
 					"(%s) on line %d\n", value, lineno);
 			currentcontext->port = 0;
@@ -283,11 +282,11 @@ static int handle_username(struct config_parsed *config, int lineno, char *value
 
 	if (currentcontext->username != NULL) {
 		if (currentcontext == &(config->default_server))
-			show_msg(MSGERR, "Default username may only be specified "
+			ERR("Default username may only be specified "
 					"once for default server, at line %d "
 					"in configuration file\n", lineno);
 		else
-			show_msg(MSGERR, "Default username may only be specified "
+			ERR("Default username may only be specified "
 					"once per path on line %d in configuration "
 					"file. (Path begins on line %d)\n",
 					lineno, currentcontext->lineno);
@@ -302,11 +301,11 @@ static int handle_password(struct config_parsed *config, int lineno, char *value
 
 	if (currentcontext->password != NULL) {
 		if (currentcontext == &(config->default_server))
-			show_msg(MSGERR, "Default password may only be specified "
+			ERR("Default password may only be specified "
 					"once for default server, at line %d "
 					"in configuration file\n", lineno);
 		else
-			show_msg(MSGERR, "Default password may only be specified "
+			ERR("Default password may only be specified "
 					"once per path on line %d in configuration "
 					"file. (Path begins on line %d)\n",
 					lineno, currentcontext->lineno);
@@ -321,11 +320,11 @@ static int handle_type(struct config_parsed *config, int lineno, char *value) {
 
 	if (currentcontext->type != 0) {
 		if (currentcontext == &(config->default_server))
-			show_msg(MSGERR, "Server type may only be specified "
+			ERR("Server type may only be specified "
 					"once for default server, at line %d "
 					"in configuration file\n", lineno);
 		else
-			show_msg(MSGERR, "Server type may only be specified "
+			ERR("Server type may only be specified "
 					"once per path on line %d in configuration "
 					"file. (Path begins on line %d)\n",
 					lineno, currentcontext->lineno);
@@ -334,7 +333,7 @@ static int handle_type(struct config_parsed *config, int lineno, char *value) {
 		currentcontext->type = (int) strtol(value, (char **)NULL, 10);
 		if ((errno != 0) || (currentcontext->type == 0) ||
 				((currentcontext->type != 4) && (currentcontext->type != 5))) {
-			show_msg(MSGERR, "Invalid server type (%s) "
+			ERR("Invalid server type (%s) "
 					"specified in configuration file "
 					"on line %d, only 4 or 5 may be "
 					"specified\n", value, lineno);
@@ -363,7 +362,7 @@ static int handle_tordns_enabled(struct config_parsed *config, int lineno,
 {
 	int val = handle_flag(value);
 	if(val == -1) {
-		show_msg(MSGERR, "Invalid value %s supplied for tordns_enabled at "
+		ERR("Invalid value %s supplied for tordns_enabled at "
 				"line %d in config file, IGNORED\n", value, lineno);
 	} else {
 		config->tordns_enabled = val;
@@ -377,15 +376,15 @@ static int handle_tordns_cache_size(struct config_parsed *config,
 	char *endptr;
 	long size = strtol(value, &endptr, 10);
 	if(*endptr != '\0') {
-		show_msg(MSGERR, "Error parsing integer value for "
+		ERR("Error parsing integer value for "
 				"tordns_cache_size (%s), using default %d\n", 
 				value, config->tordns_cache_size);
 	} else if(size < 128) {
-		show_msg(MSGERR, "The value supplied for tordns_cache_size (%d) "
+		ERR("The value supplied for tordns_cache_size (%d) "
 				"is too small (<128), using default %d\n", size, 
 				config->tordns_cache_size);
 	} else if(size > 4096) {
-		show_msg(MSGERR, "The value supplied for tordns_cache_range (%d) "
+		ERR("The value supplied for tordns_cache_range (%d) "
 				"is too large (>4096), using default %d\n", size, 
 				config->tordns_cache_size);
 	} else {
@@ -399,13 +398,13 @@ static int handle_path(struct config_parsed *config, int lineno, int nowords, ch
 	struct config_server_entry *newserver;
 
 	if ((nowords != 2) || (strcmp(words[1], "{"))) {
-		show_msg(MSGERR, "Badly formed path open statement on line %d "
+		ERR("Badly formed path open statement on line %d "
 				"in configuration file (should look like "
 				"\"path {\")\n", lineno);
 	} else if (currentcontext != &(config->default_server)) {
 		/* You cannot nest path statements so check that */
 		/* the current context is default_server          */
-		show_msg(MSGERR, "Path statements cannot be nested on line %d "
+		ERR("Path statements cannot be nested on line %d "
 				"in configuration file\n", lineno);
 	} else {
 		/* Open up a new config_server_entry, put it on the list   */
@@ -414,7 +413,7 @@ static int handle_path(struct config_parsed *config, int lineno, int nowords, ch
 			exit(-1);
 
 		/* Initialize the structure */
-		show_msg(MSGDEBUG, "New server structure from line %d in configuration file going "
+		DBG("New server structure from line %d in configuration file going "
 				"to 0x%08x\n", lineno, newserver);
 		memset(newserver, 0x0, sizeof(*newserver));
 		newserver->next = config->paths;
@@ -431,7 +430,7 @@ static int handle_local(struct config_parsed *config, int lineno, const char *va
 	struct config_network_entry *ent;
 
 	if (currentcontext != &(config->default_server)) {
-		show_msg(MSGERR, "Local networks cannot be specified in path "
+		ERR("Local networks cannot be specified in path "
 				"block at line %d in configuration file. "
 				"(Path block started at line %d)\n",
 				lineno, currentcontext->lineno);
@@ -441,34 +440,34 @@ static int handle_local(struct config_parsed *config, int lineno, const char *va
 	rc = make_config_network_entry((char *)value, &ent);
 	switch(rc) {
 		case 1:
-			show_msg(MSGERR, "Local network specification (%s) is not validly "
+			ERR("Local network specification (%s) is not validly "
 					"constructed on line %d in configuration "
 					"file\n", value, lineno);
 			return(0);
 			break;
 		case 2:
-			show_msg(MSGERR, "IP for local "
+			ERR("IP for local "
 					"network specification (%s) is not valid on line "
 					"%d in configuration file\n", value, lineno);
 			return(0);
 			break;
 		case 3:
-			show_msg(MSGERR, "SUBNET for "
+			ERR("SUBNET for "
 					"local network specification (%s) is not valid on "
 					"line %d in configuration file\n", value,
 					lineno);
 			return(0);
 			break;
 		case 4:
-			show_msg(MSGERR, "IP (%s) & ", inet_ntoa(ent->local_ip));
-			show_msg(MSGERR, "SUBNET (%s) != IP on line %d in "
+			ERR("IP (%s) & ", inet_ntoa(ent->local_ip));
+			ERR("SUBNET (%s) != IP on line %d in "
 					"configuration file, ignored\n",
 					inet_ntoa(ent->local_net), lineno);
 			return(0);
 		case 5:
 		case 6:
 		case 7:
-			show_msg(MSGERR, "Port specification is invalid and "
+			ERR("Port specification is invalid and "
 					"not allowed in local network specification "
 					"(%s) on line %d in configuration file\n",
 					value, lineno);
@@ -477,7 +476,7 @@ static int handle_local(struct config_parsed *config, int lineno, const char *va
 	}
 
 	if (ent->start_port || ent->end_port) {
-		show_msg(MSGERR, "Port specification is "
+		ERR("Port specification is "
 				"not allowed in local network specification "
 				"(%s) on line %d in configuration file\n",
 				value, lineno);
@@ -498,13 +497,13 @@ static int handle_tordns_deadpool_range(struct config_parsed *config, int lineno
 	struct config_network_entry *ent;
 
 	if (config->tordns_deadpool_range != NULL) {
-		show_msg(MSGERR, "Only one 'deadpool' entry permitted, found a "
+		ERR("Only one 'deadpool' entry permitted, found a "
 				"second at line %d in configuration file.\n");
 		return(0);
 	}
 
 	if (currentcontext != &(config->default_server)) {
-		show_msg(MSGERR, "Deadpool cannot be specified in path "
+		ERR("Deadpool cannot be specified in path "
 				"block at line %d in configuration file. "
 				"(Path block started at line %d)\n",
 				lineno, currentcontext->lineno);
@@ -516,34 +515,34 @@ static int handle_tordns_deadpool_range(struct config_parsed *config, int lineno
 	   a generic whinge() function or something */
 	switch(rc) {
 		case 1:
-			show_msg(MSGERR, "The deadpool specification (%s) is not validly "
+			ERR("The deadpool specification (%s) is not validly "
 					"constructed on line %d in configuration "
 					"file\n", value, lineno);
 			return(0);
 			break;
 		case 2:
-			show_msg(MSGERR, "IP for deadpool "
+			ERR("IP for deadpool "
 					"network specification (%s) is not valid on line "
 					"%d in configuration file\n", value, lineno);
 			return(0);
 			break;
 		case 3:
-			show_msg(MSGERR, "SUBNET for " 
+			ERR("SUBNET for " 
 					"deadpool network specification (%s) is not valid on "
 					"line %d in configuration file\n", value, 
 					lineno);
 			return(0);
 			break;
 		case 4:
-			show_msg(MSGERR, "IP (%s) & ", inet_ntoa(ent->local_ip));
-			show_msg(MSGERR, "SUBNET (%s) != IP on line %d in "
+			ERR("IP (%s) & ", inet_ntoa(ent->local_ip));
+			ERR("SUBNET (%s) != IP on line %d in "
 					"configuration file, ignored\n",
 					inet_ntoa(ent->local_net), lineno);
 			return(0);
 		case 5:
 		case 6:
 		case 7:
-			show_msg(MSGERR, "Port specification is invalid and "
+			ERR("Port specification is invalid and "
 					"not allowed in deadpool specification "
 					"(%s) on line %d in configuration file\n",
 					value, lineno);
@@ -551,7 +550,7 @@ static int handle_tordns_deadpool_range(struct config_parsed *config, int lineno
 			break;
 	}
 	if (ent->start_port || ent->end_port) {
-		show_msg(MSGERR, "Port specification is "
+		ERR("Port specification is "
 				"not allowed in deadpool specification "
 				"(%s) on line %d in configuration file\n",
 				value, lineno);
@@ -590,7 +589,7 @@ static int handle_line(struct config_parsed *config, char *line, int lineno)
         } else {
             /* Has to be a pair */
             if ((nowords != 3) || (strcmp(words[1], "="))) {
-                show_msg(MSGERR, "Malformed configuration pair "
+                ERR("Malformed configuration pair "
                        "on line %d in configuration "
                        "file, \"%s\"\n", lineno, savedline);
             } else if (!strcmp(words[0], "reaches")) {
@@ -614,7 +613,7 @@ static int handle_line(struct config_parsed *config, char *line, int lineno)
             } else if (!strcmp(words[0], "tordns_cache_size")) {
                 handle_tordns_cache_size(config, words[2]);
             } else {
-                show_msg(MSGERR, "Invalid pair type (%s) specified "
+                ERR("Invalid pair type (%s) specified "
                        "on line %d in configuration file, "
                        "\"%s\"\n", words[0], lineno,
                        savedline);
@@ -629,31 +628,31 @@ int is_local(struct config_parsed *config, struct in_addr *testip) {
     struct config_network_entry *ent;
     char buf[16];
     inet_ntop(AF_INET, testip, buf, sizeof(buf));
-    show_msg(MSGDEBUG, "checking if address: %s is local"
+    DBG("checking if address: %s is local"
                         "\n",
                         buf);
 
     for (ent = (config->local_nets); ent != NULL; ent = ent -> next) {
         inet_ntop(AF_INET, &ent->local_net, buf, sizeof(buf));
-        show_msg(MSGDEBUG, "local_net addr: %s"
+        DBG("local_net addr: %s"
                             "\n",
                             buf);
         inet_ntop(AF_INET, &ent->local_ip, buf, sizeof(buf));
-        show_msg(MSGDEBUG, "local_ip addr: %s"
+        DBG("local_ip addr: %s"
                             "\n",
                             buf);
-        show_msg(MSGDEBUG, "result testip->s_addr & ent->local_net.s_addr : %i"
+        DBG("result testip->s_addr & ent->local_net.s_addr : %i"
                             "\n",
                             testip->s_addr & ent->local_net.s_addr);
-        show_msg(MSGDEBUG, "result ent->local_ip.s_addr & ent->local_net.s_addr : %i"
+        DBG("result ent->local_ip.s_addr & ent->local_net.s_addr : %i"
                             "\n",
                             ent->local_ip.s_addr & ent->local_net.s_addr);
-        show_msg(MSGDEBUG, "result ent->local_ip.s_addr : %i"
+        DBG("result ent->local_ip.s_addr : %i"
                             "\n",
                             ent->local_ip.s_addr);
         if ((testip->s_addr & ent->local_net.s_addr) ==
             (ent->local_ip.s_addr & ent->local_net.s_addr))  {
-            show_msg(MSGDEBUG, "address: %s is local"
+            DBG("address: %s is local"
                                 "\n",
                                 buf);
             return(0);
@@ -661,7 +660,7 @@ int is_local(struct config_parsed *config, struct in_addr *testip) {
     }
 
     inet_ntop(AF_INET, testip, buf, sizeof(buf));
-    show_msg(MSGDEBUG, "address: %s is not local"
+    DBG("address: %s is not local"
                         "\n",
                         buf);
     return(1);
@@ -673,24 +672,24 @@ int pick_server(struct config_parsed *config, struct config_server_entry **ent,
     struct config_network_entry *net;
    char ipbuf[64];
 
-   show_msg(MSGDEBUG, "Picking appropriate server for %s\n", inet_ntoa(*ip));
+   DBG("Picking appropriate server for %s\n", inet_ntoa(*ip));
     *ent = (config->paths);
     while (*ent != NULL) {
         /* Go through all the servers looking for one */
         /* with a path to this network                */
-        show_msg(MSGDEBUG, "Checking SOCKS server %s\n", 
+        DBG("Checking SOCKS server %s\n", 
                 ((*ent)->address ? (*ent)->address : "(No Address)"));
         net = (*ent)->reachnets;
         while (net != NULL) {
          strcpy(ipbuf, inet_ntoa(net->local_ip));
-         show_msg(MSGDEBUG, "Server can reach %s/%s\n", 
+         DBG("Server can reach %s/%s\n", 
                   ipbuf, inet_ntoa(net->local_net));
             if (((ip->s_addr & net->local_net.s_addr) ==
                 (net->local_ip.s_addr & net->local_net.s_addr)) &&
                 (!net->start_port || 
                 ((net->start_port <= port) && (net->end_port >= port))))  
             {
-                show_msg(MSGDEBUG, "This server can reach target\n");
+                DBG("This server can reach target\n");
                     /* Found the net, return */
                     return(0);
             }
@@ -734,13 +733,13 @@ int config_file_read(const char *filename, struct config_parsed *config)
 		/* Insure null termination */
 		line[sizeof(line) - 1] = (char) 0;
 		filename = line;
-		show_msg(MSGDEBUG, "Configuration file not provided by TORSOCKS_CONF_FILE "
+		DBG("Configuration file not provided by TORSOCKS_CONF_FILE "
 				"environment variable, attempting to use defaults in %s.\n", filename);
 	}
 
 	/* If there is no configuration file use reasonable defaults for Tor */
 	if ((conf = fopen(filename, "r")) == NULL) {
-		show_msg(MSGERR, "Could not open socks configuration file "
+		ERR("Could not open socks configuration file "
 				"(%s) errno (%d), assuming sensible defaults for Tor.\n", filename, errno);
 		memset(&(config->default_server), 0x0, sizeof(config->default_server));
 		check_server(&(config->default_server));
