@@ -651,6 +651,8 @@ AC_SUBST(DEFAULT_INCLUDES)
 AC_CONFIG_FILES([
 	Makefile
 	src/Makefile
+	src/common/Makefile
+	src/lib/Makefile
 	doc/Makefile
 	test/Makefile
 ])
