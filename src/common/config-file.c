@@ -29,37 +29,10 @@
 
 #include "config-file.h"
 #include "log.h"
+#include "utils.h"
 
 /* Global configuration variables. */
 static struct config_server_entry *currentcontext = NULL;
-
-/* This routines breaks up input lines into tokens  */
-/* and places these tokens into the array specified */
-/* by tokens                                        */
-static int tokenize(char *line, int arrsize, char *tokens[]) {
-	int tokenno = -1;
-	int finished = 0;
-
-	/* Whitespace is ignored before and after tokens     */
-	while ((tokenno < (arrsize - 1)) &&
-			(line = line + strspn(line, " \t")) &&
-			(*line != (char) 0) &&
-			(!finished)) {
-		tokenno++;
-		tokens[tokenno] = line;
-		line = line + strcspn(line, " \t");
-		*line = (char) 0;
-		line++;
-
-		/* We ignore everything after a # */
-		if (*tokens[tokenno] == '#') {
-			finished = 1;
-			tokenno--;
-		}
-	}
-
-	return(tokenno + 1);
-}
 
 /* Check server entries (and establish defaults) */
 static int check_server(struct config_server_entry *server)
@@ -117,15 +90,15 @@ int make_config_network_entry(char *value, struct config_network_entry **ent) {
 	split = buf;
 
 	/* Now rip it up */
-	ip = strsplit(&separator, &split, "/:");
+	ip = utils_strsplit(&separator, &split, "/:");
 	if (separator == ':') {
 		/* We have a start port */
-		start_port = strsplit(&separator, &split, "-/");
+		start_port = utils_strsplit(&separator, &split, "-/");
 		if (separator == '-') 
 			/* We have an end port */
-			end_port = strsplit(&separator, &split, "/");
+			end_port = utils_strsplit(&separator, &split, "/");
 	}
-	subnet = strsplit(NULL, &split, " \n");
+	subnet = utils_strsplit(NULL, &split, " \n");
 
 	if ((ip == NULL) || (subnet == NULL)) {
 		/* Network specification not validly constructed */
@@ -258,7 +231,7 @@ static int handle_reaches(int lineno, char *value) {
 static int handle_server(struct config_parsed *config, int lineno, char *value) {
 	char *ip;
 
-	ip = strsplit(NULL, &value, " ");
+	ip = utils_strsplit(NULL, &value, " ");
 
 	/* We don't verify this ip/hostname at this stage, */
 	/* its resolved immediately before use in torsocks.c */
@@ -599,7 +572,7 @@ static int handle_line(struct config_parsed *config, char *line, int lineno)
     strncpy(savedline, line, CONFIG_MAXLINE - 1);
     savedline[CONFIG_MAXLINE - 1] = (char) 0;
     /* Tokenize the input string */
-    nowords = tokenize(line, 10, words);
+    nowords = utils_tokenize_ignore_comments(line, 10, words);
 
     /* Set the spare slots to an empty string to simplify */
     /* processing                                         */
@@ -729,42 +702,6 @@ int pick_server(struct config_parsed *config, struct config_server_entry **ent,
     *ent = &(config->default_server);
 
     return(0);
-}
-
-/* This function is very much like strsep, it looks in a string for */
-/* a character from a list of characters, when it finds one it      */
-/* replaces it with a \0 and returns the start of the string        */
-/* (basically spitting out tokens with arbitrary separators). If no */
-/* match is found the remainder of the string is returned and       */
-/* the start pointer is set to be NULL. The difference between      */
-/* standard strsep and this function is that this one will          */
-/* set *separator to the character separator found if it isn't null */
-char *strsplit(char *separator, char **text, const char *search) {
-   unsigned int len;
-   char *ret;
-
-   ret = *text;
-
-    if (*text == NULL) {
-      if (separator)
-         *separator = '\0';
-      return(NULL);
-    } else {
-      len = strcspn(*text, search);
-      if (len == strlen(*text)) {
-         if (separator)
-            *separator = '\0';
-         *text = NULL;
-      } else {
-         *text = *text + len;
-         if (separator)
-            *separator = **text;
-         **text = '\0';
-         *text = *text + 1;
-      }
-    }
-
-   return(ret);
 }
 
 /*
