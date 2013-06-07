@@ -18,6 +18,12 @@
 #ifndef TORSOCKS_COMPAT_H
 #define TORSOCKS_COMPAT_H
 
+#if (defined(__linux__) || defined(__FreeBSD__) || defined(__darwin__))
+
+#define RTLD_NEXT	((void *) -1)
+
+#endif /* __linux__, __FreeBSD__, __darwin__ */
+
 #ifdef __linux__
 
 #include <pthread.h>

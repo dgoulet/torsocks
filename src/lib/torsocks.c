@@ -17,6 +17,8 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <assert.h>
+#include <dlfcn.h>
 #include <stdlib.h>
 
 #include <common/defaults.h>
@@ -29,6 +31,27 @@
  * initialization so after that it can be read without any protection.
  */
 static int is_suid;
+
+/*
+ * Lookup symbol in the loaded libraries of the binary.
+ *
+ * Return the function pointer or NULL on error.
+ */
+static void *find_libc_symbol(const char *symbol)
+{
+	void *fct_ptr = NULL;
+
+	assert(symbol);
+
+	fct_ptr = dlsym(RTLD_NEXT, symbol);
+	if (!fct_ptr) {
+		ERR("Unable to find %s", symbol);
+		goto end;
+	}
+
+end:
+	return fct_ptr;
+}
 
 /*
  * Initialize logging subsytem using either the default values or the one given
@@ -84,4 +107,31 @@ static void __attribute__((constructor)) init()
 	is_suid = (getuid() != geteuid());
 
 	init_logging();
+}
+
+/*
+ * Cleanup and exit with the given status.
+ */
+static void clean_exit(int status)
+{
+	exit(status);
+}
+
+/*
+ * Libc hijacked symbol connect(2).
+ */
+int connect(LIBC_CONNECT_SIG)
+{
+	static int (*libc_connect)(LIBC_CONNECT_SIG) = NULL;
+
+	/* Find symbol if not already set. */
+	if (!libc_connect) {
+		libc_connect = find_libc_symbol("connect");
+		if (!libc_connect) {
+			ERR("This is critical for torsocks. Exiting");
+			clean_exit(EXIT_FAILURE);
+		}
+	}
+
+	return libc_connect(_sockfd, _addr, _addrlen);
 }

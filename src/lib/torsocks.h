@@ -22,4 +22,18 @@
 
 #include <common/compat.h>
 
+#if (defined(__linux__) || defined(__FreeBSD__) || defined(__darwin__))
+
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#ifndef LIBC_CONNECT_SIG
+#define LIBC_CONNECT_SIG \
+	int _sockfd, const struct sockaddr *_addr, socklen_t _addrlen
+#endif /* LIBC_CONNECT_SIG */
+
+#else
+#error "OS not supported."
+#endif /* __linux__ , __FreeBSD__, __darwin__ */
+
 #endif /* TORSOCKS_H */
