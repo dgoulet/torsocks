@@ -1,0 +1,86 @@
+Date: 09/06/2013
+Author: David Goulet <dgoulet@ev0ke.net>
+Contributors:
+	* Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+
+This document details the design of torsocks locking for thread safety.
+
+The basis is that at *any* time any thread can interact with Torsocks
+(connect(2), DNS resolution, ...). Considering that, some sort of
+synchronization is needed since torsocks needs to keep track of per socket
+connection. They are kept in a central registry that every thread needs to
+access.
+
+The reason why it needs to be shared accross threads is because of fd passing.
+It is possible and even not uncommon that threads exchange file descriptor(s) so
+we can't keep a registry of connections using TLS (Thread Local Storage).
+Furthermore, a process could easily, for instance, close(2) a socket within a
+signal handler making Torsocks access thread storage inside a signal handler and
+this SHOULD NOT be done, just never.
+
+Considering the above, a locking mechanism is needed to protect the registry.
+Insertion, deletion and lookup in that registry CAN occur at the same time so a
+mutex has to be used to protect any action *on* it. This protection is provided
+by a mutex named "registry lock".
+
+Now, the objects inside that registry have to be protected during their life
+time (as long as a reference is held) after a lookup. To protect the free() from
+concurrent access, a refcount is used. Basically, each possible action on a
+connection object checks if the connection refcount is down to 0. If so, this
+means that no one is holding a reference to the object and it is ready to be
+destroyed. For that, the refcount needs to start with a value of 1.
+
+For this scheme to work, the connection object MUST be immutable once created.
+Any part that can change during the lifetime of the connection object MUST be
+protected with a mutex.
+
+This mechanism is used to avoid heavy contention on the registry lock. Without
+the refcount, a connection would have to be protected within the registry lock
+to avoid race between an access to the object and freeing it. As long as the
+lookups in the registry are not that frequent, this should scale since the
+critical section is pretty short.
+
+Here is the algorithm for a read/write and destroy operation.
+
+Prerequisites:
+----
+Refcount of a connection object starts at 1. When down to 0, it can be
+destroyed.
+
+Add to registry (e.g.: connect(2)):
+----
+1)	lock(registry)
+2)		new_conn refcount = 1;
+3)		add to registry
+/* We could also make a lookup for duplicates. */
+4)	unlock(registry)
+
+Read/Write op. (e.g.: DNS Lookup):
+----
+1)	lock(registry)
+2)		conn = lookup
+3)		if conn:
+4)			atomic_inc(conn refcount)
+5)	unlock(registry)
+6)	[action using the conn]
+7)	if atomic_dec_return(conn refcount) == 0:
+/*
+ * This is safe because at this point the connection object is not visible
+ * anymore to any thread so we can safely free the object after unlocking it.
+ */
+8)		free conn
+
+Destroy from registry (e.g.: close(2)):
+----
+1)	lock(registry)
+2)		conn = lookup
+3)		if conn:
+/*
+ * Make sure the connection object is not visible once we release the registry
+ * lock. Note that we DO NOT increment the refcount here because we are on the
+ * destroy path so we have to make the refcount come down to 0.
+ */
+4)			remove from registry
+5)	unlock(registry)
+6)	if atomic_dec_return(conn refcount) == 0:
+7)		free(conn)
