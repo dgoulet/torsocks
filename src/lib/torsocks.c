@@ -33,11 +33,21 @@
 static int is_suid;
 
 /*
+ * Cleanup and exit with the given status. Note that the lib destructor will be
+ * called after this call.
+ */
+static void clean_exit(int status)
+{
+	exit(status);
+}
+
+/*
  * Lookup symbol in the loaded libraries of the binary.
  *
  * Return the function pointer or NULL on error.
  */
-static void *find_libc_symbol(const char *symbol)
+static void *find_libc_symbol(const char *symbol,
+		enum tsocks_sym_action action)
 {
 	void *fct_ptr = NULL;
 
@@ -46,10 +56,12 @@ static void *find_libc_symbol(const char *symbol)
 	fct_ptr = dlsym(RTLD_NEXT, symbol);
 	if (!fct_ptr) {
 		ERR("Unable to find %s", symbol);
-		goto end;
+		if (action == TSOCKS_SYM_EXIT_NOT_FOUND) {
+			ERR("This is critical for torsocks. Exiting");
+			clean_exit(EXIT_FAILURE);
+		}
 	}
 
-end:
 	return fct_ptr;
 }
 
@@ -101,7 +113,7 @@ static void init_logging(void)
  * Lib constructor. Initialize torsocks here before the main execution of the
  * binary we are preloading.
  */
-static void __attribute__((constructor)) init()
+static void __attribute__((constructor)) tsocks_init(void)
 {
 	/* UID and effective UID MUST be the same or else we are SUID. */
 	is_suid = (getuid() != geteuid());
@@ -110,28 +122,30 @@ static void __attribute__((constructor)) init()
 }
 
 /*
- * Cleanup and exit with the given status.
+ * Lib destructor.
  */
-static void clean_exit(int status)
+static void __attribute__((destructor)) tsocks_exit(void)
 {
-	exit(status);
+	/* Clean up logging. */
+	log_destroy();
+}
+
+/*
+ * Torsocks call for connect(2).
+ */
+LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
+{
+	DBG("Connect catched on fd %d", __sockfd);
+	return tsocks_libc_connect(LIBC_CONNECT_ARGS);
 }
 
 /*
  * Libc hijacked symbol connect(2).
  */
-int connect(LIBC_CONNECT_SIG)
+LIBC_CONNECT_DECL
 {
-	static int (*libc_connect)(LIBC_CONNECT_SIG) = NULL;
-
-	/* Find symbol if not already set. */
-	if (!libc_connect) {
-		libc_connect = find_libc_symbol("connect");
-		if (!libc_connect) {
-			ERR("This is critical for torsocks. Exiting");
-			clean_exit(EXIT_FAILURE);
-		}
-	}
-
-	return libc_connect(_sockfd, _addr, _addrlen);
+	/* Find symbol if not already set. Exit if not found. */
+	tsocks_libc_connect = find_libc_symbol(LIBC_CONNECT_NAME_STR,
+			TSOCKS_SYM_EXIT_NOT_FOUND);
+	return tsocks_connect(LIBC_CONNECT_ARGS);
 }

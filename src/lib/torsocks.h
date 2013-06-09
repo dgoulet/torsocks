@@ -22,18 +22,38 @@
 
 #include <common/compat.h>
 
+#define TSOCKS_LIBC_DECL(name, type, sig) \
+	type (*tsocks_libc_##name)(sig);
+
 #if (defined(__linux__) || defined(__FreeBSD__) || defined(__darwin__))
 
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#ifndef LIBC_CONNECT_SIG
+#define LIBC_CONNECT_NAME connect
+#define LIBC_CONNECT_NAME_STR XSTR(LIBC_CONNECT_NAME)
+#define LIBC_CONNECT_RET_TYPE int
 #define LIBC_CONNECT_SIG \
-	int _sockfd, const struct sockaddr *_addr, socklen_t _addrlen
-#endif /* LIBC_CONNECT_SIG */
+	int __sockfd, const struct sockaddr *__addr, socklen_t __addrlen
+#define LIBC_CONNECT_ARGS \
+	__sockfd, __addr, __addrlen
 
 #else
 #error "OS not supported."
 #endif /* __linux__ , __FreeBSD__, __darwin__ */
+
+/*
+ * The following defines are libc function declarations using the macros
+ * defined above on a per OS basis.
+ */
+
+/* connect(2) */
+TSOCKS_LIBC_DECL(connect, LIBC_CONNECT_RET_TYPE, LIBC_CONNECT_SIG)
+#define LIBC_CONNECT_DECL \
+	LIBC_CONNECT_RET_TYPE LIBC_CONNECT_NAME(LIBC_CONNECT_SIG)
+
+enum tsocks_sym_action {
+	TSOCKS_SYM_EXIT_NOT_FOUND	= 1,
+};
 
 #endif /* TORSOCKS_H */
