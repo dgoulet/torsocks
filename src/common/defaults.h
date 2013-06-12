@@ -31,4 +31,10 @@
 #define DEFAULT_LOG_TIME_STATUS		LOG_TIME_ADD
 #define DEFAULT_LOG_LEVEL			MSGWARN
 
+/*
+ * RFC 1035 specifies a maxium of 255 possibe for domain name.
+ * (https://www.ietf.org/rfc/rfc1035.txt).
+ */
+#define DEFAULT_DOMAIN_NAME_SIZE	255
+
 #endif /* TORSOCKS_DEFAULTS_H */

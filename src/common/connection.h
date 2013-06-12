@@ -18,18 +18,34 @@
 #ifndef TORSOCKS_CONNECTION_H
 #define TORSOCKS_CONNECTION_H
 
+#include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+
+#include "defaults.h"
+
+enum connection_domain {
+	CONNECTION_DOMAIN_INET	= 1,
+	CONNECTION_DOMAIN_INET6	= 2,
+};
+
+struct connection_addr {
+	enum connection_domain domain;
+	union {
+		struct sockaddr_in sin;
+		struct sockaddr_in6 sin6;
+	} u;
+};
 
 struct connection {
 	/* Socket fd and also unique ID. */
 	int fd;
 
 	/* Location of the SOCKS5 server. */
-	struct sockaddr_in socks5_addr;
+	struct connection_addr socks5_addr;
 
-	/* Remove destination that passes through Tor. */
-	struct sockaddr_in dest_addr;
+	/* Remote destination that passes through Tor. */
+	struct connection_addr dest_addr;
 
 	/* Next connection of the linked list. */
 	struct connection *next, *prev;

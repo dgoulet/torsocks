@@ -32,6 +32,7 @@
  * METHOD" [00] is supported and should be used.
  */
 #define SOCKS5_NO_AUTH_METHOD	0x00
+#define SOCKS5_NO_ACCPT_METHOD	0xFF
 
 /* Request to connect. */
 #define SOCKS5_CMD_CONNECT		0x01
@@ -56,6 +57,7 @@
 struct socks5_method_req {
 	uint8_t ver;
 	uint8_t nmethods;
+	uint8_t methods;
 };
 
 /* Reply data structure for the method. */
@@ -74,14 +76,12 @@ struct socks5_request {
 
 /* IPv4 destination addr for a request. */
 struct socks5_request_ipv4 {
-	uint8_t len;
 	uint8_t addr[4];
 	uint16_t port;
 };
 
 /* IPv6 destination addr for a request. */
 struct socks5_request_ipv6 {
-	uint8_t len;
 	uint8_t addr[16];
 	uint16_t port;
 };
@@ -101,5 +101,15 @@ struct socks5_reply {
 	uint8_t rsv;
 	uint8_t atyp;
 };
+
+int socks5_connect(struct connection *conn);
+
+/* Method messaging. */
+int socks5_send_method(struct connection *conn);
+int socks5_recv_method(struct connection *conn);
+
+/* Connect request. */
+int socks5_send_connect_request(struct connection *conn);
+int socks5_recv_connect_reply(struct connection *conn);
 
 #endif /* TORSOCKS_SOCKS_H */
