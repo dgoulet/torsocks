@@ -1,5 +1,5 @@
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src -I$(builddir)
-AM_CFLAGS = -fno-strict-aliasing
+#AM_CFLAGS = -fno-strict-aliasing
 
 libdir = @libdir@/torsocks
 

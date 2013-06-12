@@ -18,11 +18,12 @@
 #ifndef TORSOCKS_DEFAULTS_H
 #define TORSOCKS_DEFAULTS_H
 
+#include "connection.h"
 #include "log.h"
 
 #define DEFAULT_TOR_PORT	9050
 #define DEFAULT_TOR_ADDRESS	"127.0.0.1"
-#define DEFAULT_TOR_SOCKS	5
+#define DEFAULT_TOR_DOMAIN  CONNECTION_DOMAIN_INET
 
 /* Logging defaults. */
 #define DEFAULT_LOG_LEVEL_ENV		"TORSOCKS_LOG_LEVEL"
@@ -36,5 +37,14 @@
  * (https://www.ietf.org/rfc/rfc1035.txt).
  */
 #define DEFAULT_DOMAIN_NAME_SIZE	255
+
+#define DEFAULT_CONF_FILE			"/etc/torsocks.conf"
+#define DEFAULT_CONF_FILE_ENV		"TORSOCKS_CONF_FILE"
+
+/*
+ * Maximum number of token in a single line of the torsocks configuration file.
+ * For instance, "TorAddress 127.0.0.1" is two tokens.
+ */
+#define DEFAULT_MAX_CONF_TOKEN		5
 
 #endif /* TORSOCKS_DEFAULTS_H */

@@ -112,7 +112,7 @@ error:
 }
 
 /*
- * Connect to socks5 server address in the connection object.
+ * Connect to socks5 server address from the global configuration.
  *
  * Return 0 on success or else a negative value.
  */
@@ -124,15 +124,16 @@ int socks5_connect(struct connection *conn)
 	assert(conn);
 	assert(conn->fd >= 0);
 
-	switch (conn->socks5_addr.domain) {
+	switch (tsocks_config.socks5_addr.domain) {
 	case CONNECTION_DOMAIN_INET:
-		socks5_addr = (struct sockaddr *) &conn->socks5_addr.u.sin;
+		socks5_addr = (struct sockaddr *) &tsocks_config.socks5_addr.u.sin;
 		break;
 	case CONNECTION_DOMAIN_INET6:
-		socks5_addr = (struct sockaddr *) &conn->socks5_addr.u.sin6;
+		socks5_addr = (struct sockaddr *) &tsocks_config.socks5_addr.u.sin6;
 		break;
 	default:
-		ERR("Socks5 connect domain unknown %d", conn->socks5_addr.domain);
+		ERR("Socks5 connect domain unknown %d",
+				tsocks_config.socks5_addr.domain);
 		assert(0);
 		ret = -EBADF;
 		goto error;

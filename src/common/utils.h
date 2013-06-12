@@ -23,6 +23,9 @@
 #include <netinet/in.h>
 
 char *utils_strsplit(char *separator, char **text, const char *search);
-int utils_tokenize_ignore_comments(char *line, int arrsize, char **tokens);
+int utils_tokenize_ignore_comments(const char *_line, size_t size, char **tokens);
+
+int utils_is_address_ipv4(const char *ip);
+int utils_is_address_ipv6(const char *ip);
 
 #endif /* TORSOCKS_UTILS_H */

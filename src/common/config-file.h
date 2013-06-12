@@ -22,64 +22,37 @@
 
 #include <netinet/in.h>
 
-/* Max length of a configuration line. */
-#define CONFIG_MAXLINE BUFSIZ
+#include "connection.h"
 
 /*
- * Structure representing one server entry specified in the config.
+ * Represent the values in a configuration file (torsocks.conf). Basically,
+ * this is the data structure of a parsed config file.
  */
-struct config_server_entry {
-	/* Line number in conf file this path started on. */
-    int lineno;
-	/* Address/hostname of server. */
-    const char *address;
-	/* Port number of server. */
-    in_port_t port;
-	/* Type of server (4/5). */
-    int type;
-	/* Username for this socks server. */
-    const char *username;
-	/* Password for this socks server. */
-    const char *password;
-	/* Linked list of nets from this serveri. */
-    struct config_network_entry *reachnets;
-	/* Pointer to next server entry. */
-    struct config_server_entry *next;
-};
-
-/*
- * Structure representing a network.
- */
-struct config_network_entry {
-	/* Base IP of the network */
-   struct in_addr local_ip;
-   /* Mask for the network */
-   struct in_addr local_net;
-   /* Range of ports for the network */
-   in_port_t start_port;
-   in_port_t end_port;
-   /* Pointer to next network entry */
-   struct config_network_entry *next;
+struct config_file {
+	/* The tor address is inet or inet 6. */
+	enum connection_domain tor_domain;
+	/* The IP of the Tor SOCKS. */
+	char *tor_address;
+	/* The port of the Tor SOCKS. */
+	in_port_t tor_port;
 };
 
 /*
  * Structure representing a complete parsed file.
  */
-struct config_parsed {
-   struct config_network_entry *local_nets;
-   struct config_server_entry default_server;
-   struct config_server_entry *paths;
-   int tordns_enabled;
-   int tordns_failopen;
-   unsigned int tordns_cache_size;
-   struct config_network_entry *tordns_deadpool_range;
+struct configuration {
+	/*
+	 * Parsed config file (torsocks.conf).
+	 */
+	struct config_file conf_file;
+
+	/*
+	 * Socks5 address so basically where to connect to Tor.
+	 */
+	struct connection_addr socks5_addr;
 };
 
-/* Functions provided by parser module */
-int config_file_read(const char *filename, struct config_parsed *config);
-
-int is_local(struct config_parsed *, struct in_addr *);
-int pick_server(struct config_parsed *, struct config_server_entry **, struct in_addr *, unsigned int port);
-char *strsplit(char *separator, char **text, const char *search);
+int config_file_read(const char *filename, struct configuration *config);
+void config_file_destroy(struct config_file *conf);
 
 #endif /* CONFIG_FILE_H */

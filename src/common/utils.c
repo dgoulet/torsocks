@@ -17,10 +17,51 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <arpa/inet.h>
+#include <assert.h>
+#include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "macros.h"
 #include "utils.h"
+
+/*
+ * Return 1 if the given IP belongs in the af domain else return a negative
+ * value.
+ */
+static int check_addr(const char *ip, int af)
+{
+	int ret = 0;
+	char buf[128];
+
+	assert(ip);
+
+	ret = inet_pton(af, ip, buf);
+	if (ret != 1) {
+		ret = -1;
+	}
+
+	return ret;
+}
+
+/*
+ * Return 1 if the given IP is an IPv4.
+ */
+ATTR_HIDDEN
+int utils_is_address_ipv4(const char *ip)
+{
+	return check_addr(ip, AF_INET);
+}
+
+/*
+ * Return 1 if the given IP is an IPv6.
+ */
+ATTR_HIDDEN
+int utils_is_address_ipv6(const char *ip)
+{
+	return check_addr(ip, AF_INET6);
+}
 
 /*
  * This routines breaks up input lines into tokens and places these tokens into
@@ -29,30 +70,48 @@
  * Return the number of token plus one set in the given array.
  */
 ATTR_HIDDEN
-int utils_tokenize_ignore_comments(char *line, int arrsize, char **tokens)
+int utils_tokenize_ignore_comments(const char *_line, size_t size, char **tokens)
 {
-	int tokenno = -1;
-	int finished = 0;
+	int ret, i = 0, argc = 0;
+	char *c, *line = NULL;
 
-	/* Whitespace is ignored before and after tokens     */
-	while ((tokenno < (arrsize - 1)) &&
-			(line = line + strspn(line, " \t")) &&
-			(*line != (char) 0) &&
-			(!finished)) {
-		tokenno++;
-		tokens[tokenno] = line;
-		line = line + strcspn(line, " \t");
-		*line = '\0';
-		line++;
+	assert(_line);
+	assert(tokens);
 
-		/* We ignore everything after a # */
-		if (*tokens[tokenno] == '#') {
-			finished = 1;
-			tokenno--;
-		}
+	line = strdup(_line);
+
+	/* Ignore line if it starts with a # meaning a comment. */
+	if (*line == '#') {
+		goto end;
 	}
 
-	return tokenno + 1;
+	/* Count number of token. If larger than size, we return an error. */
+	c = line;
+	while ((c = strchr(c + 1, ' '))) {
+		/* Skip consecutive spaces. */
+		if (*(c + 1) == ' ') {
+			continue;
+		}
+		argc++;
+	}
+
+	if (argc > size) {
+		ret = -ENOMEM;
+		goto error;
+	}
+
+	c = strtok(line, " \t");
+	while (c != NULL) {
+		tokens[i] = strdup(c);
+		c = strtok(NULL, " \t");
+		i++;
+	}
+
+end:
+	ret = i;
+error:
+	free(line);
+	return ret;
 }
 
 /*

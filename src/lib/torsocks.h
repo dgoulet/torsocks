@@ -21,6 +21,7 @@
 #define TORSOCKS_H
 
 #include <common/compat.h>
+#include <common/config-file.h>
 
 #define TSOCKS_LIBC_DECL(name, type, sig) \
 	type (*tsocks_libc_##name)(sig);
@@ -55,5 +56,8 @@ TSOCKS_LIBC_DECL(connect, LIBC_CONNECT_RET_TYPE, LIBC_CONNECT_SIG)
 enum tsocks_sym_action {
 	TSOCKS_SYM_EXIT_NOT_FOUND	= 1,
 };
+
+/* Global configuration of torsocks. */
+extern struct configuration tsocks_config;
 
 #endif /* TORSOCKS_H */

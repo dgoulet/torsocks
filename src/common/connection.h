@@ -29,6 +29,9 @@ enum connection_domain {
 	CONNECTION_DOMAIN_INET6	= 2,
 };
 
+/*
+ * Connection address which both supports IPv4 and IPv6.
+ */
 struct connection_addr {
 	enum connection_domain domain;
 	union {
@@ -37,12 +40,13 @@ struct connection_addr {
 	} u;
 };
 
+/*
+ * Connection object representing a connect we did to the Tor network from a
+ * connect(2) hijacked call.
+ */
 struct connection {
 	/* Socket fd and also unique ID. */
 	int fd;
-
-	/* Location of the SOCKS5 server. */
-	struct connection_addr socks5_addr;
 
 	/* Remote destination that passes through Tor. */
 	struct connection_addr dest_addr;
@@ -50,5 +54,12 @@ struct connection {
 	/* Next connection of the linked list. */
 	struct connection *next, *prev;
 };
+
+int connection_addr_set(enum connection_domain domain, const char *ip,
+		in_port_t port, struct connection_addr *addr);
+
+struct connection *connection_create(int fd, enum connection_domain domain,
+		struct sockaddr *dest);
+void connection_destroy(struct connection *conn);
 
 #endif /* TORSOCKS_CONNECTION_H */

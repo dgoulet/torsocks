@@ -65,7 +65,7 @@ void log_destroy(void);
 
 #define MSG(fmt, args...) __tsocks_print(MSGNOTICE, fmt "\n", ## args)
 #define ERR(fmt, args...) _ERRMSG("ERROR", MSGERR, fmt, ## args)
-#define WARN(fmt, args...) _ERRMSG("Warning", MSGWARN, fmt, ## args)
+#define WARN(fmt, args...) _ERRMSG("WARNING", MSGWARN, fmt, ## args)
 #define DBG(fmt, args...) _ERRMSG("DEBUG", MSGDEBUG, fmt, ## args)
 
 /*

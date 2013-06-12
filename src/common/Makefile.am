@@ -4,4 +4,5 @@ AM_CFLAGS = -fno-strict-aliasing
 
 noinst_LTLIBRARIES = libcommon.la
 libcommon_la_SOURCES = log.c log.h config-file.c config-file.h utils.c utils.h \
-                       compat.c compat.h socks5.c socks5.h
+                       compat.c compat.h socks5.c socks5.h \
+                       connection.c connection.h
