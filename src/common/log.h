@@ -20,6 +20,8 @@
 #ifndef TORSOCKS_LOG_H
 #define TORSOCKS_LOG_H
 
+#include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
 
