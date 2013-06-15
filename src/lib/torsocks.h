@@ -23,6 +23,11 @@
 #include <common/compat.h>
 #include <common/config-file.h>
 
+/*
+ * This defines a function pointer to the original libc call of "name" so the
+ * libc call outside of torsocks can be used. These are declared for each
+ * symbol torsocks hijacked.
+ */
 #define TSOCKS_LIBC_DECL(name, type, sig) \
 	type (*tsocks_libc_##name)(sig);
 
@@ -53,11 +58,16 @@ TSOCKS_LIBC_DECL(connect, LIBC_CONNECT_RET_TYPE, LIBC_CONNECT_SIG)
 #define LIBC_CONNECT_DECL \
 	LIBC_CONNECT_RET_TYPE LIBC_CONNECT_NAME(LIBC_CONNECT_SIG)
 
+/*
+ * Those are actions to do during the lookup process of libc symbols. For
+ * instance the connect(2) syscall is essential to Torsocks so the function
+ * call exits if not found.
+ */
 enum tsocks_sym_action {
 	TSOCKS_SYM_EXIT_NOT_FOUND	= 1,
 };
 
-/* Global configuration of torsocks. */
+/* Global configuration. Initialized once in the library constructor. */
 extern struct configuration tsocks_config;
 
 #endif /* TORSOCKS_H */
