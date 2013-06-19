@@ -23,6 +23,59 @@
 #include "macros.h"
 
 /*
+ * Return 0 if the two connections are equal else 1.
+ */
+static inline int conn_equal_fct(struct connection *c1,
+		struct connection *c2)
+{
+	return (c1->fd == c2->fd);
+}
+
+/*
+ * Return a hash value based on the unique fd of the given connection.
+ */
+static inline unsigned int conn_hash_fct(struct connection *c)
+{
+	unsigned int mask;
+
+	assert(c);
+
+	switch (sizeof(mask)) {
+	case 1:
+		mask = 0xff;
+		break;
+	case 2:
+		mask = 0xffff;
+		break;
+	case 4:
+	default:
+		mask = 0xffffffff;
+		break;
+	}
+
+	return (((unsigned int)(c->fd) << 8) ^
+				((unsigned int)((c->fd >> sizeof(mask)) & mask)) ^
+				((unsigned int)(c->fd & mask)));
+}
+
+/*
+ * Declare the connection registry.
+ */
+static HT_HEAD(connection_registry, connection) connection_registry_root;
+HT_PROTOTYPE(connection_registry, connection, node, conn_hash_fct,
+		conn_equal_fct);
+HT_GENERATE(connection_registry, connection, node, conn_hash_fct,
+		conn_equal_fct, 0.5, malloc, realloc, free);
+
+/*
+ * Initialize connection registry.
+ */
+void connection_registry_init(void)
+{
+	HT_INIT(connection_registry, &connection_registry_root);
+}
+
+/*
  * Set an already allocated connection address using the given IPv4/6 address,
  * domain and port.
  *
@@ -122,21 +175,48 @@ error:
 }
 
 /*
+ * Return the matching element with the given key or NULL if not found.
+ */
+struct connection *connection_find(int key)
+{
+	struct connection c_tmp;
+
+	c_tmp.fd = key;
+	return HT_FIND(connection_registry, &connection_registry_root, &c_tmp);
+}
+
+/*
+ * Insert a connection object into the hash table.
+ */
+void connection_insert(struct connection *conn)
+{
+	struct connection *c_tmp;
+
+	assert(conn);
+
+	/* An existing element is a code flow error. */
+	c_tmp = connection_find(conn->fd);
+	assert(!c_tmp);
+
+	HT_INSERT(connection_registry, &connection_registry_root, conn);
+}
+
+/*
+ * Remove a given connection object from the registry.
+ */
+void connection_remove(struct connection *conn)
+{
+	assert(conn);
+	HT_REMOVE(connection_registry, &connection_registry_root, conn);
+}
+
+/*
  * Destroy a connection by freeing its memory.
  */
 void connection_destroy(struct connection *conn)
 {
 	if (!conn) {
 		return;
-	}
-
-	/* Remove from the double linked list. */
-	if (conn->prev) {
-		conn->prev->next = conn->next;
-	}
-
-	if (conn->next) {
-		conn->next->prev = conn->prev;
 	}
 
 	free(conn);

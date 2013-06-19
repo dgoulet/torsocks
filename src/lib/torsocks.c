@@ -198,6 +198,9 @@ static void __attribute__((constructor)) tsocks_init(void)
 	 * Read configuration file and set the global config.
 	 */
 	init_config();
+
+	/* Initialize connection reigstry. */
+	connection_registry_init();
 }
 
 /*

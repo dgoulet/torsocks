@@ -23,6 +23,7 @@
 #include <sys/socket.h>
 
 #include "defaults.h"
+#include "ht.h"
 
 enum connection_domain {
 	CONNECTION_DOMAIN_INET	= 1,
@@ -51,8 +52,8 @@ struct connection {
 	/* Remote destination that passes through Tor. */
 	struct connection_addr dest_addr;
 
-	/* Next connection of the linked list. */
-	struct connection *next, *prev;
+	/* Hash table node. */
+	HT_ENTRY(connection) node;
 };
 
 int connection_addr_set(enum connection_domain domain, const char *ip,
@@ -60,6 +61,11 @@ int connection_addr_set(enum connection_domain domain, const char *ip,
 
 struct connection *connection_create(int fd, enum connection_domain domain,
 		struct sockaddr *dest);
+struct connection *connection_find(int key);
 void connection_destroy(struct connection *conn);
+void connection_remove(struct connection *conn);
+void connection_insert(struct connection *conn);
+
+void connection_registry_init(void);
 
 #endif /* TORSOCKS_CONNECTION_H */
