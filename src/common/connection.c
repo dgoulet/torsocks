@@ -22,6 +22,20 @@
 #include "connection.h"
 #include "macros.h"
 
+/* Connection registry mutex. */
+static TSOCKS_INIT_MUTEX(connection_registry_mutex);
+
+/*
+ * Release connection using the given refcount located inside the connection
+ * object. This is ONLY called from the connection put reference. After this
+ * call, the connection object associated with that refcount object is freed.
+ */
+static void release_conn(struct ref *ref)
+{
+	struct connection *conn = container_of(ref, struct connection, refcount);
+	connection_destroy(conn);
+}
+
 /*
  * Return 0 if the two connections are equal else 1.
  */
@@ -66,6 +80,22 @@ HT_PROTOTYPE(connection_registry, connection, node, conn_hash_fct,
 		conn_equal_fct);
 HT_GENERATE(connection_registry, connection, node, conn_hash_fct,
 		conn_equal_fct, 0.5, malloc, realloc, free);
+
+/*
+ * Acquire connection registry mutex.
+ */
+void connection_registry_lock(void)
+{
+	tsocks_mutex_lock(&connection_registry_mutex);
+}
+
+/*
+ * Release connection registry mutex.
+ */
+void connection_registry_unlock(void)
+{
+	tsocks_mutex_unlock(&connection_registry_mutex);
+}
 
 /*
  * Initialize connection registry.
@@ -220,4 +250,21 @@ void connection_destroy(struct connection *conn)
 	}
 
 	free(conn);
+}
+
+/*
+ * Get a reference of the given connection object.
+ */
+void connection_get_ref(struct connection *c)
+{
+	ref_get(&c->refcount);
+}
+
+/*
+ * Put back a reference of the given connection object. If the refcount drops
+ * to 0, the release connection function is called which frees the object.
+ */
+void connection_put_ref(struct connection *c)
+{
+	ref_put(&c->refcount, release_conn);
 }

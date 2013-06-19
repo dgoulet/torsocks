@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2013 - David Goulet <dgoulet@ev0ke.net>
+ * Copyright (c) 2009 - Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+ *               2013 - David Goulet <dgoulet@ev0ke.net>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License, version 2 only, as
@@ -17,6 +18,21 @@
 
 #ifndef TORSOCKS_MACROS_H
 #define TORSOCKS_MACROS_H
+
+#include <stddef.h> /* for offsetof */
+
+/*
+ * container_of - Get the address of an object containing a field.
+ *
+ * @ptr: pointer to the field.
+ * @type: type of the object.
+ * @member: name of the field within the object.
+ */
+#define container_of(ptr, type, member)                            \
+    ({                                                             \
+        const __typeof__(((type *) NULL)->member) * __ptr = (ptr); \
+        (type *)((char *)__ptr - offsetof(type, member));          \
+    })
 
 /* Memory allocation zeroed. */
 #define zmalloc(x) calloc(1, x)

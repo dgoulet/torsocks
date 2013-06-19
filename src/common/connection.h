@@ -24,6 +24,8 @@
 
 #include "defaults.h"
 #include "ht.h"
+#include "macros.h"
+#include "ref.h"
 
 enum connection_domain {
 	CONNECTION_DOMAIN_INET	= 1,
@@ -52,6 +54,13 @@ struct connection {
 	/* Remote destination that passes through Tor. */
 	struct connection_addr dest_addr;
 
+	/*
+	 * Object refcount needed to access this object outside the registry lock.
+	 * This is always initialized to 1 so only the destroy process can bring
+	 * the refcount to 0 so to delete it.
+	 */
+	struct ref refcount;
+
 	/* Hash table node. */
 	HT_ENTRY(connection) node;
 };
@@ -67,5 +76,10 @@ void connection_remove(struct connection *conn);
 void connection_insert(struct connection *conn);
 
 void connection_registry_init(void);
+void connection_registry_lock(void);
+void connection_registry_unlock(void);
+
+void connection_get_ref(struct connection *c);
+void connection_put_ref(struct connection *c);
 
 #endif /* TORSOCKS_CONNECTION_H */
