@@ -214,15 +214,127 @@ static void __attribute__((destructor)) tsocks_exit(void)
 	log_destroy();
 }
 
-#include <arpa/inet.h>
+/*
+ * Initiate a SOCK5 connection to the Tor network using the given connection.
+ * The socks5 API will use the torsocks configuration object to find the tor
+ * daemon.
+ *
+ * Return 0 on success or else a negative value being the errno value that
+ * needs to be sent back.
+ */
+static int connect_to_tor_network(struct connection *conn)
+{
+	int ret;
+
+	assert(conn);
+
+	DBG("Connecting to the Tor network on fd %d", conn->fd);
+
+	ret = socks5_connect(conn);
+	if (ret < 0) {
+		goto error;
+	}
+
+	ret = socks5_send_method(conn);
+	if (ret < 0) {
+		goto error;
+	}
+
+	ret = socks5_recv_method(conn);
+	if (ret < 0) {
+		goto error;
+	}
+
+	ret = socks5_send_connect_request(conn);
+	if (ret < 0) {
+		goto error;
+	}
+
+	ret = socks5_recv_connect_reply(conn);
+	if (ret < 0) {
+		goto error;
+	}
+
+error:
+	return ret;
+}
 
 /*
  * Torsocks call for connect(2).
  */
 LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 {
+	int ret, sock_type;
+	socklen_t optlen;
+	struct connection *new_conn;
+
 	DBG("Connect catched on fd %d", __sockfd);
+
+	ret = getsockopt(__sockfd, SOL_SOCKET, SO_TYPE, &sock_type, &optlen);
+	if (ret < 0) {
+		/* Use the getsockopt() errno value. */
+		goto error;
+	}
+
+	/* We can't handle a non inet socket. */
+	if (__addr->sa_family != AF_INET &&
+			__addr->sa_family != AF_INET6) {
+		DBG("[conect] Connection is not IPv4/v6. Ignoring.");
+		goto libc_connect;
+	}
+
+	/*
+	 * Refuse non stream socket. There is a chance that this might be a DNS
+	 * request that we can't pass through Tor using raw UDP packet.
+	 */
+	if (sock_type != SOCK_STREAM) {
+		ERR("[connect] UDP or ICMP stream can't be handled. Rejecting.");
+		errno = EBADF;
+		goto error;
+	}
+
+	/*
+	 * Lock registry to get the connection reference if one. In this code path,
+	 * if a connection object is found, it will not be used since a double
+	 * connect() on the same file descriptor is an error so the registry is
+	 * quickly unlocked and no reference is needed.
+	 */
+	connection_registry_lock();
+	new_conn = connection_find(__sockfd);
+	connection_registry_unlock();
+	if (new_conn) {
+		/* Double connect() for the same fd. */
+		errno = EISCONN;
+		goto error;
+	}
+
+	new_conn = connection_create(__sockfd, __addr);
+	if (!new_conn) {
+		errno = ENOMEM;
+		goto error;
+	}
+
+	/* Connect the socket to the Tor network. */
+	ret = connect_to_tor_network(new_conn);
+	if (ret < 0) {
+		errno = -ret;
+		goto error;
+	}
+
+	connection_registry_lock();
+	/* This can't fail since a lookup was done previously. */
+	connection_insert(new_conn);
+	connection_registry_unlock();
+
+	/* Flag errno for success */
+	ret = errno = 0;
+	return ret;
+
+libc_connect:
 	return tsocks_libc_connect(LIBC_CONNECT_ARGS);
+error:
+	/* At this point, errno MUST be set to a valid connect() error value. */
+	return -1;
 }
 
 /*
