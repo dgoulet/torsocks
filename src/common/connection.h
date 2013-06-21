@@ -68,8 +68,7 @@ struct connection {
 int connection_addr_set(enum connection_domain domain, const char *ip,
 		in_port_t port, struct connection_addr *addr);
 
-struct connection *connection_create(int fd, enum connection_domain domain,
-		struct sockaddr *dest);
+struct connection *connection_create(int fd, const struct sockaddr *dest);
 struct connection *connection_find(int key);
 void connection_destroy(struct connection *conn);
 void connection_remove(struct connection *conn);

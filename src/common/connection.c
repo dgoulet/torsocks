@@ -170,8 +170,7 @@ error:
  *
  * Return a newly allocated connection object or else NULL.
  */
-struct connection *connection_create(int fd, enum connection_domain domain,
-		struct sockaddr *dest)
+struct connection *connection_create(int fd, const struct sockaddr *dest)
 {
 	struct connection *conn = NULL;
 
@@ -183,19 +182,22 @@ struct connection *connection_create(int fd, enum connection_domain domain,
 		goto error;
 	}
 
-	switch (domain) {
-	case CONNECTION_DOMAIN_INET:
+	switch (dest->sa_family) {
+	case AF_INET:
+		conn->dest_addr.domain = CONNECTION_DOMAIN_INET;
 		memcpy(&conn->dest_addr.u.sin, dest, sizeof(conn->dest_addr.u.sin));
 		break;
-	case CONNECTION_DOMAIN_INET6:
+	case AF_INET6:
+		conn->dest_addr.domain = CONNECTION_DOMAIN_INET6;
 		memcpy(&conn->dest_addr.u.sin6, dest, sizeof(conn->dest_addr.u.sin6));
 		break;
 	default:
-		ERR("Connection domain unknown %d", domain);
+		ERR("Connection domain unknown %d", dest->sa_family);
 		goto error;
 	}
 
 	conn->fd = fd;
+	conn->refcount.count = 1;
 
 	return conn;
 
