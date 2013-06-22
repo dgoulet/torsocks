@@ -34,8 +34,10 @@
 #define SOCKS5_NO_AUTH_METHOD	0x00
 #define SOCKS5_NO_ACCPT_METHOD	0xFF
 
-/* Request to connect. */
+/* Request command. */
 #define SOCKS5_CMD_CONNECT		0x01
+#define SOCKS5_CMD_RESOLVE		0xF0
+#define SOCKS5_CMD_RESOLVE_PTR	0xF1
 
 /* Address type. */
 #define SOCKS5_ATYP_IPV4		0x01
@@ -94,6 +96,12 @@ struct socks5_request_domain {
 	uint16_t port;
 };
 
+/* Use for the Tor resolve command. */
+struct socks5_request_resolve {
+	uint8_t len;
+	char name[UINT8_MAX];
+};
+
 /* Non variable part of a reply. */
 struct socks5_reply {
 	uint8_t ver;
@@ -111,5 +119,9 @@ int socks5_recv_method(struct connection *conn);
 /* Connect request. */
 int socks5_send_connect_request(struct connection *conn);
 int socks5_recv_connect_reply(struct connection *conn);
+
+/* Tor DNS resolve. */
+int socks5_send_resolve_request(const char *hostname, struct connection *conn);
+int socks5_recv_resolve_reply(struct connection *conn, uint32_t *ip_addr);
 
 #endif /* TORSOCKS_SOCKS_H */

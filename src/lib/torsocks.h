@@ -33,6 +33,7 @@
 
 #if (defined(__linux__) || defined(__FreeBSD__) || defined(__darwin__))
 
+/* connect(2) */
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -43,6 +44,25 @@
 	int __sockfd, const struct sockaddr *__addr, socklen_t __addrlen
 #define LIBC_CONNECT_ARGS \
 	__sockfd, __addr, __addrlen
+
+/* gethostbyname(3) */
+#include <netdb.h>
+
+/*
+ * The man page specifies that this call can return a pointers to static data
+ * meaning that the caller needs to copy the returned data and not forced to
+ * use free(). So, we use static memory here to mimic the libc call and avoid
+ * memory leaks. This also void the need of hijacking freehostent(3).
+ */
+struct hostent tsocks_he;
+char *tsocks_he_addr_list[2];
+char tsocks_he_addr[INET_ADDRSTRLEN];
+
+#define LIBC_GETHOSTBYNAME_NAME gethostbyname
+#define LIBC_GETHOSTBYNAME_NAME_STR XSTR(LIBC_GETHOSTBYNAME_NAME)
+#define LIBC_GETHOSTBYNAME_RET_TYPE struct hostent *
+#define LIBC_GETHOSTBYNAME_SIG const char *__name
+#define LIBC_GETHOSTBYNAME_ARGS __name
 
 #else
 #error "OS not supported."
@@ -58,12 +78,19 @@ TSOCKS_LIBC_DECL(connect, LIBC_CONNECT_RET_TYPE, LIBC_CONNECT_SIG)
 #define LIBC_CONNECT_DECL \
 	LIBC_CONNECT_RET_TYPE LIBC_CONNECT_NAME(LIBC_CONNECT_SIG)
 
+/* gethostbyname(3) */
+TSOCKS_LIBC_DECL(gethostbyname, LIBC_GETHOSTBYNAME_RET_TYPE,
+		LIBC_GETHOSTBYNAME_SIG)
+#define LIBC_GETHOSTBYNAME_DECL LIBC_GETHOSTBYNAME_RET_TYPE \
+		LIBC_GETHOSTBYNAME_NAME(LIBC_GETHOSTBYNAME_SIG)
+
 /*
  * Those are actions to do during the lookup process of libc symbols. For
  * instance the connect(2) syscall is essential to Torsocks so the function
  * call exits if not found.
  */
 enum tsocks_sym_action {
+	TSOCKS_SYM_DO_NOTHING		= 0,
 	TSOCKS_SYM_EXIT_NOT_FOUND	= 1,
 };
 

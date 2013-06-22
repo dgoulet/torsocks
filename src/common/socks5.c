@@ -17,6 +17,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <inttypes.h>
 
 #include <lib/torsocks.h>
 
@@ -358,6 +359,117 @@ int socks5_recv_connect_reply(struct connection *conn)
 		ret = -ECONNABORTED;
 		break;
 	}
+
+error:
+	return ret;
+}
+
+/*
+ * Send a SOCKS5 Tor resolve request for a given hostname using an already
+ * connected connection.
+ *
+ * Return 0 on success or else a negative value.
+ */
+int socks5_send_resolve_request(const char *hostname, struct connection *conn)
+{
+	int ret, ret_send;
+	/* Buffer to send won't go over a full TCP size. */
+	char buffer[1500];
+	size_t name_len, msg_len, data_len;
+	struct socks5_request msg;
+	struct socks5_request_resolve req;
+
+	assert(hostname);
+	assert(conn);
+	assert(conn->fd >= 0);
+
+	memset(buffer, 0, sizeof(buffer));
+	msg_len = sizeof(msg);
+
+	msg.ver = SOCKS5_VERSION;
+	msg.cmd = SOCKS5_CMD_RESOLVE;
+	/* Always zeroed. */
+	msg.rsv = 0;
+	/* By default we use IPv4 address. */
+	msg.atyp = SOCKS5_ATYP_DOMAIN;
+
+	name_len = strlen(hostname);
+	if (name_len > sizeof(req.name)) {
+		ret = -EINVAL;
+		goto error;
+	}
+
+	/* Setup resolve request. */
+	req.len = name_len;
+	memcpy(req.name, hostname, name_len);
+
+	/* Copy final buffer. */
+	memcpy(buffer, &msg, msg_len);
+	memcpy(buffer + msg_len, &req, sizeof(req));
+	data_len = msg_len + sizeof(req);
+
+	ret_send = send_data(conn->fd, &buffer, data_len);
+	if (ret_send < 0) {
+		ret = ret_send;
+		goto error;
+	}
+
+	/* Data was sent successfully. */
+	ret = 0;
+	DBG("[socks5] Resolve for %s sent successfully", hostname);
+
+error:
+	return ret;
+}
+
+/*
+ * Receive a Tor resolve reply on the given connection. The ip address pointer
+ * is populated with the replied value or else untouched on error.
+ *
+ * Return 0 on success else a negative value.
+ */
+int socks5_recv_resolve_reply(struct connection *conn, uint32_t *ip_addr)
+{
+	int ret;
+	ssize_t ret_recv;
+	struct {
+		struct socks5_reply msg;
+		uint32_t addr;
+	} buffer;
+
+	assert(conn);
+	assert(conn >= 0);
+	assert(ip_addr);
+
+	ret_recv = recv_data(conn->fd, &buffer, sizeof(buffer));
+	if (ret_recv < 0) {
+		ret = ret_recv;
+		goto error;
+	}
+
+	if (buffer.msg.ver != SOCKS5_VERSION) {
+		ERR("Bad SOCKS5 version reply");
+		ret = -ECONNABORTED;
+		goto error;
+	}
+
+	if (buffer.msg.rep != SOCKS5_REPLY_SUCCESS) {
+		ERR("Unable to resolve. Status reply: %d", buffer.msg.rep);
+		ret = -ECONNABORTED;
+		goto error;
+	}
+
+	if (buffer.msg.atyp == SOCKS5_ATYP_IPV4) {
+		*ip_addr = buffer.addr;
+	} else {
+		ERR("Bad SOCKS5 atyp reply %d", buffer.msg.atyp);
+		ret = -EINVAL;
+		goto error;
+	}
+
+	/* Everything went well and ip_addr has been populated. */
+	ret = 0;
+	DBG("[socks5] Resolve reply received: %" PRIu32, *ip_addr);
 
 error:
 	return ret;

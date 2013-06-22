@@ -17,6 +17,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <arpa/inet.h>
 #include <assert.h>
 #include <dlfcn.h>
 #include <stdlib.h>
@@ -215,20 +216,17 @@ static void __attribute__((destructor)) tsocks_exit(void)
 }
 
 /*
- * Initiate a SOCK5 connection to the Tor network using the given connection.
- * The socks5 API will use the torsocks configuration object to find the tor
- * daemon.
+ * Setup a Tor connection meaning initiating the initial SOCKS5 handshake.
  *
- * Return 0 on success or else a negative value being the errno value that
- * needs to be sent back.
+ * Return 0 on success else a negative value.
  */
-static int connect_to_tor_network(struct connection *conn)
+static int setup_tor_connection(struct connection *conn)
 {
 	int ret;
 
 	assert(conn);
 
-	DBG("Connecting to the Tor network on fd %d", conn->fd);
+	DBG("Setting up a connection to the Tor network on fd %d", conn->fd);
 
 	ret = socks5_connect(conn);
 	if (ret < 0) {
@@ -245,6 +243,31 @@ static int connect_to_tor_network(struct connection *conn)
 		goto error;
 	}
 
+error:
+	return ret;
+}
+
+/*
+ * Initiate a SOCK5 connection to the Tor network using the given connection.
+ * The socks5 API will use the torsocks configuration object to find the tor
+ * daemon.
+ *
+ * Return 0 on success or else a negative value being the errno value that
+ * needs to be sent back.
+ */
+static int connect_to_tor_network(struct connection *conn)
+{
+	int ret;
+
+	assert(conn);
+
+	DBG("Connecting to the Tor network on fd %d", conn->fd);
+
+	ret = setup_tor_connection(conn);
+	if (ret < 0) {
+		goto error;
+	}
+
 	ret = socks5_send_connect_request(conn);
 	if (ret < 0) {
 		goto error;
@@ -253,6 +276,52 @@ static int connect_to_tor_network(struct connection *conn)
 	ret = socks5_recv_connect_reply(conn);
 	if (ret < 0) {
 		goto error;
+	}
+
+error:
+	return ret;
+}
+
+/*
+ * Resolve a hostname through Tor and set the ip address in the given pointer.
+ *
+ * Return 0 on success else a negative value and the result addr is untouched.
+ */
+static int tor_resolve(const char *hostname, uint32_t *ip_addr)
+{
+	int ret;
+	struct connection conn;
+
+	assert(hostname);
+	assert(ip_addr);
+
+	DBG("Resolving %s on the Tor network", hostname);
+
+	conn.fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (conn.fd < 0) {
+		PERROR("socket");
+		ret = -errno;
+		goto error;
+	}
+
+	ret = setup_tor_connection(&conn);
+	if (ret < 0) {
+		goto error;
+	}
+
+	ret = socks5_send_resolve_request(hostname, &conn);
+	if (ret < 0) {
+		goto error;
+	}
+
+	ret = socks5_recv_resolve_reply(&conn, ip_addr);
+	if (ret < 0) {
+		goto error;
+	}
+
+	ret = close(conn.fd);
+	if (ret < 0) {
+		PERROR("close");
 	}
 
 error:
@@ -346,4 +415,66 @@ LIBC_CONNECT_DECL
 	tsocks_libc_connect = find_libc_symbol(LIBC_CONNECT_NAME_STR,
 			TSOCKS_SYM_EXIT_NOT_FOUND);
 	return tsocks_connect(LIBC_CONNECT_ARGS);
+}
+
+/*
+ * Torsocks call for gethostbyname(3).
+ *
+ * NOTE: This call is OBSOLETE in the glibc.
+ */
+LIBC_GETHOSTBYNAME_RET_TYPE tsocks_gethostbyname(LIBC_GETHOSTBYNAME_SIG)
+{
+	int ret;
+	uint32_t ip;
+	const char *ret_str;
+
+	DBG("[gethostbyname] Requesting %s hostname", __name);
+
+	if (!__name) {
+		h_errno = HOST_NOT_FOUND;
+		goto error;
+	}
+
+	/* Resolve the given hostname through Tor. */
+	ret = tor_resolve(__name, &ip);
+	if (ret < 0) {
+		goto error;
+	}
+
+	/* Reset static host entry of tsocks. */
+	memset(&tsocks_he, 0, sizeof(tsocks_he));
+	memset(tsocks_he_addr_list, 0, sizeof(tsocks_he_addr_list));
+	memset(tsocks_he_addr, 0, sizeof(tsocks_he_addr));
+
+	ret_str = inet_ntop(AF_INET, &ip, tsocks_he_addr, sizeof(tsocks_he_addr));
+	if (!ret_str) {
+		PERROR("inet_ntop");
+		h_errno = NO_ADDRESS;
+		goto error;
+	}
+
+	tsocks_he_addr_list[0] = tsocks_he_addr;
+	tsocks_he_addr_list[1] = NULL;
+
+	tsocks_he.h_name = (char *) __name;
+	tsocks_he.h_aliases = NULL;
+	tsocks_he.h_length = sizeof(in_addr_t);
+	tsocks_he.h_addrtype = AF_INET;
+	tsocks_he.h_addr_list = tsocks_he_addr_list;
+
+	DBG("Hostname %s resolved to %s", __name, tsocks_he_addr);
+
+	errno = 0;
+	return &tsocks_he;
+
+error:
+	return NULL;
+}
+
+/*
+ * Libc hijacked symbol gethostbyname(3).
+ */
+LIBC_GETHOSTBYNAME_DECL
+{
+	return tsocks_gethostbyname(LIBC_GETHOSTBYNAME_ARGS);
 }
