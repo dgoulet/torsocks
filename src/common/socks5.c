@@ -303,16 +303,35 @@ int socks5_recv_connect_reply(struct connection *conn)
 {
 	int ret;
 	ssize_t ret_recv;
+	char buffer[22];	/* Maximum size possible (with IPv6). */
 	struct socks5_reply msg;
+	size_t recv_len;
 
 	assert(conn);
 	assert(conn >= 0);
 
-	ret_recv = recv_data(conn->fd, &msg, sizeof(msg));
+	/* Beginning of the payload we are receiving. */
+	recv_len = sizeof(msg);
+	/* Len of BND.PORT */
+	recv_len += sizeof(uint16_t);
+
+	switch (tsocks_config.socks5_addr.domain) {
+	case CONNECTION_DOMAIN_INET:
+		recv_len+= 4;
+		break;
+	case CONNECTION_DOMAIN_INET6:
+		recv_len += 16;
+		break;
+	}
+
+	ret_recv = recv_data(conn->fd, buffer, recv_len);
 	if (ret_recv < 0) {
 		ret = ret_recv;
 		goto error;
 	}
+
+	/* Copy the beginning of the reply so we can parse it easily. */
+	memcpy(&msg, buffer, sizeof(msg));
 
 	DBG("Socks5 received connect reply - ver: %d, rep: 0x%02x, atype: 0x%02x",
 			msg.ver, msg.rep, msg.atyp);
