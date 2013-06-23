@@ -15,9 +15,11 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <arpa/inet.h>
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <stdlib.h>
 
 #include <lib/torsocks.h>
 
@@ -491,5 +493,131 @@ int socks5_recv_resolve_reply(struct connection *conn, uint32_t *ip_addr)
 	DBG("[socks5] Resolve reply received: %" PRIu32, *ip_addr);
 
 error:
+	return ret;
+}
+
+/*
+ * Send a SOCKS5 Tor resolve ptr request for a given ip address using an
+ * already connected connection.
+ *
+ * Return 0 on success or else a negative value.
+ */
+int socks5_send_resolve_ptr_request(const void *ip, struct connection *conn)
+{
+	int ret, ret_send;
+	char buffer[20];	/* Can't go higher than that (with IPv6). */
+	char ip_str[INET6_ADDRSTRLEN];
+	size_t msg_len, data_len;
+	struct socks5_request msg;
+	struct socks5_request_resolve_ptr req;
+
+	assert(conn);
+	assert(conn->fd >= 0);
+
+	DBG("[socks5] Resolve ptr request for ip %u", ip);
+
+	memset(buffer, 0, sizeof(buffer));
+	msg_len = sizeof(msg);
+
+	msg.ver = SOCKS5_VERSION;
+	msg.cmd = SOCKS5_CMD_RESOLVE_PTR;
+	/* Always zeroed. */
+	msg.rsv = 0;
+
+	if (inet_ntop(AF_INET, ip, ip_str, sizeof(ip_str))) {
+		msg.atyp = SOCKS5_ATYP_IPV4;
+		memcpy(req.addr.ipv4, ip, 4);
+	} else if (inet_ntop(AF_INET6, ip, ip_str, sizeof(ip_str))) {
+		msg.atyp = SOCKS5_ATYP_IPV6;
+		memcpy(req.addr.ipv4, ip, 16);
+	} else {
+		ERR("Unknown address domain of %d", ip);
+		ret = -EINVAL;
+		goto error;
+	}
+
+	/* Copy final buffer. */
+	memcpy(buffer, &msg, msg_len);
+	memcpy(buffer + msg_len, &req, sizeof(req));
+	data_len = msg_len + sizeof(req);
+
+	ret_send = send_data(conn->fd, &buffer, data_len);
+	if (ret_send < 0) {
+		ret = ret_send;
+		goto error;
+	}
+
+	/* Data was sent successfully. */
+	ret = 0;
+	DBG("[socks5] Resolve PTR for %u sent successfully", ip);
+
+error:
+	return ret;
+}
+
+/*
+ * Receive a Tor resolve ptr reply on the given connection. The hostname value
+ * is populated with the returned name from Tor. On error, it's untouched. The
+ * memory is allocated so the caller needs to free the memory on success.
+ *
+ * Return 0 on success else a negative value.
+ */
+int socks5_recv_resolve_ptr_reply(struct connection *conn, char **_hostname)
+{
+	int ret;
+	ssize_t ret_recv;
+	char *hostname = NULL;
+	struct {
+		struct socks5_reply msg;
+		uint8_t len;
+	} buffer;
+
+	assert(conn);
+	assert(conn >= 0);
+	assert(_hostname);
+
+	ret_recv = recv_data(conn->fd, &buffer, sizeof(buffer));
+	if (ret_recv < 0) {
+		ret = ret_recv;
+		goto error;
+	}
+
+	if (buffer.msg.ver != SOCKS5_VERSION) {
+		ERR("Bad SOCKS5 version reply");
+		ret = -ECONNABORTED;
+		goto error;
+	}
+
+	if (buffer.msg.rep != SOCKS5_REPLY_SUCCESS) {
+		ERR("Unable to resolve. Status reply: %d", buffer.msg.rep);
+		ret = -ECONNABORTED;
+		goto error;
+	}
+
+	if (buffer.msg.atyp == SOCKS5_ATYP_DOMAIN) {
+		/* Allocate hostname len plus an extra for the null byte. */
+		hostname = zmalloc(buffer.len + 1);
+		if (!hostname) {
+			ret = -ENOMEM;
+			goto error;
+		}
+		ret_recv = recv_data(conn->fd, hostname, buffer.len);
+		if (ret_recv < 0) {
+			ret = ret_recv;
+			goto error;
+		}
+		hostname[buffer.len] = '\0';
+	} else {
+		ERR("Bad SOCKS5 atyp reply %d", buffer.msg.atyp);
+		ret = -EINVAL;
+		goto error;
+	}
+
+	*_hostname = hostname;
+	DBG("[socks5] Resolve reply received: %s", *_hostname);
+	return 0;
+
+error:
+	free(hostname);
 	return ret;
 }
