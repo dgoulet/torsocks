@@ -394,8 +394,11 @@ error:
 int socks5_send_resolve_request(const char *hostname, struct connection *conn)
 {
 	int ret, ret_send;
-	/* Buffer to send won't go over a full TCP size. */
-	char buffer[1500];
+	/*
+	 * Can't go bigger than that. 4 bytes for the header, 1 for the name len
+	 * and 255 for the name.
+	 */
+	char buffer[260];
 	size_t name_len, msg_len, data_len;
 	struct socks5_request msg;
 	struct socks5_request_resolve req;
