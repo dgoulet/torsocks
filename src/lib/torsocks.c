@@ -362,6 +362,9 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 		goto error;
 	}
 
+	DBG("[connect] Socket family %s and type %d",
+			__addr->sa_family == AF_INET ? "AF_INET" : "AF_INET6", sock_type);
+
 	/*
 	 * Lock registry to get the connection reference if one. In this code path,
 	 * if a connection object is found, it will not be used since a double
@@ -477,4 +480,80 @@ error:
 LIBC_GETHOSTBYNAME_DECL
 {
 	return tsocks_gethostbyname(LIBC_GETHOSTBYNAME_ARGS);
+}
+
+/*
+ * Torsocks call for getaddrinfo(3).
+ */
+LIBC_GETADDRINFO_RET_TYPE tsocks_getaddrinfo(LIBC_GETADDRINFO_SIG)
+{
+	int ret, af;
+	struct in_addr addr4;
+	struct in6_addr addr6;
+	void *addr;
+	char *ip_str, ipv4[INET_ADDRSTRLEN], ipv6[INET6_ADDRSTRLEN];
+	socklen_t ip_str_size;
+	const char *node;
+
+	DBG("[getaddrinfo] Requesting %s hostname", __node);
+
+	if (!__node) {
+		ret = EAI_NONAME;
+		goto error;
+	}
+
+	/* Use right domain for the next step. */
+	switch (__hints->ai_family) {
+	default:
+		/* Default value is to use IPv4. */
+	case AF_INET:
+		addr = &addr4;
+		ip_str = ipv4;
+		ip_str_size = sizeof(ipv4);
+		af = AF_INET;
+		break;
+	case AF_INET6:
+		addr = &addr6;
+		ip_str = ipv6;
+		ip_str_size = sizeof(ipv6);
+		af = AF_INET6;
+		break;
+	}
+
+	ret = inet_pton(af, __node, &addr);
+	if (ret == 0) {
+		/* The node most probably is a DNS name. */
+		ret = tor_resolve(__node, (uint32_t *) addr);
+		if (ret < 0) {
+			ret = EAI_FAIL;
+			goto error;
+		}
+
+		(void) inet_ntop(af, addr, ip_str, ip_str_size);
+		node = ip_str;
+		DBG("[getaddrinfo] Node %s resolved to %s", __node, node);
+	} else {
+		node = __node;
+		DBG("[getaddrinfo] Node %s will be passed to the libc call", node);
+	}
+
+	ret = tsocks_libc_getaddrinfo(node, __service, __hints, __res);
+	if (ret) {
+		goto error;
+	}
+
+	return 0;
+
+error:
+	return ret;
+}
+
+/*
+ * Libc hijacked symbol getaddrinfo(3).
+ */
+LIBC_GETADDRINFO_DECL
+{
+	tsocks_libc_getaddrinfo = find_libc_symbol(LIBC_GETADDRINFO_NAME_STR,
+			TSOCKS_SYM_EXIT_NOT_FOUND);
+	return tsocks_getaddrinfo(LIBC_GETADDRINFO_ARGS);
 }

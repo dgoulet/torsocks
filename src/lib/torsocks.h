@@ -64,6 +64,17 @@ char tsocks_he_addr[INET_ADDRSTRLEN];
 #define LIBC_GETHOSTBYNAME_SIG const char *__name
 #define LIBC_GETHOSTBYNAME_ARGS __name
 
+/* getaddrinfo(3) */
+#include <netdb.h>
+
+#define LIBC_GETADDRINFO_NAME getaddrinfo
+#define LIBC_GETADDRINFO_NAME_STR XSTR(LIBC_GETADDRINFO_NAME)
+#define LIBC_GETADDRINFO_RET_TYPE int
+#define LIBC_GETADDRINFO_SIG \
+	const char *__node, const char *__service, const struct addrinfo *__hints,\
+	struct addrinfo **__res
+#define LIBC_GETADDRINFO_ARGS  __node, __service, __hints, __res
+
 #else
 #error "OS not supported."
 #endif /* __linux__ , __FreeBSD__, __darwin__ */
@@ -83,6 +94,12 @@ TSOCKS_LIBC_DECL(gethostbyname, LIBC_GETHOSTBYNAME_RET_TYPE,
 		LIBC_GETHOSTBYNAME_SIG)
 #define LIBC_GETHOSTBYNAME_DECL LIBC_GETHOSTBYNAME_RET_TYPE \
 		LIBC_GETHOSTBYNAME_NAME(LIBC_GETHOSTBYNAME_SIG)
+
+/* getaddrinfo(3) */
+TSOCKS_LIBC_DECL(getaddrinfo, LIBC_GETADDRINFO_RET_TYPE,
+		LIBC_GETADDRINFO_SIG)
+#define LIBC_GETADDRINFO_DECL LIBC_GETADDRINFO_RET_TYPE \
+		LIBC_GETADDRINFO_NAME(LIBC_GETADDRINFO_SIG)
 
 /*
  * Those are actions to do during the lookup process of libc symbols. For
