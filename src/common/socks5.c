@@ -449,20 +449,25 @@ error:
  *
  * Return 0 on success else a negative value.
  */
-int socks5_recv_resolve_reply(struct connection *conn, uint32_t *ip_addr)
+int socks5_recv_resolve_reply(struct connection *conn, void *addr,
+		size_t addrlen)
 {
 	int ret;
+	size_t recv_len;
 	ssize_t ret_recv;
 	struct {
 		struct socks5_reply msg;
-		uint32_t addr;
+		union {
+			uint8_t ipv4[4];
+			uint8_t ipv6[16];
+		} addr;
 	} buffer;
 
 	assert(conn);
 	assert(conn >= 0);
-	assert(ip_addr);
+	assert(addr);
 
-	ret_recv = recv_data(conn->fd, &buffer, sizeof(buffer));
+	ret_recv = recv_data(conn->fd, &buffer, sizeof(buffer.msg));
 	if (ret_recv < 0) {
 		ret = ret_recv;
 		goto error;
@@ -481,16 +486,34 @@ int socks5_recv_resolve_reply(struct connection *conn, uint32_t *ip_addr)
 	}
 
 	if (buffer.msg.atyp == SOCKS5_ATYP_IPV4) {
-		*ip_addr = buffer.addr;
+		/* Size of a binary IPv4 in bytes. */
+		recv_len = sizeof(buffer.addr.ipv4);
+	} else if (buffer.msg.atyp == SOCKS5_ATYP_IPV6) {
+		/* Size of a binary IPv6 in bytes. */
+		recv_len = sizeof(buffer.addr.ipv6);
 	} else {
 		ERR("Bad SOCKS5 atyp reply %d", buffer.msg.atyp);
 		ret = -EINVAL;
 		goto error;
 	}
 
+	ret_recv = recv_data(conn->fd, &buffer.addr, recv_len);
+	if (ret_recv < 0) {
+		ret = ret_recv;
+		goto error;
+	}
+
+	if (addrlen < recv_len) {
+		ERR("[socks5] Resolve destination buffer too small");
+		ret = -EINVAL;
+		goto error;
+	}
+
+	memcpy(addr, &buffer.addr, recv_len);
+
 	/* Everything went well and ip_addr has been populated. */
 	ret = 0;
-	DBG("[socks5] Resolve reply received: %" PRIu32, *ip_addr);
+	DBG("[socks5] Resolve reply received successfully");
 
 error:
 	return ret;

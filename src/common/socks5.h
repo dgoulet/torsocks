@@ -130,7 +130,8 @@ int socks5_recv_connect_reply(struct connection *conn);
 
 /* Tor DNS resolve. */
 int socks5_send_resolve_request(const char *hostname, struct connection *conn);
-int socks5_recv_resolve_reply(struct connection *conn, uint32_t *ip_addr);
+int socks5_recv_resolve_reply(struct connection *conn, void *addr,
+		size_t addrlent);
 int socks5_recv_resolve_ptr_reply(struct connection *conn, char **_hostname);
 int socks5_send_resolve_ptr_request(const void *ip, struct connection *conn);
 

@@ -289,7 +289,8 @@ int tsocks_tor_resolve(const char *hostname, uint32_t *ip_addr)
 		goto error;
 	}
 
-	ret = socks5_recv_resolve_reply(&conn, ip_addr);
+	/* Force IPv4 resolution for now. */
+	ret = socks5_recv_resolve_reply(&conn, ip_addr, sizeof(uint32_t));
 	if (ret < 0) {
 		goto error;
 	}
