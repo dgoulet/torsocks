@@ -114,4 +114,9 @@ enum tsocks_sym_action {
 /* Global configuration. Initialized once in the library constructor. */
 extern struct configuration tsocks_config;
 
+int tsocks_connect_to_tor(struct connection *conn);
+void *tsocks_find_libc_symbol(const char *symbol,
+		enum tsocks_sym_action action);
+int tsocks_tor_resolve(const char *hostname, uint32_t *ip_addr);
+
 #endif /* TORSOCKS_H */

@@ -17,7 +17,6 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <arpa/inet.h>
 #include <assert.h>
 #include <dlfcn.h>
 #include <stdlib.h>
@@ -51,30 +50,6 @@ static int is_suid;
 static void clean_exit(int status)
 {
 	exit(status);
-}
-
-/*
- * Lookup symbol in the loaded libraries of the binary.
- *
- * Return the function pointer or NULL on error.
- */
-static void *find_libc_symbol(const char *symbol,
-		enum tsocks_sym_action action)
-{
-	void *fct_ptr = NULL;
-
-	assert(symbol);
-
-	fct_ptr = dlsym(RTLD_NEXT, symbol);
-	if (!fct_ptr) {
-		ERR("Unable to find %s", symbol);
-		if (action == TSOCKS_SYM_EXIT_NOT_FOUND) {
-			ERR("This is critical for torsocks. Exiting");
-			clean_exit(EXIT_FAILURE);
-		}
-	}
-
-	return fct_ptr;
 }
 
 /*
@@ -130,7 +105,7 @@ static void init_config(void)
  */
 static void init_libc_symbols(void)
 {
-	tsocks_libc_connect = find_libc_symbol(LIBC_CONNECT_NAME_STR,
+	tsocks_libc_connect = tsocks_find_libc_symbol(LIBC_CONNECT_NAME_STR,
 			TSOCKS_SYM_EXIT_NOT_FOUND);
 }
 
@@ -255,7 +230,7 @@ error:
  * Return 0 on success or else a negative value being the errno value that
  * needs to be sent back.
  */
-static int connect_to_tor_network(struct connection *conn)
+int tsocks_connect_to_tor(struct connection *conn)
 {
 	int ret;
 
@@ -287,7 +262,7 @@ error:
  *
  * Return 0 on success else a negative value and the result addr is untouched.
  */
-static int tor_resolve(const char *hostname, uint32_t *ip_addr)
+int tsocks_tor_resolve(const char *hostname, uint32_t *ip_addr)
 {
 	int ret;
 	struct connection conn;
@@ -329,231 +304,25 @@ error:
 }
 
 /*
- * Torsocks call for connect(2).
- */
-LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
-{
-	int ret, sock_type;
-	socklen_t optlen;
-	struct connection *new_conn;
-
-	DBG("Connect catched on fd %d", __sockfd);
-
-	ret = getsockopt(__sockfd, SOL_SOCKET, SO_TYPE, &sock_type, &optlen);
-	if (ret < 0) {
-		/* Use the getsockopt() errno value. */
-		goto error;
-	}
-
-	/* We can't handle a non inet socket. */
-	if (__addr->sa_family != AF_INET &&
-			__addr->sa_family != AF_INET6) {
-		DBG("[conect] Connection is not IPv4/v6. Ignoring.");
-		goto libc_connect;
-	}
-
-	/*
-	 * Refuse non stream socket. There is a chance that this might be a DNS
-	 * request that we can't pass through Tor using raw UDP packet.
-	 */
-	if (sock_type != SOCK_STREAM) {
-		ERR("[connect] UDP or ICMP stream can't be handled. Rejecting.");
-		errno = EBADF;
-		goto error;
-	}
-
-	DBG("[connect] Socket family %s and type %d",
-			__addr->sa_family == AF_INET ? "AF_INET" : "AF_INET6", sock_type);
-
-	/*
-	 * Lock registry to get the connection reference if one. In this code path,
-	 * if a connection object is found, it will not be used since a double
-	 * connect() on the same file descriptor is an error so the registry is
-	 * quickly unlocked and no reference is needed.
-	 */
-	connection_registry_lock();
-	new_conn = connection_find(__sockfd);
-	connection_registry_unlock();
-	if (new_conn) {
-		/* Double connect() for the same fd. */
-		errno = EISCONN;
-		goto error;
-	}
-
-	new_conn = connection_create(__sockfd, __addr);
-	if (!new_conn) {
-		errno = ENOMEM;
-		goto error;
-	}
-
-	/* Connect the socket to the Tor network. */
-	ret = connect_to_tor_network(new_conn);
-	if (ret < 0) {
-		errno = -ret;
-		goto error;
-	}
-
-	connection_registry_lock();
-	/* This can't fail since a lookup was done previously. */
-	connection_insert(new_conn);
-	connection_registry_unlock();
-
-	/* Flag errno for success */
-	ret = errno = 0;
-	return ret;
-
-libc_connect:
-	return tsocks_libc_connect(LIBC_CONNECT_ARGS);
-error:
-	/* At this point, errno MUST be set to a valid connect() error value. */
-	return -1;
-}
-
-/*
- * Libc hijacked symbol connect(2).
- */
-LIBC_CONNECT_DECL
-{
-	/* Find symbol if not already set. Exit if not found. */
-	tsocks_libc_connect = find_libc_symbol(LIBC_CONNECT_NAME_STR,
-			TSOCKS_SYM_EXIT_NOT_FOUND);
-	return tsocks_connect(LIBC_CONNECT_ARGS);
-}
-
-/*
- * Torsocks call for gethostbyname(3).
+ * Lookup symbol in the loaded libraries of the binary.
  *
- * NOTE: This call is OBSOLETE in the glibc.
+ * Return the function pointer or NULL on error.
  */
-LIBC_GETHOSTBYNAME_RET_TYPE tsocks_gethostbyname(LIBC_GETHOSTBYNAME_SIG)
+void *tsocks_find_libc_symbol(const char *symbol,
+		enum tsocks_sym_action action)
 {
-	int ret;
-	uint32_t ip;
-	const char *ret_str;
+	void *fct_ptr = NULL;
 
-	DBG("[gethostbyname] Requesting %s hostname", __name);
+	assert(symbol);
 
-	if (!__name) {
-		h_errno = HOST_NOT_FOUND;
-		goto error;
-	}
-
-	/* Resolve the given hostname through Tor. */
-	ret = tor_resolve(__name, &ip);
-	if (ret < 0) {
-		goto error;
-	}
-
-	/* Reset static host entry of tsocks. */
-	memset(&tsocks_he, 0, sizeof(tsocks_he));
-	memset(tsocks_he_addr_list, 0, sizeof(tsocks_he_addr_list));
-	memset(tsocks_he_addr, 0, sizeof(tsocks_he_addr));
-
-	ret_str = inet_ntop(AF_INET, &ip, tsocks_he_addr, sizeof(tsocks_he_addr));
-	if (!ret_str) {
-		PERROR("inet_ntop");
-		h_errno = NO_ADDRESS;
-		goto error;
-	}
-
-	tsocks_he_addr_list[0] = tsocks_he_addr;
-	tsocks_he_addr_list[1] = NULL;
-
-	tsocks_he.h_name = (char *) __name;
-	tsocks_he.h_aliases = NULL;
-	tsocks_he.h_length = sizeof(in_addr_t);
-	tsocks_he.h_addrtype = AF_INET;
-	tsocks_he.h_addr_list = tsocks_he_addr_list;
-
-	DBG("Hostname %s resolved to %s", __name, tsocks_he_addr);
-
-	errno = 0;
-	return &tsocks_he;
-
-error:
-	return NULL;
-}
-
-/*
- * Libc hijacked symbol gethostbyname(3).
- */
-LIBC_GETHOSTBYNAME_DECL
-{
-	return tsocks_gethostbyname(LIBC_GETHOSTBYNAME_ARGS);
-}
-
-/*
- * Torsocks call for getaddrinfo(3).
- */
-LIBC_GETADDRINFO_RET_TYPE tsocks_getaddrinfo(LIBC_GETADDRINFO_SIG)
-{
-	int ret, af;
-	struct in_addr addr4;
-	struct in6_addr addr6;
-	void *addr;
-	char *ip_str, ipv4[INET_ADDRSTRLEN], ipv6[INET6_ADDRSTRLEN];
-	socklen_t ip_str_size;
-	const char *node;
-
-	DBG("[getaddrinfo] Requesting %s hostname", __node);
-
-	if (!__node) {
-		ret = EAI_NONAME;
-		goto error;
-	}
-
-	/* Use right domain for the next step. */
-	switch (__hints->ai_family) {
-	default:
-		/* Default value is to use IPv4. */
-	case AF_INET:
-		addr = &addr4;
-		ip_str = ipv4;
-		ip_str_size = sizeof(ipv4);
-		af = AF_INET;
-		break;
-	case AF_INET6:
-		addr = &addr6;
-		ip_str = ipv6;
-		ip_str_size = sizeof(ipv6);
-		af = AF_INET6;
-		break;
-	}
-
-	ret = inet_pton(af, __node, &addr);
-	if (ret == 0) {
-		/* The node most probably is a DNS name. */
-		ret = tor_resolve(__node, (uint32_t *) addr);
-		if (ret < 0) {
-			ret = EAI_FAIL;
-			goto error;
+	fct_ptr = dlsym(RTLD_NEXT, symbol);
+	if (!fct_ptr) {
+		ERR("Unable to find %s", symbol);
+		if (action == TSOCKS_SYM_EXIT_NOT_FOUND) {
+			ERR("This is critical for torsocks. Exiting");
+			clean_exit(EXIT_FAILURE);
 		}
-
-		(void) inet_ntop(af, addr, ip_str, ip_str_size);
-		node = ip_str;
-		DBG("[getaddrinfo] Node %s resolved to %s", __node, node);
-	} else {
-		node = __node;
-		DBG("[getaddrinfo] Node %s will be passed to the libc call", node);
 	}
 
-	ret = tsocks_libc_getaddrinfo(node, __service, __hints, __res);
-	if (ret) {
-		goto error;
-	}
-
-	return 0;
-
-error:
-	return ret;
-}
-
-/*
- * Libc hijacked symbol getaddrinfo(3).
- */
-LIBC_GETADDRINFO_DECL
-{
-	tsocks_libc_getaddrinfo = find_libc_symbol(LIBC_GETADDRINFO_NAME_STR,
-			TSOCKS_SYM_EXIT_NOT_FOUND);
-	return tsocks_getaddrinfo(LIBC_GETADDRINFO_ARGS);
+	return fct_ptr;
 }
