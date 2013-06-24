@@ -251,6 +251,7 @@ void connection_destroy(struct connection *conn)
 		return;
 	}
 
+	free(conn->dest_addr.hostname.addr);
 	free(conn);
 }
 

@@ -30,6 +30,7 @@
 enum connection_domain {
 	CONNECTION_DOMAIN_INET	= 1,
 	CONNECTION_DOMAIN_INET6	= 2,
+	CONNECTION_DOMAIN_NAME  = 3,
 };
 
 /*
@@ -37,6 +38,12 @@ enum connection_domain {
  */
 struct connection_addr {
 	enum connection_domain domain;
+
+	struct {
+		char *addr;
+		uint16_t port;
+	} hostname;
+
 	union {
 		struct sockaddr_in sin;
 		struct sockaddr_in6 sin6;

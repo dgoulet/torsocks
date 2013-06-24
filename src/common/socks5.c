@@ -244,8 +244,9 @@ int socks5_send_connect_request(struct connection *conn)
 	/* Always zeroed. */
 	msg.rsv = 0;
 
-	/* Select connection socket domain. */
-	if (conn->dest_addr.domain == CONNECTION_DOMAIN_INET) {
+	switch (conn->dest_addr.domain) {
+	case CONNECTION_DOMAIN_INET:
+	{
 		struct socks5_request_ipv4 req_ipv4;
 
 		msg.atyp = SOCKS5_ATYP_IPV4;
@@ -260,7 +261,10 @@ int socks5_send_connect_request(struct connection *conn)
 		/* Copy ipv4 request portion in the buffer. */
 		memcpy(buffer + buf_len, &req_ipv4, sizeof(req_ipv4));
 		buf_len += sizeof(req_ipv4);
-	} else if (conn->dest_addr.domain == CONNECTION_DOMAIN_INET6) {
+		break;
+	}
+	case CONNECTION_DOMAIN_INET6:
+	{
 		struct socks5_request_ipv6 req_ipv6;
 
 		msg.atyp = SOCKS5_ATYP_IPV6;
@@ -275,7 +279,28 @@ int socks5_send_connect_request(struct connection *conn)
 		/* Copy ipv6 request portion in the buffer. */
 		memcpy(buffer + buf_len, &req_ipv6, sizeof(req_ipv6));
 		buf_len += sizeof(req_ipv6);
-	} else {
+		break;
+	}
+	case CONNECTION_DOMAIN_NAME:
+	{
+		struct socks5_request_domain req_name;
+
+		msg.atyp = SOCKS5_ATYP_DOMAIN;
+		/* Copy the first part of the request. */
+		memcpy(buffer, &msg, buf_len);
+
+		/* Setup domain name request buffer. */
+		memcpy(req_name.name, conn->dest_addr.hostname.addr,
+				sizeof(req_name.name));
+		req_name.port = conn->dest_addr.hostname.port;
+		req_name.len = strlen(conn->dest_addr.hostname.addr);
+
+		/* Copy ipv6 request portion in the buffer. */
+		memcpy(buffer + buf_len, &req_name, sizeof(req_name));
+		buf_len += sizeof(req_name);
+		break;
+	}
+	default:
 		ERR("Socks5 connection domain unknown %d", conn->dest_addr.domain);
 		ret = -EINVAL;
 		goto error;
@@ -318,6 +343,10 @@ int socks5_recv_connect_reply(struct connection *conn)
 	recv_len += sizeof(uint16_t);
 
 	switch (tsocks_config.socks5_addr.domain) {
+	case CONNECTION_DOMAIN_NAME:
+		/*
+		 * Tor returns and IPv4 upon resolution. Same for .onion address.
+		 */
 	case CONNECTION_DOMAIN_INET:
 		recv_len+= 4;
 		break;
