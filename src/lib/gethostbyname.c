@@ -19,6 +19,7 @@
 
 #include <arpa/inet.h>
 #include <assert.h>
+#include <stdlib.h>
 
 #include <common/log.h>
 
@@ -83,4 +84,32 @@ error:
 LIBC_GETHOSTBYNAME_DECL
 {
 	return tsocks_gethostbyname(LIBC_GETHOSTBYNAME_ARGS);
+}
+
+/*
+ * Torsocks call for gethostbyname2(3).
+ *
+ * This call, like gethostbyname(), returns pointer to static data thus is
+ * absolutely not reentrant.
+ */
+LIBC_GETHOSTBYNAME2_RET_TYPE tsocks_gethostbyname2(LIBC_GETHOSTBYNAME2_SIG)
+{
+	/*
+	 * For now, there is no way of resolving a domain name to IPv6 through Tor
+	 * so only accept INET request thus using the original gethostbyname().
+	 */
+	if (__af != AF_INET) {
+		h_errno = HOST_NOT_FOUND;
+		return NULL;
+	}
+
+	return tsocks_gethostbyname(__name);
+}
+
+/*
+ * Libc hijacked symbol gethostbyname2(3).
+ */
+LIBC_GETHOSTBYNAME2_DECL
+{
+	return tsocks_gethostbyname2(LIBC_GETHOSTBYNAME2_ARGS);
 }
