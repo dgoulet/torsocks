@@ -45,7 +45,7 @@
 #define LIBC_CONNECT_ARGS \
 	__sockfd, __addr, __addrlen
 
-/* gethostbyname(3) */
+/* gethostbyname(3) - DEPRECATED in glibc. */
 #include <netdb.h>
 
 /*
@@ -57,6 +57,7 @@
 struct hostent tsocks_he;
 char *tsocks_he_addr_list[2];
 char tsocks_he_addr[INET_ADDRSTRLEN];
+char tsocks_he_name[255];
 
 #define LIBC_GETHOSTBYNAME_NAME gethostbyname
 #define LIBC_GETHOSTBYNAME_NAME_STR XSTR(LIBC_GETHOSTBYNAME_NAME)
@@ -70,6 +71,15 @@ char tsocks_he_addr[INET_ADDRSTRLEN];
 #define LIBC_GETHOSTBYNAME2_RET_TYPE struct hostent *
 #define LIBC_GETHOSTBYNAME2_SIG const char *__name, int __af
 #define LIBC_GETHOSTBYNAME2_ARGS __name, __af
+
+/* gethostbyaddr(3) - DEPRECATED in glibc. */
+#include <sys/socket.h>
+
+#define LIBC_GETHOSTBYADDR_NAME gethostbyaddr
+#define LIBC_GETHOSTBYADDR_NAME_STR XSTR(LIBC_GETHOSTBYADDR_NAME)
+#define LIBC_GETHOSTBYADDR_RET_TYPE struct hostent *
+#define LIBC_GETHOSTBYADDR_SIG const void *__addr, socklen_t __len, int __type
+#define LIBC_GETHOSTBYADDR_ARGS __addr, __len, __type
 
 /* getaddrinfo(3) */
 #include <netdb.h>
@@ -108,6 +118,12 @@ TSOCKS_LIBC_DECL(gethostbyname2, LIBC_GETHOSTBYNAME2_RET_TYPE,
 #define LIBC_GETHOSTBYNAME2_DECL LIBC_GETHOSTBYNAME2_RET_TYPE \
 		LIBC_GETHOSTBYNAME2_NAME(LIBC_GETHOSTBYNAME2_SIG)
 
+/* gethostbyaddr(3) */
+TSOCKS_LIBC_DECL(gethostbyaddr, LIBC_GETHOSTBYADDR_RET_TYPE,
+		LIBC_GETHOSTBYADDR_SIG)
+#define LIBC_GETHOSTBYADDR_DECL LIBC_GETHOSTBYADDR_RET_TYPE \
+		LIBC_GETHOSTBYADDR_NAME(LIBC_GETHOSTBYADDR_SIG)
+
 /* getaddrinfo(3) */
 TSOCKS_LIBC_DECL(getaddrinfo, LIBC_GETADDRINFO_RET_TYPE,
 		LIBC_GETADDRINFO_SIG)
@@ -131,5 +147,6 @@ int tsocks_connect_to_tor(struct connection *conn);
 void *tsocks_find_libc_symbol(const char *symbol,
 		enum tsocks_sym_action action);
 int tsocks_tor_resolve(const char *hostname, uint32_t *ip_addr);
+int tsocks_tor_resolve_ptr(const char *addr, char **ip, int af);
 
 #endif /* TORSOCKS_H */

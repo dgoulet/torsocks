@@ -24,6 +24,7 @@
 #include <common/log.h>
 
 #include "torsocks.h"
+
 /*
  * Torsocks call for gethostbyname(3).
  *
@@ -112,4 +113,69 @@ LIBC_GETHOSTBYNAME2_RET_TYPE tsocks_gethostbyname2(LIBC_GETHOSTBYNAME2_SIG)
 LIBC_GETHOSTBYNAME2_DECL
 {
 	return tsocks_gethostbyname2(LIBC_GETHOSTBYNAME2_ARGS);
+}
+
+/*
+ * Torsocks call for gethostbyaddr(3).
+ *
+ * NOTE: This call is OBSOLETE in the glibc. Also, this call returns a pointer
+ * to a static pointer.
+ */
+LIBC_GETHOSTBYADDR_RET_TYPE tsocks_gethostbyaddr(LIBC_GETHOSTBYADDR_SIG)
+{
+	int ret;
+	char *hostname;
+
+	/*
+	 * Tor does not allow to resolve to an IPv6 pointer so only accept inet
+	 * return address.
+	 */
+	if (!__addr || __type != AF_INET) {
+		h_errno = HOST_NOT_FOUND;
+		goto error;
+	}
+
+	DBG("[gethostbyaddr] Requesting address %s of len %d and type %d",
+			inet_ntoa(*((struct in_addr *) __addr)), __len, __type);
+
+	/* Reset static host entry of tsocks. */
+	memset(&tsocks_he, 0, sizeof(tsocks_he));
+	memset(tsocks_he_addr_list, 0, sizeof(tsocks_he_addr_list));
+	memset(tsocks_he_name, 0, sizeof(tsocks_he_name));
+
+	ret = tsocks_tor_resolve_ptr(__addr, &hostname, __type);
+	if (ret < 0) {
+		const char *ret_str;
+
+		ret_str = inet_ntop(__type, __addr, tsocks_he_name,
+				sizeof(tsocks_he_name));
+		if (!ret_str) {
+			h_errno = HOST_NOT_FOUND;
+			goto error;
+		}
+	} else {
+		memcpy(tsocks_he_name, hostname, sizeof(tsocks_he_name));
+		free(hostname);
+		tsocks_he_addr_list[0] = (char *) __addr;
+	}
+
+	tsocks_he.h_name = tsocks_he_name;
+	tsocks_he.h_aliases = NULL;
+	tsocks_he.h_length = strlen(tsocks_he_name);
+	tsocks_he.h_addrtype = __type;
+	tsocks_he.h_addr_list = tsocks_he_addr_list;
+
+	errno = 0;
+	return &tsocks_he;
+
+error:
+	return NULL;
+}
+
+/*
+ * Libc hijacked symbol gethostbyaddr(3).
+ */
+LIBC_GETHOSTBYADDR_DECL
+{
+	return tsocks_gethostbyaddr(LIBC_GETHOSTBYADDR_ARGS);
 }

@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include <dlfcn.h>
+#include <inttypes.h>
 #include <stdlib.h>
 
 #include <common/config-file.h>
@@ -291,6 +292,53 @@ int tsocks_tor_resolve(const char *hostname, uint32_t *ip_addr)
 
 	/* Force IPv4 resolution for now. */
 	ret = socks5_recv_resolve_reply(&conn, ip_addr, sizeof(uint32_t));
+	if (ret < 0) {
+		goto error;
+	}
+
+	ret = close(conn.fd);
+	if (ret < 0) {
+		PERROR("close");
+	}
+
+error:
+	return ret;
+}
+
+/*
+ * Resolve a hostname through Tor and set the ip address in the given pointer.
+ *
+ * Return 0 on success else a negative value and the result addr is untouched.
+ */
+int tsocks_tor_resolve_ptr(const char *addr, char **ip, int af)
+{
+	int ret;
+	struct connection conn;
+
+	assert(addr);
+	assert(ip);
+
+	DBG("Resolving %" PRIu32 " on the Tor network", addr);
+
+	conn.fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (conn.fd < 0) {
+		PERROR("socket");
+		ret = -errno;
+		goto error;
+	}
+
+	ret = setup_tor_connection(&conn);
+	if (ret < 0) {
+		goto error;
+	}
+
+	ret = socks5_send_resolve_ptr_request(addr, &conn);
+	if (ret < 0) {
+		goto error;
+	}
+
+	/* Force IPv4 resolution for now. */
+	ret = socks5_recv_resolve_ptr_reply(&conn, ip);
 	if (ret < 0) {
 		goto error;
 	}
