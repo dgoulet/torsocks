@@ -157,3 +157,20 @@ char *utils_strsplit(char *separator, char **text, const char *search)
 
 	return ret;
 }
+
+/*
+ * Compares the last strlen(s2) characters of s1 with s2.
+ *
+ * Returns as for strcasecmp.
+ */
+int utils_strcasecmpend(const char *s1, const char *s2)
+{
+	size_t n1 = strlen(s1), n2 = strlen(s2);
+
+	if (n2 > n1) {
+		/* Then they can't be the same; figure out which is bigger */
+		return strcasecmp(s1, s2);
+	} else {
+		return strncasecmp(s1 + (n1 - n2), s2, n2);
+	}
+}

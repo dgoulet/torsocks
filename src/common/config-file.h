@@ -35,6 +35,13 @@ struct config_file {
 	char *tor_address;
 	/* The port of the Tor SOCKS. */
 	in_port_t tor_port;
+
+	/*
+	 * Base for onion address pool and the mask. In the config file, this is
+	 * represented by BASE/MASK like so: 127.0.69.0/24
+	 */
+	in_addr_t onion_base;
+	uint8_t onion_mask;
 };
 
 /*

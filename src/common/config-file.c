@@ -17,9 +17,13 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <arpa/inet.h>
 #include <assert.h>
+#include <limits.h>
+#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/socket.h>
 
 #include "config-file.h"
 #include "log.h"
@@ -30,6 +34,66 @@
  */
 static const char *conf_toraddr_str = "TorAddress";
 static const char *conf_torport_str = "TorPort";
+static const char *conf_onion_str = "OnionAddrRange";
+
+/*
+ * Set the onion pool address range in the configuration object using the value
+ * found in the conf file.
+ *
+ * Return 0 on success or else a negative value.
+ */
+static int set_onion_info(const char *addr, struct configuration *config)
+{
+	int ret;
+	unsigned long bit_mask;
+	char *ip = NULL, *mask = NULL;
+	in_addr_t net;
+
+	assert(addr);
+	assert(config);
+
+	ip = strchr(addr, '/');
+	if (!ip) {
+		ERR("[config] Invalid %s value for %s", addr, conf_onion_str);
+		ret = -EINVAL;
+		goto error;
+	}
+
+	mask = strdup(addr + (ip - addr) + 1);
+	ip = strndup(addr, ip - addr);
+	if (!ip || !mask) {
+		PERROR("[config] strdup onion addr");
+		ret = -ENOMEM;
+		goto error;
+	}
+
+	net = inet_addr(ip);
+	if (net == INADDR_NONE) {
+		ERR("[config] Invalid IP subnet %s for %s", ip, conf_onion_str);
+		ret = -EINVAL;
+		goto error;
+	}
+
+	/* Expressed in base 10. */
+	bit_mask = strtoul(mask, NULL, 10);
+	if (bit_mask == ULONG_MAX) {
+		ERR("[config] Invalid mask %s for %s", mask, conf_onion_str);
+		ret = -EINVAL;
+		goto error;
+	}
+
+	memcpy(&config->conf_file.onion_base, &net,
+			sizeof(config->conf_file.onion_base));
+	config->conf_file.onion_mask = (uint8_t) bit_mask;
+
+	DBG("[config] Onion address range set to %s", addr);
+	ret = 0;
+
+error:
+	free(ip);
+	free(mask);
+	return ret;
+}
 
 /*
  * Set the given string port in a configuration object.
@@ -130,6 +194,11 @@ static int parse_config_line(const char *line, struct configuration *config)
 		if (ret < 0) {
 			goto error;
 		}
+	} else if (!strcmp(tokens[0], conf_onion_str)) {
+		ret = set_onion_info(tokens[1], config);
+		if (ret < 0) {
+			goto error;
+		}
 	} else {
 		WARN("Config file contains unknown value: %s", line);
 	}
@@ -207,7 +276,13 @@ int config_file_read(const char *filename, struct configuration *config)
 		 * statement in the function call to set port.
 		 */
 		(void) set_tor_port(XSTR(DEFAULT_TOR_PORT), config);
-		ret = 0;
+
+		ret = set_onion_info(
+				DEFAULT_ONION_ADDR_RANGE "/" DEFAULT_ONION_ADDR_MASK, config);
+		if (!ret) {
+			/* ENOMEM is probably the only case here. */
+			goto error;
+		}
 		goto end;
 	}
 

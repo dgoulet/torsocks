@@ -26,7 +26,9 @@
 #include <common/connection.h>
 #include <common/defaults.h>
 #include <common/log.h>
+#include <common/onion.h>
 #include <common/socks5.h>
+#include <common/utils.h>
 
 #include "torsocks.h"
 
@@ -37,6 +39,13 @@
  * read this object as long as there is not write action.
  */
 struct configuration tsocks_config;
+
+/*
+ * This is the onion address pool for the library. It is initialized once in
+ * the constructor. This object changes over time and every access is nested
+ * inside the registry lock.
+ */
+struct onion_pool tsocks_onion_pool;
 
 /*
  * Set to 1 if the binary is set with suid or 0 if not. This is set once during
@@ -86,6 +95,10 @@ static void init_config(void)
 	}
 	if (tsocks_config.conf_file.tor_domain == 0) {
 		tsocks_config.conf_file.tor_domain = DEFAULT_TOR_DOMAIN;
+	}
+	if (tsocks_config.conf_file.onion_base == 0) {
+		tsocks_config.conf_file.onion_base = inet_addr(DEFAULT_ONION_ADDR_RANGE);
+		tsocks_config.conf_file.onion_mask = atoi(DEFAULT_ONION_ADDR_MASK);
 	}
 
 	/* Create the Tor SOCKS5 connection address. */
@@ -160,6 +173,8 @@ static void init_logging(void)
  */
 static void __attribute__((constructor)) tsocks_init(void)
 {
+	int ret;
+
 	/* UID and effective UID MUST be the same or else we are SUID. */
 	is_suid = (getuid() != geteuid());
 
@@ -178,6 +193,17 @@ static void __attribute__((constructor)) tsocks_init(void)
 
 	/* Initialize connection reigstry. */
 	connection_registry_init();
+
+	/*
+	 * Initalized the onion pool which maps cookie address to hidden service
+	 * onion address.
+	 */
+	ret = onion_pool_init(&tsocks_onion_pool,
+			tsocks_config.conf_file.onion_base,
+			tsocks_config.conf_file.onion_mask);
+	if (ret < 0) {
+		clean_exit(EXIT_FAILURE);
+	}
 }
 
 /*
@@ -185,6 +211,8 @@ static void __attribute__((constructor)) tsocks_init(void)
  */
 static void __attribute__((destructor)) tsocks_exit(void)
 {
+	/* Cleanup every entries in the onion pool. */
+	onion_pool_destroy(&tsocks_onion_pool);
 	/* Cleanup allocated memory in the config file. */
 	config_file_destroy(&tsocks_config.conf_file);
 	/* Clean up logging. */
@@ -221,6 +249,45 @@ static int setup_tor_connection(struct connection *conn)
 
 error:
 	return ret;
+}
+
+/*
+ * Lookup by hostname for an onion entry in a given pool. The entry is returned
+ * if found or else a new one is created, added to the pool and finally
+ * returned.
+ *
+ * NOTE: The pool lock MUST NOT be acquired before calling this.
+ *
+ * On success the entry is returned else a NULL value.
+ */
+static struct onion_entry *get_onion_entry(const char *hostname,
+		struct onion_pool *pool)
+{
+	struct onion_entry *entry = NULL;
+
+	assert(hostname);
+	assert(pool);
+
+	tsocks_mutex_lock(&pool->lock);
+
+	entry = onion_entry_find_by_name(hostname, pool);
+	if (entry) {
+		goto end;
+	}
+
+	/*
+	 * On success, the onion entry is automatically added to the onion pool and
+	 * the reference is returned.
+	 */
+	entry = onion_entry_create(pool, hostname);
+	if (!entry) {
+		goto error;
+	}
+
+end:
+error:
+	tsocks_mutex_unlock(&pool->lock);
+	return entry;
 }
 
 /*
@@ -273,6 +340,22 @@ int tsocks_tor_resolve(const char *hostname, uint32_t *ip_addr)
 
 	DBG("Resolving %s on the Tor network", hostname);
 
+	/*
+	 * Tor hidden service address have no IP address so we send back an onion
+	 * reserved IP address that acts as a cookie that we will use to find the
+	 * onion hostname at the connect() stage.
+	 */
+	if (utils_strcasecmpend(hostname, ".onion") == 0) {
+		struct onion_entry *entry;
+
+		entry = get_onion_entry(hostname, &tsocks_onion_pool);
+		if (entry) {
+			memcpy(ip_addr, &entry->ip, sizeof(entry->ip));
+			ret = 0;
+			goto end;
+		}
+	}
+
 	conn.fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (conn.fd < 0) {
 		PERROR("socket");
@@ -301,6 +384,7 @@ int tsocks_tor_resolve(const char *hostname, uint32_t *ip_addr)
 		PERROR("close");
 	}
 
+end:
 error:
 	return ret;
 }

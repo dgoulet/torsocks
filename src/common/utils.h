@@ -23,6 +23,7 @@
 #include <netinet/in.h>
 
 char *utils_strsplit(char *separator, char **text, const char *search);
+int utils_strcasecmpend(const char *s1, const char *s2);
 int utils_tokenize_ignore_comments(const char *_line, size_t size, char **tokens);
 
 int utils_is_address_ipv4(const char *ip);

@@ -174,26 +174,28 @@ struct connection *connection_create(int fd, const struct sockaddr *dest)
 {
 	struct connection *conn = NULL;
 
-	assert(dest);
-
 	conn = zmalloc(sizeof(*conn));
 	if (!conn) {
 		PERROR("zmalloc connection");
 		goto error;
 	}
 
-	switch (dest->sa_family) {
-	case AF_INET:
-		conn->dest_addr.domain = CONNECTION_DOMAIN_INET;
-		memcpy(&conn->dest_addr.u.sin, dest, sizeof(conn->dest_addr.u.sin));
-		break;
-	case AF_INET6:
-		conn->dest_addr.domain = CONNECTION_DOMAIN_INET6;
-		memcpy(&conn->dest_addr.u.sin6, dest, sizeof(conn->dest_addr.u.sin6));
-		break;
-	default:
-		ERR("Connection domain unknown %d", dest->sa_family);
-		goto error;
+	if (dest) {
+		switch (dest->sa_family) {
+		case AF_INET:
+			conn->dest_addr.domain = CONNECTION_DOMAIN_INET;
+			memcpy(&conn->dest_addr.u.sin, dest,
+					sizeof(conn->dest_addr.u.sin));
+			break;
+		case AF_INET6:
+			conn->dest_addr.domain = CONNECTION_DOMAIN_INET6;
+			memcpy(&conn->dest_addr.u.sin6, dest,
+					sizeof(conn->dest_addr.u.sin6));
+			break;
+		default:
+			ERR("Connection domain unknown %d", dest->sa_family);
+			goto error;
+		}
 	}
 
 	conn->fd = fd;

@@ -21,6 +21,7 @@
 
 #include <common/connection.h>
 #include <common/log.h>
+#include <common/onion.h>
 
 #include "torsocks.h"
 
@@ -32,6 +33,8 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 	int ret, sock_type;
 	socklen_t optlen;
 	struct connection *new_conn;
+	struct onion_entry *on_entry;
+	struct sockaddr_in *inet_addr;
 
 	DBG("Connect catched on fd %d", __sockfd);
 
@@ -61,6 +64,8 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 	DBG("[connect] Socket family %s and type %d",
 			__addr->sa_family == AF_INET ? "AF_INET" : "AF_INET6", sock_type);
 
+	inet_addr = (struct sockaddr_in *) __addr;
+
 	/*
 	 * Lock registry to get the connection reference if one. In this code path,
 	 * if a connection object is found, it will not be used since a double
@@ -76,10 +81,34 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 		goto error;
 	}
 
-	new_conn = connection_create(__sockfd, __addr);
-	if (!new_conn) {
-		errno = ENOMEM;
-		goto error;
+	/*
+	 * See if the IP being connected is an onion IP cookie mapping to an
+	 * existing .onion address.
+	 */
+	onion_pool_lock(&tsocks_onion_pool);
+	on_entry = onion_entry_find_by_ip(inet_addr->sin_addr.s_addr,
+			&tsocks_onion_pool);
+	onion_pool_unlock(&tsocks_onion_pool);
+
+	if (on_entry) {
+		/*
+		 * Create a connection without a destination address since we will set
+		 * the onion address name found before.
+		 */
+		new_conn = connection_create(__sockfd, NULL);
+		if (!new_conn) {
+			errno = ENOMEM;
+			goto error;
+		}
+		new_conn->dest_addr.domain = CONNECTION_DOMAIN_NAME;
+		new_conn->dest_addr.hostname.addr = strdup(on_entry->hostname);
+		new_conn->dest_addr.hostname.port = inet_addr->sin_port;
+	} else {
+		new_conn = connection_create(__sockfd, __addr);
+		if (!new_conn) {
+			errno = ENOMEM;
+			goto error;
+		}
 	}
 
 	/* Connect the socket to the Tor network. */

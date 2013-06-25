@@ -47,4 +47,15 @@
  */
 #define DEFAULT_MAX_CONF_TOKEN		5
 
+/*
+ * Default initial size of the onion pool.
+ */
+#define DEFAULT_ONION_POOL_SIZE		8
+
+/*
+ * The default onion pool cookie range starting at 0 up to 255.
+ */
+#define DEFAULT_ONION_ADDR_RANGE	"127.42.42.0"
+#define DEFAULT_ONION_ADDR_MASK		"24"
+
 #endif /* TORSOCKS_DEFAULTS_H */

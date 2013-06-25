@@ -290,14 +290,17 @@ int socks5_send_connect_request(struct connection *conn)
 		memcpy(buffer, &msg, buf_len);
 
 		/* Setup domain name request buffer. */
-		memcpy(req_name.name, conn->dest_addr.hostname.addr,
-				sizeof(req_name.name));
-		req_name.port = conn->dest_addr.hostname.port;
 		req_name.len = strlen(conn->dest_addr.hostname.addr);
+		memcpy(req_name.name, conn->dest_addr.hostname.addr, req_name.len);
+		req_name.port = conn->dest_addr.hostname.port;
 
 		/* Copy ipv6 request portion in the buffer. */
-		memcpy(buffer + buf_len, &req_name, sizeof(req_name));
-		buf_len += sizeof(req_name);
+		memcpy(buffer + buf_len, &req_name.len, sizeof(req_name.len));
+		buf_len += sizeof(req_name.len);
+		memcpy(buffer + buf_len, req_name.name, req_name.len);
+		buf_len += req_name.len;
+		memcpy(buffer + buf_len, &req_name.port, sizeof(req_name.port));
+		buf_len += sizeof(req_name.port);
 		break;
 	}
 	default:
@@ -342,7 +345,7 @@ int socks5_recv_connect_reply(struct connection *conn)
 	/* Len of BND.PORT */
 	recv_len += sizeof(uint16_t);
 
-	switch (tsocks_config.socks5_addr.domain) {
+	switch (conn->dest_addr.domain) {
 	case CONNECTION_DOMAIN_NAME:
 		/*
 		 * Tor returns and IPv4 upon resolution. Same for .onion address.
