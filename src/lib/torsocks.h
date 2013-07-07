@@ -45,6 +45,15 @@
 #define LIBC_CONNECT_ARGS \
 	__sockfd, __addr, __addrlen
 
+/* close(2) */
+#include <unistd.h>
+
+#define LIBC_CLOSE_NAME close
+#define LIBC_CLOSE_NAME_STR XSTR(LIBC_CLOSE_NAME)
+#define LIBC_CLOSE_RET_TYPE int
+#define LIBC_CLOSE_SIG int __fd
+#define LIBC_CLOSE_ARGS __fd
+
 /* gethostbyname(3) - DEPRECATED in glibc. */
 #include <netdb.h>
 
@@ -105,6 +114,11 @@ char tsocks_he_name[255];
 TSOCKS_LIBC_DECL(connect, LIBC_CONNECT_RET_TYPE, LIBC_CONNECT_SIG)
 #define LIBC_CONNECT_DECL \
 	LIBC_CONNECT_RET_TYPE LIBC_CONNECT_NAME(LIBC_CONNECT_SIG)
+
+/* close(2) */
+TSOCKS_LIBC_DECL(close, LIBC_CLOSE_RET_TYPE, LIBC_CLOSE_SIG)
+#define LIBC_CLOSE_DECL \
+		LIBC_CLOSE_RET_TYPE LIBC_CLOSE_NAME(LIBC_CLOSE_SIG)
 
 /* gethostbyname(3) */
 TSOCKS_LIBC_DECL(gethostbyname, LIBC_GETHOSTBYNAME_RET_TYPE,

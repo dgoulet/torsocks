@@ -121,6 +121,8 @@ static void init_libc_symbols(void)
 {
 	tsocks_libc_connect = tsocks_find_libc_symbol(LIBC_CONNECT_NAME_STR,
 			TSOCKS_SYM_EXIT_NOT_FOUND);
+	tsocks_libc_close = tsocks_find_libc_symbol(LIBC_CLOSE_NAME_STR,
+			TSOCKS_SYM_EXIT_NOT_FOUND);
 }
 
 /*
