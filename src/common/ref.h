@@ -18,6 +18,8 @@
 #ifndef TORSOCKS_REF_H
 #define TORSOCKS_REF_H
 
+#include <assert.h>
+
 struct ref {
 	long count;
 };
