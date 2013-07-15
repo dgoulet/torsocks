@@ -26,6 +26,98 @@
 #include "torsocks.h"
 
 /*
+ * Free the given hostent structure and all pointers contained inside.
+ */
+static void free_hostent(struct hostent *he)
+{
+	if (!he) {
+		return;
+	}
+
+	if (he->h_name) {
+		free(he->h_name);
+	}
+
+	if (he->h_aliases) {
+		int i = 0;
+
+		while (he->h_aliases[i] != NULL) {
+			free(he->h_aliases[i]);
+			i++;
+		}
+	}
+
+	if (he->h_addr_list) {
+		int i = 0;
+
+		while (he->h_addr_list[i] != NULL) {
+			free(he->h_addr_list[i]);
+			i++;
+		}
+	}
+
+	free(he);
+}
+
+/*
+ * Allocate a hostent structure with the given type.
+ *
+ * On error, return NULL.
+ */
+static struct hostent *alloc_hostent(int af)
+{
+	void *addr = NULL;
+	char **addr_list = NULL, **aliases = NULL;
+	struct hostent *he = NULL;
+	size_t addrlen;
+
+	if (af != AF_INET && af != AF_INET6) {
+		goto error;
+	}
+
+	he = zmalloc(sizeof(*he));
+	addr_list = zmalloc(sizeof(*addr_list) * 2);
+	aliases = zmalloc(sizeof(*aliases));
+	if (!he || !addr_list || !aliases) {
+		PERROR("zmalloc hostent");
+		goto error;
+	}
+
+	switch (af) {
+	case AF_INET:
+		addr = zmalloc(sizeof(struct in_addr));
+		addrlen = sizeof(struct in_addr);
+		break;
+	case AF_INET6:
+		addr = zmalloc(sizeof(struct in6_addr));
+		addrlen = sizeof(struct in6_addr);
+		break;
+	default:
+		assert(0);
+		goto error;
+	}
+	if (!addr) {
+		PERROR("zmalloc addr");
+		goto error;
+	}
+
+	he->h_name = NULL;
+	he->h_addr_list = addr_list;
+	he->h_addr_list[0] = addr;
+	he->h_addr_list[1] = NULL;
+	he->h_aliases = aliases;
+	he->h_aliases[0] = NULL;
+	he->h_length = addrlen;
+	he->h_addrtype = af;
+
+	return he;
+
+error:
+	free_hostent(he);
+	return NULL;
+}
+
+/*
  * Torsocks call for gethostbyname(3).
  *
  * NOTE: This call is OBSOLETE in the glibc.
@@ -178,4 +270,107 @@ error:
 LIBC_GETHOSTBYADDR_DECL
 {
 	return tsocks_gethostbyaddr(LIBC_GETHOSTBYADDR_ARGS);
+}
+
+/*
+ * Torsocks call for gethostbyaddr_r(3).
+ *
+ * NOTE: GNU extension. Reentrant version.
+ */
+LIBC_GETHOSTBYADDR_R_RET_TYPE tsocks_gethostbyaddr_r(LIBC_GETHOSTBYADDR_R_SIG)
+{
+	int ret;
+	struct hostent *he = NULL;
+
+	struct data {
+		char *hostname;
+		char *addr_list[2];
+		char padding[];
+	} *data;
+
+	if (__buflen < sizeof(struct data)) {
+		ret = ERANGE;
+		goto error;
+	}
+	data = (struct data *) __buf;
+	memset(data, 0, sizeof(*data));
+
+	/*
+	 * Tor does not allow to resolve to an IPv6 pointer so only accept inet
+	 * return address.
+	 */
+	if (!__addr || __type != AF_INET) {
+		ret = HOST_NOT_FOUND;
+		if (__h_errnop) {
+			*__h_errnop = HOST_NOT_FOUND;
+		}
+		goto error;
+	}
+
+	DBG("[gethostbyaddr_r] Requesting address %s of len %d and type %d",
+			inet_ntoa(*((struct in_addr *) __addr)), __len, __type);
+
+	/* This call allocates hostname. On error, it's untouched. */
+	ret = tsocks_tor_resolve_ptr(__addr, &data->hostname, __type);
+	if (ret < 0) {
+		const char *ret_str;
+
+		ret_str = inet_ntop(__type, __addr, __buf, __buflen);
+		if (!ret_str) {
+			ret = HOST_NOT_FOUND;
+			if (errno == ENOSPC) {
+				ret = ERANGE;
+			}
+			if (__h_errnop) {
+				*__h_errnop = HOST_NOT_FOUND;
+			}
+			goto error;
+		}
+	}
+
+	/* Ease our life a bit. */
+	he = __ret;
+
+	if (!he) {
+		ret = NO_RECOVERY;
+		if (__h_errnop) {
+			*__h_errnop = NO_RECOVERY;
+		}
+		goto error;
+	}
+
+	if (data->hostname) {
+		he->h_name = data->hostname;
+	} else {
+		ret = NO_RECOVERY;
+		if (__h_errnop) {
+			*__h_errnop = NO_RECOVERY;
+		}
+		goto error;
+	}
+
+	he->h_aliases = NULL;
+	he->h_length = strlen(he->h_name);
+	/* Assign the address list within the data of the given buffer. */
+	data->addr_list[0] = (char *) __addr;
+	data->addr_list[1] = NULL;
+	he->h_addr_list = data->addr_list;
+
+	if (__result) {
+		*__result = he;
+	}
+
+	/* Everything went good. */
+	ret = 0;
+
+error:
+	return ret;
+}
+
+/*
+ * Libc hijacked symbol gethostbyaddr_r(3).
+ */
+LIBC_GETHOSTBYADDR_R_DECL
+{
+	return tsocks_gethostbyaddr_r(LIBC_GETHOSTBYADDR_R_ARGS);
 }

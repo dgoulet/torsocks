@@ -90,6 +90,16 @@ char tsocks_he_name[255];
 #define LIBC_GETHOSTBYADDR_SIG const void *__addr, socklen_t __len, int __type
 #define LIBC_GETHOSTBYADDR_ARGS __addr, __len, __type
 
+/* GNU extension. Reentrant version. */
+#define LIBC_GETHOSTBYADDR_R_NAME gethostbyaddr_r
+#define LIBC_GETHOSTBYADDR_R_NAME_STR XSTR(LIBC_GETHOSTBYADDR_R_NAME)
+#define LIBC_GETHOSTBYADDR_R_RET_TYPE int
+#define LIBC_GETHOSTBYADDR_R_SIG const void *__addr, socklen_t __len, int __type, \
+	struct hostent *__ret, char *__buf, size_t __buflen, \
+	struct hostent **__result, int *__h_errnop
+#define LIBC_GETHOSTBYADDR_R_ARGS __addr, __len, __type, __ret, __buf, \
+	__buflen, __result, __h_errnop
+
 /* getaddrinfo(3) */
 #include <netdb.h>
 
@@ -137,6 +147,12 @@ TSOCKS_LIBC_DECL(gethostbyaddr, LIBC_GETHOSTBYADDR_RET_TYPE,
 		LIBC_GETHOSTBYADDR_SIG)
 #define LIBC_GETHOSTBYADDR_DECL LIBC_GETHOSTBYADDR_RET_TYPE \
 		LIBC_GETHOSTBYADDR_NAME(LIBC_GETHOSTBYADDR_SIG)
+
+/* gethostbyaddr_r(3) */
+TSOCKS_LIBC_DECL(gethostbyaddr_r, LIBC_GETHOSTBYADDR_R_RET_TYPE,
+		LIBC_GETHOSTBYADDR_R_SIG)
+#define LIBC_GETHOSTBYADDR_R_DECL LIBC_GETHOSTBYADDR_R_RET_TYPE \
+		LIBC_GETHOSTBYADDR_R_NAME(LIBC_GETHOSTBYADDR_R_SIG)
 
 /* getaddrinfo(3) */
 TSOCKS_LIBC_DECL(getaddrinfo, LIBC_GETADDRINFO_RET_TYPE,
