@@ -11,7 +11,8 @@ EXTRA_DIST = torsocks.in usewithtor.in
 lib_LTLIBRARIES = libtorsocks.la
 
 libtorsocks_la_SOURCES = torsocks.c torsocks.h \
-                         connect.c gethostbyname.c getaddrinfo.c close.c
+                         connect.c gethostbyname.c getaddrinfo.c close.c \
+                         getpeername.c
 
 libtorsocks_la_LIBADD = \
 		$(top_builddir)/src/common/libcommon.la \

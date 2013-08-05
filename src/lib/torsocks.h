@@ -111,6 +111,16 @@ char tsocks_he_name[255];
 	struct addrinfo **__res
 #define LIBC_GETADDRINFO_ARGS  __node, __service, __hints, __res
 
+/* getpeername(2) */
+#include <sys/socket.h>
+
+#define LIBC_GETPEERNAME_NAME getpeername
+#define LIBC_GETPEERNAME_NAME_STR XSTR(LIBC_GETPEERNAME_NAME)
+#define LIBC_GETPEERNAME_RET_TYPE int
+#define LIBC_GETPEERNAME_SIG \
+	int __sockfd, struct sockaddr *__addr, socklen_t *__addrlen
+#define LIBC_GETPEERNAME_ARGS  __sockfd, __addr, __addrlen
+
 #else
 #error "OS not supported."
 #endif /* __linux__ , __FreeBSD__, __darwin__ */
@@ -159,6 +169,12 @@ TSOCKS_LIBC_DECL(getaddrinfo, LIBC_GETADDRINFO_RET_TYPE,
 		LIBC_GETADDRINFO_SIG)
 #define LIBC_GETADDRINFO_DECL LIBC_GETADDRINFO_RET_TYPE \
 		LIBC_GETADDRINFO_NAME(LIBC_GETADDRINFO_SIG)
+
+/* getpeername(2) */
+TSOCKS_LIBC_DECL(getpeername, LIBC_GETPEERNAME_RET_TYPE,
+		LIBC_GETPEERNAME_SIG)
+#define LIBC_GETPEERNAME_DECL LIBC_GETPEERNAME_RET_TYPE \
+		LIBC_GETPEERNAME_NAME(LIBC_GETPEERNAME_SIG)
 
 /*
  * Those are actions to do during the lookup process of libc symbols. For
