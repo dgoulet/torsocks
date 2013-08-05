@@ -38,6 +38,7 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 
 	DBG("Connect catched on fd %d", __sockfd);
 
+	optlen = sizeof(sock_type);
 	ret = getsockopt(__sockfd, SOL_SOCKET, SO_TYPE, &sock_type, &optlen);
 	if (ret < 0) {
 		/* Use the getsockopt() errno value. */
