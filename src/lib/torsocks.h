@@ -81,6 +81,26 @@ char tsocks_he_name[255];
 #define LIBC_GETHOSTBYNAME2_SIG const char *__name, int __af
 #define LIBC_GETHOSTBYNAME2_ARGS __name, __af
 
+/* GNU extension. Reentrant version. */
+#define LIBC_GETHOSTBYNAME_R_NAME gethostbyname_r
+#define LIBC_GETHOSTBYNAME_R_NAME_STR XSTR(LIBC_GETHOSTBYNAME_R_NAME)
+#define LIBC_GETHOSTBYNAME_R_RET_TYPE int
+#define LIBC_GETHOSTBYNAME_R_SIG const char *__name, \
+	struct hostent *__ret, char *__buf, size_t __buflen, \
+	struct hostent **__result, int *__h_errnop
+#define LIBC_GETHOSTBYNAME_R_ARGS __name, __ret, __buf, \
+	__buflen, __result, __h_errnop
+
+/* GNU extension. Reentrant version 2. */
+#define LIBC_GETHOSTBYNAME2_R_NAME gethostbyname2_r
+#define LIBC_GETHOSTBYNAME2_R_NAME_STR XSTR(LIBC_GETHOSTBYNAME2_R_NAME)
+#define LIBC_GETHOSTBYNAME2_R_RET_TYPE int
+#define LIBC_GETHOSTBYNAME2_R_SIG const char *__name, int __af, \
+	struct hostent *__ret, char *__buf, size_t __buflen, \
+struct hostent **__result, int *__h_errnop
+#define LIBC_GETHOSTBYNAME2_R_ARGS __name, __af, __ret, __buf, \
+	__buflen, __result, __h_errnop
+
 /* gethostbyaddr(3) - DEPRECATED in glibc. */
 #include <sys/socket.h>
 
@@ -146,11 +166,23 @@ TSOCKS_LIBC_DECL(gethostbyname, LIBC_GETHOSTBYNAME_RET_TYPE,
 #define LIBC_GETHOSTBYNAME_DECL LIBC_GETHOSTBYNAME_RET_TYPE \
 		LIBC_GETHOSTBYNAME_NAME(LIBC_GETHOSTBYNAME_SIG)
 
+/* gethostbyname_r(3) */
+TSOCKS_LIBC_DECL(gethostbyname_r, LIBC_GETHOSTBYNAME_R_RET_TYPE,
+		LIBC_GETHOSTBYNAME_R_SIG)
+#define LIBC_GETHOSTBYNAME_R_DECL LIBC_GETHOSTBYNAME_R_RET_TYPE \
+		LIBC_GETHOSTBYNAME_R_NAME(LIBC_GETHOSTBYNAME_R_SIG)
+
 /* gethostbyname2(3) */
 TSOCKS_LIBC_DECL(gethostbyname2, LIBC_GETHOSTBYNAME2_RET_TYPE,
 		LIBC_GETHOSTBYNAME2_SIG)
 #define LIBC_GETHOSTBYNAME2_DECL LIBC_GETHOSTBYNAME2_RET_TYPE \
 		LIBC_GETHOSTBYNAME2_NAME(LIBC_GETHOSTBYNAME2_SIG)
+
+/* gethostbyname2_r(3) */
+TSOCKS_LIBC_DECL(gethostbyname2_r, LIBC_GETHOSTBYNAME2_R_RET_TYPE,
+		LIBC_GETHOSTBYNAME2_R_SIG)
+#define LIBC_GETHOSTBYNAME2_R_DECL LIBC_GETHOSTBYNAME2_R_RET_TYPE \
+		LIBC_GETHOSTBYNAME2_R_NAME(LIBC_GETHOSTBYNAME2_R_SIG)
 
 /* gethostbyaddr(3) */
 TSOCKS_LIBC_DECL(gethostbyaddr, LIBC_GETHOSTBYADDR_RET_TYPE,

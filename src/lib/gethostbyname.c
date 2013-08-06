@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2000-2008 - Shaun Clowes <delius@progsoc.org> 
- * 				 2008-2011 - Robert Hogan <robert@roberthogan.net>
- * 				 	  2013 - David Goulet <dgoulet@ev0ke.net>
+ * Copyright (C) 2000-2008 - Shaun Clowes <delius@progsoc.org> 2008-2011 -
+ * Robert Hogan <robert@roberthogan.net> 2013 - David Goulet
+ * <dgoulet@ev0ke.net>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License, version 2 only, as
@@ -373,4 +373,109 @@ error:
 LIBC_GETHOSTBYADDR_R_DECL
 {
 	return tsocks_gethostbyaddr_r(LIBC_GETHOSTBYADDR_R_ARGS);
+}
+
+/*
+ * Torsocks call for gethostbyname(3).
+ *
+ * NOTE: GNU extension. Reentrant version.
+ */
+LIBC_GETHOSTBYNAME_R_RET_TYPE tsocks_gethostbyname_r(LIBC_GETHOSTBYNAME_R_SIG)
+{
+	int ret;
+	/* This call is always using AF_INET. */
+	uint32_t ip;
+	const char *ret_str;
+	struct hostent *he = NULL;
+
+	struct data {
+		char addr[INET_ADDRSTRLEN];
+		char *addr_list[2];
+		char padding[];
+	} *data;
+
+	DBG("[gethostbyname_r] Requesting %s hostname", __name);
+
+	if (!__name) {
+		*__h_errnop = HOST_NOT_FOUND;
+		ret = -1;
+		goto error;
+	}
+
+	if (__buflen < sizeof(*data)) {
+		ret = ERANGE;
+		goto error;
+	}
+
+	/* Resolve the given hostname through Tor. */
+	ret = tsocks_tor_resolve(__name, &ip);
+	if (ret < 0) {
+		goto error;
+	}
+
+	data = (struct data *) __buf;
+	memset(data, 0, sizeof(*data));
+	/* Ease our life a bit. */
+	he = __ret;
+
+	ret_str = inet_ntop(AF_INET, &ip, data->addr, sizeof(data->addr));
+	if (!ret_str) {
+		PERROR("inet_ntop");
+		*__h_errnop = NO_ADDRESS;
+		goto error;
+	}
+
+	memcpy(data->addr, &ip, sizeof(ip));
+	data->addr_list[0] = data->addr;
+	data->addr_list[1] = NULL;
+	he->h_addr_list = data->addr_list;
+
+	he->h_name = (char *) __name;
+	he->h_aliases = NULL;
+	he->h_length = sizeof(in_addr_t);
+	he->h_addrtype = AF_INET;
+
+	DBG("[gethostbyname_r] Hostname %s resolved to %s", __name,
+			inet_ntoa(*((struct in_addr *) &ip)));
+
+error:
+	return ret;
+}
+
+/*
+ * Libc hijacked symbol gethostbyname_r(3).
+ */
+LIBC_GETHOSTBYNAME_R_DECL
+{
+	return tsocks_gethostbyname_r(LIBC_GETHOSTBYNAME_R_ARGS);
+}
+
+/*
+ * Torsocks call for gethostbyname(3).
+ *
+ * NOTE: GNU extension. Reentrant version.
+ */
+LIBC_GETHOSTBYNAME2_R_RET_TYPE tsocks_gethostbyname2_r(LIBC_GETHOSTBYNAME2_R_SIG)
+{
+	DBG("[gethostbyname2_r] Requesting %s hostname", __name);
+
+	/*
+	 * For now, there is no way of resolving a domain name to IPv6 through Tor
+	 * so only accept INET request thus using the original gethostbyname().
+	 */
+	if (__af != AF_INET) {
+		*__h_errnop = HOST_NOT_FOUND;
+		return -1;
+	}
+
+	return tsocks_gethostbyname_r(__name, __ret, __buf, __buflen, __result,
+			__h_errnop);
+}
+
+/*
+ * Libc hijacked symbol gethostbyname2_r(3).
+ */
+LIBC_GETHOSTBYNAME2_R_DECL
+{
+	return tsocks_gethostbyname2_r(LIBC_GETHOSTBYNAME2_R_ARGS);
 }
