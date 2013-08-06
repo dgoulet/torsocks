@@ -3,7 +3,7 @@
 ##############################################################################
 
 # Process this file with autoconf to produce a configure script.
-AC_INIT([torsocks], [2.0.0-rc1],[jacob@appelbaum.net],[],[https://torproject.org])
+AC_INIT([torsocks], [2.0.0-rc1],[dgoulet@ev0ke.net],[],[https://torproject.org])
 AC_CONFIG_AUX_DIR([config])
 AC_CANONICAL_TARGET
 # Get hostname and other information.
@@ -60,12 +60,6 @@ AC_CHECK_HEADER(arpa/inet.h,,AC_MSG_ERROR("arpa/inet.h not found"))
 dnl Check for the fcntl header
 AC_CHECK_HEADER(fcntl.h,,AC_MSG_ERROR("fcntl.h not found"))
 
-dnl Check for the poll header
-AC_CHECK_HEADER(sys/poll.h,,AC_MSG_ERROR("sys/poll.h not found"))
-
-dnl Check for the mmap header
-AC_CHECK_HEADER(sys/mman.h,,AC_MSG_ERROR("sys/mman.h not found"))
-
 dnl Other headers we're interested in
 AC_CHECK_HEADERS(unistd.h)
 
@@ -121,12 +115,11 @@ AC_CHECK_FUNC(gethostbyname, AC_DEFINE([HAVE_GETHOSTBYNAME],[],[Description]), [
 
 
 dnl Our main libs to link against are -dl and -lresolv.
-AC_SEARCH_LIBS(dlopen, [c dl])
-# Required to compile on machines that export res_query with a double underscore.
-# Sourced from gnupg configure via cvsnt.
-AC_SEARCH_LIBS(res_query,resolv bind,,AC_SEARCH_LIBS(__res_query,resolv bind))
-AC_DEFINE([SUPPORT_RES_API],[],[Support the res_query family of calls])
-
+AC_CHECK_LIB([dl], [dlopen],
+[
+	AC_DEFINE_UNQUOTED([TORSOCKS_HAVE_DL], 1, [Has libdl support.])
+	have_libdl=yes
+])
 
 dnl OpenBSD needs -lpthread. It also doesn't support AI_V4MAPPED.
 case $host in
@@ -267,283 +260,6 @@ if test "${oldmethod}" = "yes"; then
 
   AC_MSG_RESULT($LIBC)
 fi
-
-##############################################################################
-# 4. Get the signatures for each of the functions we are going
-#    to override in torsocks. These are:
-#     connect, poll, select, close, getpeername, res_query,
-#     res_init, res_send, res_querydomain, gethostbyname,
-#     gethostbyaddr, getaddrinfo, getipnodebyname, sendto,
-#     sendmsg
-##############################################################################
-
-dnl Find the correct select prototype on this machine
-AC_MSG_CHECKING(for correct select prototype)
-PROTO=
-NAMES='n, readfds, writefds, exceptfds, timeout'
-for testproto in 'int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout'
-do
-  if test "${PROTO}" = ""; then
-    AC_TRY_COMPILE([
-      #include <sys/time.h>
-      #include <sys/types.h>
-      #include <unistd.h>
-      int select($testproto);
-    ],,[PROTO="$testproto";],)
-  fi
-done
-if test "${PROTO}" = ""; then
-  AC_MSG_ERROR("no match found!")
-fi
-AC_MSG_RESULT([select(${PROTO})])
-AC_DEFINE_UNQUOTED([SELECT_SIGNATURE],[${PROTO}],[Description])
-AC_DEFINE_UNQUOTED([SELECT_ARGNAMES],[${NAMES}],[Argument names])
-
-
-dnl Find the correct connect prototype on this machine
-AC_MSG_CHECKING(for correct connect prototype)
-PROTO=
-NAMES='__fd, __addr, __len'
-PROTO1='int __fd, const struct sockaddr * __addr, int __len'
-PROTO2='int __fd, const struct sockaddr_in * __addr, socklen_t __len'
-PROTO3='int __fd, struct sockaddr * __addr, int __len'
-PROTO4='int __fd, const struct sockaddr * __addr, socklen_t __len'
-for testproto in "${PROTO1}" \
-                 "${PROTO2}" \
-                 "${PROTO3}" \
-                 "${PROTO4}"
-do
-  if test "${PROTO}" = ""; then
-    AC_TRY_COMPILE([
-      #include <sys/types.h>
-      #include <sys/socket.h>
-      int connect($testproto);
-    ],,[PROTO="$testproto";],)
-  fi
-done
-if test "${PROTO}" = ""; then
-  AC_MSG_ERROR("no match found!")
-fi
-AC_MSG_RESULT([connect(${PROTO})])
-AC_DEFINE_UNQUOTED([CONNECT_SIGNATURE],[${PROTO}],[Description])
-AC_DEFINE_UNQUOTED([CONNECT_ARGNAMES],[${NAMES}],[Argument names])
-
-dnl Pick which of the sockaddr type arguments we need for
-dnl connect(), we need to cast one of ours to it later
-SOCKETARG="struct sockaddr *"
-case "${PROTO}" in
-   *sockaddr_in*)
-      SOCKETARG="struct sockaddr_in *"
-      ;;
-esac
-AC_DEFINE_UNQUOTED([CONNECT_SOCKARG],[${SOCKETARG}],[Description])
-
-dnl Find the correct close prototype on this machine
-AC_MSG_CHECKING(for correct close prototype)
-PROTO=
-NAMES='fd'
-PROTO1='int fd'
-for testproto in "${PROTO1}"
-do
-  if test "${PROTO}" = ""; then
-    AC_TRY_COMPILE([
-      #include <stdlib.h>
-      int close($testproto);
-    ],,[PROTO="$testproto";],)
-  fi
-done
-if test "${PROTO}" = ""; then
-  AC_MSG_ERROR("no match found!")
-fi
-AC_MSG_RESULT([close(${PROTO})])
-AC_DEFINE_UNQUOTED([CLOSE_SIGNATURE], [${PROTO}],[Description])
-AC_DEFINE_UNQUOTED([CLOSE_ARGNAMES],[${NAMES}],[Argument names])
-
-
-dnl Find the correct res_querydomain prototype on this machine
-AC_MSG_CHECKING(for correct res_querydomain prototype)
-PROTO=
-NAMES='name, domain, class, type, answer, anslen'
-PROTO1='const char *name, const char *domain, int class, int type, unsigned char *answer, int anslen'
-for testproto in "${PROTO1}"
-do
-  if test "${PROTO}" = ""; then
-    AC_TRY_COMPILE([
-      #include <sys/types.h> 
-      #include <netinet/in.h>
-      #include <resolv.h>
-      int res_querydomain($testproto);
-    ],,[PROTO="$testproto";],)
-  fi
-done
-if test "${PROTO}" = ""; then
-  AC_MSG_ERROR("no match found!")
-fi
-AC_MSG_RESULT([res_querydomain(${PROTO})])
-AC_DEFINE_UNQUOTED([RES_QUERYDOMAIN_SIGNATURE], [${PROTO}],[Description])
-AC_DEFINE_UNQUOTED([RES_QUERYDOMAIN_ARGNAMES],[${NAMES}],[Argument names])
-
-
-dnl Find the correct res_send prototype on this machine
-AC_MSG_CHECKING(for correct res_send prototype)
-PROTO=
-NAMES='msg, msglen, answer, anslen'
-PROTO1='const char *msg, int msglen, char *answer, int anslen'
-PROTO2='const unsigned char *msg, int msglen, unsigned char *answer, int anslen'
-for testproto in "${PROTO1}" \
-                 "${PROTO2}"
-do
-  if test "${PROTO}" = ""; then
-    AC_TRY_COMPILE([
-      #include <sys/types.h>
-      #include <netinet/in.h>
-      #include <resolv.h>
-      int res_send($testproto);
-    ],,[PROTO="$testproto";],)
-  fi
-done
-if test "${PROTO}" = ""; then
-  AC_MSG_ERROR("no match found!")
-fi
-AC_MSG_RESULT([res_send(${PROTO})])
-AC_DEFINE_UNQUOTED([RES_SEND_SIGNATURE], [${PROTO}],[Description])
-AC_DEFINE_UNQUOTED([RES_SEND_ARGNAMES],[${NAMES}],[Argument names])
-
-
-dnl Find the correct res_search prototype on this machine
-AC_MSG_CHECKING(for correct res_search prototype)
-PROTO=
-NAMES='dname, class, type, answer, anslen'
-PROTO1='const char *dname, int class, int type, unsigned char *answer, int anslen'
-for testproto in "${PROTO1}"
-do
-  if test "${PROTO}" = ""; then
-    AC_TRY_COMPILE([
-      #include <sys/types.h>
-      #include <netinet/in.h>
-      #include <resolv.h>
-      int res_search($testproto);
-    ],,[PROTO="$testproto";],)
-  fi
-done
-if test "${PROTO}" = ""; then
-  AC_MSG_ERROR("no match found!")
-fi
-AC_MSG_RESULT([res_search(${PROTO})])
-AC_DEFINE_UNQUOTED([RES_SEARCH_SIGNATURE], [${PROTO}],[Description])
-AC_DEFINE_UNQUOTED([RES_SEARCH_ARGNAMES],[${NAMES}],[Argument names])
-
-
-dnl Find the correct res_query prototype on this machine
-AC_MSG_CHECKING(for correct res_query prototype)
-PROTO=
-NAMES='dname, class, type, answer, anslen'
-PROTO1='const char *dname, int class, int type, unsigned char *answer, int anslen'
-for testproto in "${PROTO1}"
-do
-  if test "${PROTO}" = ""; then
-    AC_TRY_COMPILE([
-      #include <sys/types.h>
-      #include <netinet/in.h>
-      #include <resolv.h>
-      int res_query($testproto);
-    ],,[PROTO="$testproto";],)
-  fi
-done
-if test "${PROTO}" = ""; then
-  AC_MSG_ERROR("no match found!")
-fi
-AC_MSG_RESULT([res_query(${PROTO})])
-AC_DEFINE_UNQUOTED([RES_QUERY_SIGNATURE], [${PROTO}],[Description])
-AC_DEFINE_UNQUOTED([RES_QUERY_ARGNAMES],[${NAMES}],[Argument names])
-
-dnl Find the correct getpeername prototype on this machine
-AC_MSG_CHECKING(for correct getpeername prototype)
-PROTO=
-NAMES='__fd, __name, __namelen'
-PROTO1='int __fd, const struct sockaddr * __name, int *__namelen'
-PROTO2='int __fd, const struct sockaddr_in * __name, socklen_t *__namelen'
-PROTO3='int __fd, struct sockaddr * __name, socklen_t *__namelen'
-PROTO4='int __fd, const struct sockaddr * __name, socklen_t *__namelen'
-for testproto in "${PROTO1}" \
-                 "${PROTO2}" \
-                 "${PROTO3}" \
-                 "${PROTO4}"
-do
-  if test "${PROTO}" = ""; then
-    AC_TRY_COMPILE([
-      #include <sys/types.h>
-      #include <sys/socket.h>
-      int getpeername($testproto);
-    ],,[PROTO="$testproto";],)
-  fi
-done
-if test "${PROTO}" = ""; then
-  AC_MSG_ERROR("no match found!")
-fi
-AC_MSG_RESULT([getpeername(${PROTO})])
-AC_DEFINE_UNQUOTED(GETPEERNAME_SIGNATURE, [${PROTO}],[Description])
-AC_DEFINE_UNQUOTED([GETPEERNAME_ARGNAMES],[${NAMES}],[Argument names])
-
-
-dnl Find the correct poll prototype on this machine
-AC_MSG_CHECKING(for correct poll prototype)
-PROTO=
-NAMES='ufds, nfds, timeout'
-for testproto in 'struct pollfd *ufds, unsigned long nfds, int timeout' \
-                 'struct pollfd *ufds, nfds_t nfds, int timeout' \
-                 'struct pollfd *ufds, unsigned int nfds, int timeout'
-do
-  if test "${PROTO}" = ""; then
-    AC_TRY_COMPILE([
-      #include <sys/poll.h>
-      int poll($testproto);
-    ],,[PROTO="$testproto";],)
-  fi
-done
-if test "${PROTO}" = ""; then
-  AC_MSG_ERROR("no match found!")
-fi
-AC_MSG_RESULT([poll(${PROTO})])
-AC_DEFINE_UNQUOTED([POLL_SIGNATURE], [${PROTO}],[Description])
-AC_DEFINE_UNQUOTED([POLL_ARGNAMES],[${NAMES}],[Argument names])
-
-dnl Emit signature for gethostbyname
-PROTO="const char *name"
-NAMES='name'
-AC_DEFINE_UNQUOTED([GETHOSTBYNAME_SIGNATURE], [${PROTO}],[Description])
-AC_DEFINE_UNQUOTED([GETHOSTBYNAME_ARGNAMES],[${NAMES}],[Argument names])
-
-dnl Emit signature for getaddrinfo
-PROTO="const char *node, const char *service, void *hints, void *res"
-NAMES='node, service, hints, res'
-AC_DEFINE_UNQUOTED([GETADDRINFO_SIGNATURE], [${PROTO}],[Description])
-AC_DEFINE_UNQUOTED([GETADDRINFO_ARGNAMES],[${NAMES}],[Argument names])
-
-dnl Emit signature for getipnodebyname
-PROTO="const char *name, int af, int flags, int *error_num"
-NAMES='name, af, flags, error_num'
-AC_DEFINE_UNQUOTED([GETIPNODEBYNAME_SIGNATURE], [${PROTO}],[Description])
-AC_DEFINE_UNQUOTED([GETIPNODEBYNAME_ARGNAMES],[${NAMES}],[Argument names])
-
-dnl Emit signature for gethostbyaddr
-PROTO="const void *addr, socklen_t len, int type"
-NAMES='addr, len, type'
-AC_DEFINE_UNQUOTED(GETHOSTBYADDR_SIGNATURE, [${PROTO}], [Description])
-AC_DEFINE_UNQUOTED([GETHOSTBYADDR_ARGNAMES],[${NAMES}],[Argument names])
-
-dnl Emit signature for sendto
-PROTO="int s, const void *buf, size_t len, int flags, const struct sockaddr *to, socklen_t tolen"
-NAMES='s, buf, len, flags, to, tolen'
-AC_DEFINE_UNQUOTED(SENDTO_SIGNATURE, [${PROTO}], [Description])
-AC_DEFINE_UNQUOTED([SENDTO_ARGNAMES],[${NAMES}],[Argument names])
-
-dnl Emit signature for sendmsg
-PROTO="int s, const struct msghdr *msg, int flags"
-NAMES='s, msg, flags'
-AC_DEFINE_UNQUOTED(SENDMSG_SIGNATURE, [${PROTO}], [Description])
-AC_DEFINE_UNQUOTED([SENDMSG_ARGNAMES],[${NAMES}],[Argument names])
-
 
 ##############################################################################
 # 5. Determine how to preload libtorsocks.so on this system.
