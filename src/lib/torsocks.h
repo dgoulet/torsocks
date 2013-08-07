@@ -30,6 +30,8 @@
  */
 #define TSOCKS_LIBC_DECL(name, type, sig) \
 	type (*tsocks_libc_##name)(sig);
+#define TSOCKS_DECL(name, type, sig) \
+	extern type tsocks_##name(sig);
 
 #if (defined(__linux__) || defined(__FreeBSD__) || defined(__darwin__))
 
@@ -154,6 +156,21 @@ struct hostent **__result, int *__h_errnop
 #error "OS not supported."
 #endif /* __linux__ , __FreeBSD__, __darwin__ */
 
+#if (defined(__linux__))
+
+#define _GNU_SOURCE
+#include <unistd.h>
+#include <sys/syscall.h>
+
+/* syscall(2) */
+#define LIBC_SYSCALL_NAME syscall
+#define LIBC_SYSCALL_NAME_STR XSTR(LIBC_SYSCALL_NAME)
+#define LIBC_SYSCALL_RET_TYPE long int
+#define LIBC_SYSCALL_SIG long int __number, ...
+#define LIBC_SYSCALL_ARGS __number
+
+#endif /* __linux__ */
+
 /*
  * The following defines are libc function declarations using the macros
  * defined above on a per OS basis.
@@ -161,16 +178,24 @@ struct hostent **__result, int *__h_errnop
 
 /* connect(2) */
 TSOCKS_LIBC_DECL(connect, LIBC_CONNECT_RET_TYPE, LIBC_CONNECT_SIG)
+TSOCKS_DECL(connect, LIBC_CONNECT_RET_TYPE, LIBC_CONNECT_SIG)
 #define LIBC_CONNECT_DECL \
 	LIBC_CONNECT_RET_TYPE LIBC_CONNECT_NAME(LIBC_CONNECT_SIG)
 
 /* socket(2) */
 TSOCKS_LIBC_DECL(socket, LIBC_SOCKET_RET_TYPE, LIBC_SOCKET_SIG)
+TSOCKS_DECL(socket, LIBC_SOCKET_RET_TYPE, LIBC_SOCKET_SIG)
 #define LIBC_SOCKET_DECL \
 		LIBC_SOCKET_RET_TYPE LIBC_SOCKET_NAME(LIBC_SOCKET_SIG)
 
+/* syscall(2) */
+TSOCKS_LIBC_DECL(syscall, LIBC_SYSCALL_RET_TYPE, LIBC_SYSCALL_SIG)
+#define LIBC_SYSCALL_DECL \
+		LIBC_SYSCALL_RET_TYPE LIBC_SYSCALL_NAME(LIBC_SYSCALL_SIG)
+
 /* close(2) */
 TSOCKS_LIBC_DECL(close, LIBC_CLOSE_RET_TYPE, LIBC_CLOSE_SIG)
+TSOCKS_DECL(close, LIBC_CLOSE_RET_TYPE, LIBC_CLOSE_SIG)
 #define LIBC_CLOSE_DECL \
 		LIBC_CLOSE_RET_TYPE LIBC_CLOSE_NAME(LIBC_CLOSE_SIG)
 

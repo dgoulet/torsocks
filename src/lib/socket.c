@@ -26,6 +26,9 @@
  */
 LIBC_SOCKET_RET_TYPE tsocks_socket(LIBC_SOCKET_SIG)
 {
+	DBG("[socket] Creating socket with domain %d, type %d and protocol %d",
+			__domain, __type, __protocol);
+
 	switch (__type) {
 	case SOCK_STREAM:
 		break;
