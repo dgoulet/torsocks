@@ -1,7 +1,7 @@
 Version 2.0
 -----------
 * Support res_* API
-* Get sendmsg FD passing on Unix socket and for TCP socket, clean exit
+* Check recvmmsg() FD passing on Unix socket and for TCP socket, clean exit
 * Deny ICMP
 * Support the complete list of dangerous syscall number with syscall()
 

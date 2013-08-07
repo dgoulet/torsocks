@@ -161,6 +161,14 @@ struct hostent **__result, int *__h_errnop
 	int __sockfd, struct sockaddr *__addr, socklen_t *__addrlen
 #define LIBC_GETPEERNAME_ARGS  __sockfd, __addr, __addrlen
 
+#define LIBC_RECVMSG_NAME recvmsg
+#define LIBC_RECVMSG_NAME_STR XSTR(LIBC_RECVMSG_NAME)
+#define LIBC_RECVMSG_RET_TYPE ssize_t
+#define LIBC_RECVMSG_SIG \
+	int __sockfd, struct msghdr *__msg, int __flags
+#define LIBC_RECVMSG_ARGS \
+	__sockfd, __msg, __flags
+
 #else
 #error "OS not supported."
 #endif /* __linux__ , __FreeBSD__, __darwin__ */
@@ -190,6 +198,11 @@ TSOCKS_LIBC_DECL(connect, LIBC_CONNECT_RET_TYPE, LIBC_CONNECT_SIG)
 TSOCKS_DECL(connect, LIBC_CONNECT_RET_TYPE, LIBC_CONNECT_SIG)
 #define LIBC_CONNECT_DECL \
 	LIBC_CONNECT_RET_TYPE LIBC_CONNECT_NAME(LIBC_CONNECT_SIG)
+
+/* recvmsg(2) */
+TSOCKS_LIBC_DECL(recvmsg, LIBC_RECVMSG_RET_TYPE, LIBC_RECVMSG_SIG)
+#define LIBC_RECVMSG_DECL \
+		LIBC_RECVMSG_RET_TYPE LIBC_RECVMSG_NAME(LIBC_RECVMSG_SIG)
 
 /* socket(2) */
 TSOCKS_LIBC_DECL(socket, LIBC_SOCKET_RET_TYPE, LIBC_SOCKET_SIG)
