@@ -1,12 +1,9 @@
 Version 2.0
 -----------
-* sendmsg()/sendto() --> Deny UDP packet since it might be a DNS request.
-* Complete gethostby* family function
 * Support res_* API
 * Get sendmsg FD passing on Unix socket and for TCP socket, clean exit
-* Support getpeername() since some programs use that to check if a socket
-is already connected.
 * Deny ICMP
+* Support the complete list of dangerous syscall number with syscall()
 
 Version 1.0
 -----------
