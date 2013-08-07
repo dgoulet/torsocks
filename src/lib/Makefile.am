@@ -12,7 +12,7 @@ lib_LTLIBRARIES = libtorsocks.la
 
 libtorsocks_la_SOURCES = torsocks.c torsocks.h \
                          connect.c gethostbyname.c getaddrinfo.c close.c \
-                         getpeername.c
+                         getpeername.c socket.c
 
 libtorsocks_la_LIBADD = \
 		$(top_builddir)/src/common/libcommon.la \

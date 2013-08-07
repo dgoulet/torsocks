@@ -45,6 +45,15 @@
 #define LIBC_CONNECT_ARGS \
 	__sockfd, __addr, __addrlen
 
+/* socket(2) */
+#define LIBC_SOCKET_NAME socket
+#define LIBC_SOCKET_NAME_STR XSTR(LIBC_SOCKET_NAME)
+#define LIBC_SOCKET_RET_TYPE int
+#define LIBC_SOCKET_SIG \
+	int __domain, int __type, int __protocol
+#define LIBC_SOCKET_ARGS \
+	__domain, __type, __protocol
+
 /* close(2) */
 #include <unistd.h>
 
@@ -154,6 +163,11 @@ struct hostent **__result, int *__h_errnop
 TSOCKS_LIBC_DECL(connect, LIBC_CONNECT_RET_TYPE, LIBC_CONNECT_SIG)
 #define LIBC_CONNECT_DECL \
 	LIBC_CONNECT_RET_TYPE LIBC_CONNECT_NAME(LIBC_CONNECT_SIG)
+
+/* socket(2) */
+TSOCKS_LIBC_DECL(socket, LIBC_SOCKET_RET_TYPE, LIBC_SOCKET_SIG)
+#define LIBC_SOCKET_DECL \
+		LIBC_SOCKET_RET_TYPE LIBC_SOCKET_NAME(LIBC_SOCKET_SIG)
 
 /* close(2) */
 TSOCKS_LIBC_DECL(close, LIBC_CLOSE_RET_TYPE, LIBC_CLOSE_SIG)

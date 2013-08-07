@@ -123,6 +123,8 @@ static void init_libc_symbols(void)
 			TSOCKS_SYM_EXIT_NOT_FOUND);
 	tsocks_libc_close = tsocks_find_libc_symbol(LIBC_CLOSE_NAME_STR,
 			TSOCKS_SYM_EXIT_NOT_FOUND);
+	tsocks_libc_socket = tsocks_find_libc_symbol(LIBC_SOCKET_NAME_STR,
+			TSOCKS_SYM_EXIT_NOT_FOUND);
 }
 
 /*
@@ -358,7 +360,7 @@ int tsocks_tor_resolve(const char *hostname, uint32_t *ip_addr)
 		}
 	}
 
-	conn.fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	conn.fd = tsocks_libc_socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (conn.fd < 0) {
 		PERROR("socket");
 		ret = -errno;
@@ -406,7 +408,7 @@ int tsocks_tor_resolve_ptr(const char *addr, char **ip, int af)
 
 	DBG("Resolving %" PRIu32 " on the Tor network", addr);
 
-	conn.fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	conn.fd = tsocks_libc_socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (conn.fd < 0) {
 		PERROR("socket");
 		ret = -errno;
