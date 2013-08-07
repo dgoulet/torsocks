@@ -56,6 +56,15 @@
 #define LIBC_SOCKET_ARGS \
 	__domain, __type, __protocol
 
+/* socketpair(2) */
+#define LIBC_SOCKETPAIR_NAME socketpair
+#define LIBC_SOCKETPAIR_NAME_STR XSTR(LIBC_SOCKETPAIR_NAME)
+#define LIBC_SOCKETPAIR_RET_TYPE int
+#define LIBC_SOCKETPAIR_SIG \
+	int __domain, int __type, int __protocol, int __sv[2]
+#define LIBC_SOCKETPAIR_ARGS \
+	__domain, __type, __protocol, __sv
+
 /* close(2) */
 #include <unistd.h>
 
@@ -187,6 +196,12 @@ TSOCKS_LIBC_DECL(socket, LIBC_SOCKET_RET_TYPE, LIBC_SOCKET_SIG)
 TSOCKS_DECL(socket, LIBC_SOCKET_RET_TYPE, LIBC_SOCKET_SIG)
 #define LIBC_SOCKET_DECL \
 		LIBC_SOCKET_RET_TYPE LIBC_SOCKET_NAME(LIBC_SOCKET_SIG)
+
+/* socketpair(2) */
+TSOCKS_LIBC_DECL(socketpair, LIBC_SOCKETPAIR_RET_TYPE, LIBC_SOCKETPAIR_SIG)
+TSOCKS_DECL(socketpair, LIBC_SOCKETPAIR_RET_TYPE, LIBC_SOCKETPAIR_SIG)
+#define LIBC_SOCKETPAIR_DECL \
+		LIBC_SOCKETPAIR_RET_TYPE LIBC_SOCKETPAIR_NAME(LIBC_SOCKETPAIR_SIG)
 
 /* syscall(2) */
 TSOCKS_LIBC_DECL(syscall, LIBC_SYSCALL_RET_TYPE, LIBC_SYSCALL_SIG)
