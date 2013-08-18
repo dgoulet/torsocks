@@ -53,7 +53,7 @@ static ssize_t recv_data(int fd, void *buf, size_t len)
 					/* Return the number of bytes received up to this point. */
 					ret = index;
 				}
-				goto error;
+				continue;
 			} else {
 				PERROR("recv socks5 data");
 				goto error;
@@ -97,7 +97,7 @@ static ssize_t send_data(int fd, const void *buf, size_t len)
 					/* Return the number of bytes sent up to this point. */
 					ret = index;
 				}
-				goto error;
+				continue;
 			} else {
 				PERROR("send socks5 data");
 				goto error;
@@ -142,10 +142,13 @@ int socks5_connect(struct connection *conn)
 		goto error;
 	}
 
-	/* Use the original libc connect() to the Tor. */
-	ret = tsocks_libc_connect(conn->fd, socks5_addr, sizeof(*socks5_addr));
+	do {
+		/* Use the original libc connect() to the Tor. */
+		ret = tsocks_libc_connect(conn->fd, socks5_addr, sizeof(*socks5_addr));
+	} while (ret < 0 && (errno == EINTR || errno == EINPROGRESS));
 	if (ret < 0) {
 		ret = -errno;
+		PERROR("socks5 libc connect");
 	}
 
 error:
