@@ -39,7 +39,6 @@ doc/torsocks.8
 doc/torsocks.conf.5
 doc/usewithtor.1
 
-src/torsocks
-src/usewithtor
+src/bin/torsocks
 
 test/test_torsocks
