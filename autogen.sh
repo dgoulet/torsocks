@@ -1,13 +1,9 @@
 #!/bin/sh
 
-if [ -x "`which autoreconf 2>/dev/null`" ] ; then
-  exec autoreconf -ivf
+set -x
+
+if [ ! -e config ]; then
+	mkdir config
 fi
 
-set -e
-
-# Run this to generate all the initial makefiles, etc.
-aclocal && \
-	autoheader && \
-	autoconf && \
-	automake --add-missing --copy
+autoreconf -i
