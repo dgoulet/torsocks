@@ -34,7 +34,6 @@ LIBC_GETHOSTBYNAME_RET_TYPE tsocks_gethostbyname(LIBC_GETHOSTBYNAME_SIG)
 {
 	int ret;
 	uint32_t ip;
-	const char *ret_str;
 
 	DBG("[gethostbyname] Requesting %s hostname", __name);
 
@@ -54,12 +53,8 @@ LIBC_GETHOSTBYNAME_RET_TYPE tsocks_gethostbyname(LIBC_GETHOSTBYNAME_SIG)
 	memset(tsocks_he_addr_list, 0, sizeof(tsocks_he_addr_list));
 	memset(tsocks_he_addr, 0, sizeof(tsocks_he_addr));
 
-	ret_str = inet_ntop(AF_INET, &ip, tsocks_he_addr, sizeof(tsocks_he_addr));
-	if (!ret_str) {
-		PERROR("inet_ntop");
-		h_errno = NO_ADDRESS;
-		goto error;
-	}
+	/* Copy resolved network byte order IP address. */
+	memcpy(tsocks_he_addr, &ip, sizeof(tsocks_he_addr));
 
 	tsocks_he_addr_list[0] = tsocks_he_addr;
 	tsocks_he_addr_list[1] = NULL;
@@ -70,7 +65,8 @@ LIBC_GETHOSTBYNAME_RET_TYPE tsocks_gethostbyname(LIBC_GETHOSTBYNAME_SIG)
 	tsocks_he.h_addrtype = AF_INET;
 	tsocks_he.h_addr_list = tsocks_he_addr_list;
 
-	DBG("Hostname %s resolved to %s", __name, tsocks_he_addr);
+	DBG("Hostname %s resolved to %s", __name,
+			inet_ntoa(*((struct in_addr *) &ip)));
 
 	errno = 0;
 	return &tsocks_he;
