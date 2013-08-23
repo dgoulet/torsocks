@@ -84,7 +84,14 @@ LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int __number, va_list args)
 		ret = handle_close(args);
 		break;
 	default:
-		ret = tsocks_libc_syscall(__number, args);
+		/*
+		 * Deny call since we have no idea if this call can leak or not data
+		 * off the Tor network.
+		 */
+		WARN("[syscall] Unsupported syscall number %ld. Denying the call",
+				__number);
+		ret = -1;
+		errno = ENOSYS;
 		break;
 	}
 
