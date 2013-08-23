@@ -367,6 +367,8 @@ AC_SUBST(DEFAULT_INCLUDES)
 AC_CONFIG_FILES([
 	Makefile
 	src/Makefile
+	src/bin/Makefile
+	src/bin/torsocks
 	src/common/Makefile
 	src/lib/Makefile
 	doc/Makefile

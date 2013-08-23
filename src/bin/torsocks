@@ -1,0 +1,154 @@
+#!/bin/sh
+# ***************************************************************************
+# *                                                                         *
+# *                                                                         *
+# *   Copyright (C) 2008 by Robert Hogan                                    *
+# *   robert@roberthogan.net                                                *
+# *   Copyright (C) 2012 by Jacob Appelbaum <jacob@torproject.org>          *
+# *   Copyright (C) 2013 by David Goulet <dgoulet@ev0ke.net>                *
+# *                                                                         *
+# *   This program is free software; you can redistribute it and/or modify  *
+# *   it under the terms of the GNU General Public License as published by  *
+# *   the Free Software Foundation; either version 2 of the License, or     *
+# *   (at your option) any later version.                                   *
+# *                                                                         *
+# *   This program is distributed in the hope that it will be useful,       *
+# *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+# *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+# *   GNU General Public License for more details.                          *
+# *                                                                         *
+# *   You should have received a copy of the GNU General Public License     *
+# *   along with this program; if not, write to the                         *
+# *   Free Software Foundation, Inc.,                                       *
+# *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+# ***************************************************************************
+# *                                                                         *
+# *   This is a modified version of a source file from the Tor project.     *
+# *   Original copyright information follows:                               *
+# ***************************************************************************
+# Wrapper script for use of the torsocks(8) transparent socksification library
+#
+# There are three forms of usage for this script:
+#
+# /usr/local/bin/torsocks program [program arguments...]
+#
+# This form sets the users LD_PRELOAD environment variable so that torsocks(8)
+# will be loaded to socksify the application then executes the specified 
+# program (with the provided arguments). The following simple example might 
+# be used to ssh to www.foo.org via a torsocks.conf(5) configured socks server:
+#
+# /usr/local/bin/torsocks ssh www.foo.org
+#
+# The second form allows for torsocks(8) to be switched on and off for a
+# session (that is, it adds and removes torsocks from the LD_PRELOAD environment
+# variable). This form must be _sourced_ into the user's existing session
+# (and will only work with bourne shell users):
+#
+# . /usr/local/bin/torsocks on
+# telnet www.foo.org 
+# . /usr/local/bin/torsocks off
+# 
+# Or
+# 
+# source /usr/local/bin/torsocks on
+# telnet www.foo.org
+# source /usr/local/bin/torsocks off
+#
+# This script is originally from the debian torsocks package by
+# Tamas Szerb <toma@rulez.org>
+# Modified by Robert Hogan <robert@roberthogan.net> April 16th 2006
+# Modified by David Goulet <dgoulet@ev0ke.net> 2013
+
+LIBDIR="/usr/local/${exec_prefix}/lib/torsocks"
+LIB_NAME="libtorsocks"
+SHLIB_EXT="so"
+SHLIB="${LIBDIR}/${LIB_NAME}.${SHLIB_EXT}"
+
+# Set LD_PRELOAD variable with torsocks library path.
+set_ld_preload ()
+{
+	if [ -z "$LD_PRELOAD" ]; then
+		export LD_PRELOAD="${SHLIB}"
+	else
+		echo $LD_PRELOAD | grep -q "${SHLIB}" || \
+			export LD_PRELOAD="${SHLIB} $LD_PRELOAD"
+	fi
+
+	# OS X specific env variable
+	case "$OSTYPE" in
+		darwin*)
+			export DYLD_FORCE_FLAT_NAMESPACE=1
+			;;
+	esac
+}
+
+# Spawn a torified shell.
+tor_shell ()
+{
+	set_ld_preload
+	echo "$0: New torified shell coming right up..."
+	${SHELL:-/bin/sh}
+}
+
+torify_app ()
+{
+	local app_path=`which $1`
+
+	# NEVER remove that line or else nothing it torified.
+	set_ld_preload
+
+	if [ -z $app_path ]; then
+		echo "ERROR: $1 cannot be found." >&2
+		exit 1
+	elif [ -u $app_path -o -g $app_path ]; then
+		echo "ERROR: $1 is set${2}id. torsocks will not work on a set${2}id executable." >&2
+		exit 1
+	fi
+
+	exec "$@"
+}
+
+usage ()
+{
+	echo "$0: Please see torsocks(1) or read comment at top of $0"
+}
+
+if [ $# -eq 0 ] ; then
+	usage
+	exit 1
+fi
+
+# Ensure libtorsocks exists,
+if [ ! -f $SHLIB ]; then
+   echo "$0: $SHLIB does not exist! Try re-installing torsocks."
+   exit
+fi
+
+case "$1" in
+	on)
+		set_ld_preload
+		;;
+	off)
+		export LD_PRELOAD=`echo -n $LD_PRELOAD | sed "s#$SHLIB *##"`
+		if [ -z "$LD_PRELOAD" ]; then
+			unset LD_PRELOAD
+			case "$OSTYPE" in
+				darwin*)
+					unset DYLD_FORCE_FLAT_NAMESPACE
+					;;
+			esac
+		fi
+		;;
+	show|sh)
+		echo "LD_PRELOAD=\"$LD_PRELOAD\""
+		;;
+	-h|--help|-?)
+		usage
+		;;
+	--shell)
+		tor_shell
+		;;
+	*)
+		torify_app $@
+		;;
+esac

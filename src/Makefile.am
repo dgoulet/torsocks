@@ -1,1 +1,1 @@
-SUBDIRS = common lib
+SUBDIRS = common lib bin
