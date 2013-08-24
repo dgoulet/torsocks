@@ -34,8 +34,7 @@ LIBC_SOCKET_RET_TYPE tsocks_socket(LIBC_SOCKET_SIG)
 		break;
 	default:
 		if (__domain == AF_INET || __domain == AF_INET6) {
-			ERR("Non TCP socket denied. Tor network can't handle it. "
-					"Stopping everything!");
+			WARN("Non TCP inet socket denied. Tor network can't handle it.");
 			errno = EINVAL;
 			return -1;
 		}

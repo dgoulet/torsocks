@@ -57,7 +57,7 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 	 * request that we can't pass through Tor using raw UDP packet.
 	 */
 	if (sock_type != SOCK_STREAM) {
-		ERR("[connect] UDP or ICMP stream can't be handled. Rejecting.");
+		WARN("[connect] UDP or ICMP stream can't be handled. Rejecting.");
 		errno = EBADF;
 		goto error;
 	}
