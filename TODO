@@ -3,8 +3,8 @@ Version 2.0
 * Support res_* API
 * Check recvmmsg() FD passing on Unix socket and for TCP socket, clean exit
 * Support the complete list of dangerous syscall numbers with syscall()
-* Clean configure.ac
-* Create new updated torsocks shell script
+* Clean configure.ac - DONE
+* Create new updated torsocks shell script - DONE
 * Rename torsocks to something more meaningful
 * Add tests and a bunch load of them!
 
