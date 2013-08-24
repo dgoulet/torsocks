@@ -1,13 +1,11 @@
-.TH TORSOCKS.CONF 5 "" "Robert Hogan" \" -*-
- \" nroff -*
+.TH "TORSOCKS.CONF" "5" "August 24th, 2013" "" ""
 
 .SH NAME
-.BR torsocks.conf
-\- configuration file for torsocks(8)
+torsocks.conf \(em Configuration file for torsocks(8)
 
 .SH SUMMARY
 
-By default, torsocks will assume that it should connect to the SOCKS proxy
+By default, torsocks will assume that it should connect to the Tor SOCKS proxy
 running at 127.0.0.1 on port 9050. This is the default address and port for
 Tor's socks server on most installations. If you are running a normal Tor
 installation and have no special requirements, then you should not need to
@@ -17,198 +15,57 @@ Your installation of torsocks includes a default configuration file
 that contains values sensible for use with most Tor installations. The
 installation location for your default configuration file is:
 
-  @CONFDIR@/torsocks.conf
+  @CONFDIR@/tor/torsocks.conf
 
 In order to use a configuration file, you must set the environment variable
 TORSOCKS_CONF_FILE with the location of the file.
 
-If TORSOCKS_CONF_FILE is not set, torsocks will attempt to read the configuration
-file at @CONFDIR@/torsocks.conf. If that file cannot be read, torsocks will
-use sensible defaults for most Tor installations, i.e. it will assume that
-you want to use a SOCKS proxy running at 127.0.0.1 (localhost) on port 9050.
+If TORSOCKS_CONF_FILE is not set, torsocks will attempt to read the
+configuration file at @CONFDIR@/tor/torsocks.conf. If that file cannot be read,
+torsocks will use sensible defaults for most Tor installations, i.e. it will
+assume that you want to use a SOCKS proxy running at 127.0.0.1 (localhost) on
+port 9050.
 
-An example of typical usage is provided under the 'example' heading at the
-end of this manual page. The script 'usewithtor' provided with your torsocks
-installation will set this environment variable for you, and load the
-configuration file provided with your installation.
+.SH CONFIGURATION
 
-If you want to use a custom file in a different location, you should set the
-environment variable yourself and then use the torsocks command, rather than
-usewithtor.
-
-.SH OVERVIEW
-
-The configuration for torsocks can be anything from two lines to hundreds of
-lines based on the needs at any particular site. The basic idea is to define 
-any networks the machine can access directly (i.e without the use of a 
-SOCKS server) and define one or many SOCKS servers to be used to access
-other networks (including a 'default' server). 
-
-Local networks are declared using the 'local' keyword in the configuration 
-file. When applications attempt to connect to machines in networks marked
-as local torsocks will not attempt to use a SOCKS server to negotiate the
-connection.
-
-Obviously if a connection is not to a locally accessible network it will need
-to be proxied over a SOCKS server. However, many installations have several
-different SOCKS servers to be used to access different internal (and external)
-networks. For this reason the configuration file allows the definition of 
-`paths' as well as a default SOCKS server.
-
-Paths are declared as blocks in the configuration file. That is, they begin
-with a 'path {' line in the configuration file and end with a '}' line. Inside
-this block directives should be used to declare a SOCKS server (as documented
-later in this manual page) and 'reaches' directives should be used to declare 
-networks and even destination ports in those networks that this server should 
-be used to reach. N.B Each path MUST define a SOCKS server and contain one or 
-more 'reaches' directives.
-
-SOCKS server declaration directives that are not contained within a 'path' 
-block define the default SOCKS server. If torsocks needs to connect to a machine
-via a SOCKS server (i.e it isn't a network declared as 'local') and no 'path'
-has declared it can reach that network via a 'reaches' directive this server 
-is used to negotiate the connection. 
-
-.SH CONFIGURATION SYNTAX
-
+.SS SYNTAX
 The basic structure of all lines in the configuration file is:
 
 .RS
-<directive> = <parameters>
+<directive> <parameters>
 .RE
 
-The exception to this is 'path' blocks which look like:
-
-.RS
-path {
-.RS
-<directive> = <parameters>
-.RE
-}
-.RE
-
-Empty lines are ignored and all input on a line after a '#' character is 
+Empty lines are ignored and all input on a line after a '#' character is
 ignored.
 
-.SS DIRECTIVES 
+.SS DIRECTIVES
 The following directives are used in the torsocks configuration file:
 
 .TP
-.I server
-The IP address of the SOCKS server (e.g "server = 10.1.4.253"). Only one
-server may be specified per path block, or one outside a path
-block (to define the default server). Unless \-\-disable-hostnames was 
-specified to configure at compile time the server can be specified as 
-a hostname (e.g "server = socks.nec.com") 
+.I TorAddress
+The IP address of the Tor SOCKS server (e.g "server = 10.1.4.253"). Only one
+server may be specified. Currently, torsocks does NOT support hostname.
+(default: 127.0.0.1)
 
 .TP
-.I server_port
-The port on which the SOCKS server receives requests. Only one server_port
-may be specified per path block, or one outside a path (for the default
-server). This directive is not required if the server is on the
-standard port (1080).
+.I TorPort
+The port on which the Tor SOCKS server receives requests. (default: 9050)
 
 .TP
-.I server_type
-SOCKS version used by the server. Versions 4 and 5 are supported (but both
-for only the connect operation).  The default is 4. Only one server_type
-may be specified per path block, or one outside a path (for the default
-server). 
-
-You can use the inspectorsocks utility to determine the type of server, see
-the 'UTILITIES' section later in this manual page.
-
-.TP
-.I default_user
-This specifies the default username to be used for username and password
-authentication in SOCKS version 5. In order to determine the username to
-use (if the socks server requires username and password authentication)
-torsocks first looks for the environment variable TSOCKS_USERNAME, then
-looks for this configuration option, then tries to get the local username.
-This option is not valid for SOCKS version 4 servers. Only one default_user 
-may be specified per path block, or one outside a path (for the default 
-server)
-
-.TP
-.I default_pass
-This specified the default password to be used for username and password
-authentication in SOCKS version 5. In order to determine the password to
-use (if the socks server requires username and password authentication)
-torsocks first looks for the environment variable TSOCKS_PASSWORD, then
-looks for this configuration option. This option is not valid for SOCKS
-version 4 servers. Onle one default_pass may be specified per path block, 
-or one outside a path (for the default server)
-
-.TP
-.I local
-An IP/Subnet pair specifying a network which may be accessed directly without
-proxying through a SOCKS server (e.g "local = 10.0.0.0/255.0.0.0"). 
-Obviously all SOCKS server IP addresses must be in networks specified as 
-local, otherwise torsocks would need a SOCKS server to reach SOCKS servers.
-
-.TP
-.I reaches
-This directive is only valid inside a path block. Its parameter is formed
-as IP[:startport[\-endport]]/Subnet and it specifies a network (and a range
-of ports on that network) that can be accessed by the SOCKS server specified
-in this path block. For example, in a path block "reaches =
-150.0.0.0:80-1024/255.0.0.0" indicates to torsocks that the SOCKS server
-specified in the current path block should be used to access any IPs in the 
-range 150.0.0.0 to 150.255.255.255 when the connection request is for ports
-80-1024.
-
-.TP
-.I tordns_enable
-This enables the use of the 'tordns' feature in torsocks, which overrides the
-standard C library name resolution calls to use SOCKS.    The default value is 
-`true'.
-
-.TP
-.I tordns_deadpool_range
-Tor hidden sites do not have real IP addresses.  This specifies what range of 
-IP addresses will be handed to the application as "cookies" for .onion names.  
-Of course, you should pick a block of addresses which you aren't going to ever 
-need to actually connect to. The default value is '127.0.69.0/255.255.255.0'.
-
-.TP
-.I tordns_cache_size
-This specifies the number of IP addresses looked up through SOCKS to cache.
-The default value is 256.  Each entry consumes 260 bytes of memory, so the
-default adds 66,560 bytes of overhead to each 'torified' process. NOTE: if
-the number of IP addresses in tordns_deadpool_range is less than the value
-specified for tordns_cache_size, then the cache will be shrunk to fit the
-deadpool range. This is to prevent duplicate deadpool addresses from ever
-appearing in the cache. 
-
-.SH UTILITIES
-torsocks comes with two utilities that can be useful in creating and verifying
-the torsocks configuration file.
+.I OnionAddrRange
+Tor hidden sites do not have real IP addresses. This specifies what range of IP
+addresses will be handed to the application as "cookies" for .onion names.  Of
+course, you should pick a block of addresses which you aren't going to ever
+need to actually connect to. This is similar to the MapAddress feature of the
+main tor daemon. (default: 127.42.42.0/24)
 
 .SH EXAMPLE
-
-  export TORSOCKS_CONF_FILE=$PWD/torsocks.conf
-  torsocks ssh account@sshserver.com
+  $ export TORSOCKS_CONF_FILE=$PWD/torsocks.conf
+  $ torsocks ssh account@sshserver.com
 
 .SH SEE ALSO
-torsocks(8)
+.BR torsocks(1),
+.BR torsocks(8),
 
 .SH AUTHOR
-Robert Hogan (robert@roberthogan.net)
-Shaun Clowes (delius@progsoc.uts.edu.au)
-
-.SH COPYRIGHT
-Copyright 2009 Robert Hogan
-Copyright 2000 Shaun Clowes
-
-Renamed for use by torsocks to avoid conflict with torsocks by Robert Hogan.
-
-torsocks and its documentation may be freely copied under the terms and
-conditions of version 2 of the GNU General Public License, as published
-by the Free Software Foundation (Cambridge, Massachusetts, United
-States of America).
-
-This documentation is based on the documentation for logwrites, another
-shared library interceptor. One line of code from it was used in
-torsocks and a lot of the documentation :) logwrites is by
-adam@yggdrasil.com (Adam J. Richter) and can be had from ftp.yggdrasil.com
-pub/dist/pkg
+David Goulet <dgoulet@ev0ke.net>
