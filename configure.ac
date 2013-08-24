@@ -24,15 +24,6 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_LN_S
 
-dnl Arguments we allow
-AC_ARG_ENABLE(debug,
-[  --disable-debug         disable ALL error messages from torsocks ])
-AC_ARG_ENABLE(oldmethod,
-[  --enable-oldmethod      use the old method to override connect ])
-AC_ARG_ENABLE(envconf,
-[  --disable-envconf       do not allow TORSOCKS_CONF_FILE to specify configuration file ])
-
-
 ##############################################################################
 # 2. Check for some standard headers and libraries
 ##############################################################################
