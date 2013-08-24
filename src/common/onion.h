@@ -77,7 +77,6 @@ struct onion_pool {
 	 */
 	uint32_t base;
 	uint32_t max_pos;
-	uint8_t mask;
 
 	/*
 	 * Current size of the array. This is the number of allocated entry in the

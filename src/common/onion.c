@@ -16,7 +16,6 @@
  */
 
 #include <assert.h>
-#include <inttypes.h>
 
 #include "defaults.h"
 #include "log.h"
@@ -112,7 +111,6 @@ int onion_pool_init(struct onion_pool *pool, in_addr_t addr, uint8_t mask)
 	pool->max_pos = pool->base + ((1UL << (32 - mask)) - 1);
 	pool->next_entry_pos = 0;
 	pool->count = 0;
-	pool->mask = mask;
 	tsocks_mutex_init(&pool->lock);
 
 	/*
@@ -130,8 +128,8 @@ int onion_pool_init(struct onion_pool *pool, in_addr_t addr, uint8_t mask)
 		goto error;
 	}
 
-	DBG("[onion] Pool initialized with mask %" PRIu8 ", base %lu, max_pos %lu "
-			"and size %lu", pool->mask, pool->base, pool->max_pos, pool->size);
+	DBG("[onion] Pool initialized with base %lu, max_pos %lu and size %lu",
+			pool->base, pool->max_pos, pool->size);
 
 error:
 	return ret;
@@ -228,7 +226,7 @@ struct onion_entry *onion_entry_find_by_name(const char *onion_name,
 	assert(onion_name);
 	assert(pool);
 
-	DBG("[onion] Finding onion entry by name %s", onion_name);
+	DBG("[onion] Finding onion entry for name %s", onion_name);
 
 	for (i = 0; i < pool->count; i++) {
 		if (strcmp(onion_name, pool->entries[i]->hostname) == 0) {
@@ -253,17 +251,27 @@ ATTR_HIDDEN
 struct onion_entry *onion_entry_find_by_ip(in_addr_t ip,
 		struct onion_pool *pool)
 {
-	uint32_t index;
+	int i;
 	struct onion_entry *entry = NULL;
 
 	DBG("[onion] Finding onion entry for IP %s",
 			inet_ntoa(*((struct in_addr *) &ip)));
 
-	index = ip >> pool->mask;
-	entry = pool->entries[index];
+	/*
+	 * XXX: This can be improved by simply getting the offset of the IP with
+	 * the pool subnet which gives the index in the pool entries. For instance,
+	 * 127.0.0.45 with a ip_subnet set to 127.0.0.0/24, the index in the pool
+	 * entries is 45.
+	 */
+	for (i = 0; i < pool->count; i++) {
+		if (pool->entries[i]->ip == ip) {
+			entry = pool->entries[i];
+			DBG("[onion] Onion entry name %s found in pool.",
+					entry->hostname);
+			goto end;
+		}
+	}
 
-	DBG("[onion] Onion entry name %s found in pool at index %" PRIu32,
-			entry->hostname, index);
-
+end:
 	return entry;
 }
