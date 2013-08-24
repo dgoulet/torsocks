@@ -1,94 +1,20 @@
 What is torsocks?
 -----------------
-This is a fork of the tsocks project (http://sourceforge.net/project/
-showfiles.php?group_id=17338). The purpose of this fork is to maintain a
-working implementation of tsocks that is primarily useful for Tor.
 
-The project homepage is:
-
-http://code.google.com/p/torsocks
-
+Torsocks allows you to use most socks-friendly applications in a safe way with
+Tor. It ensures that DNS requests are handled safely and explicitly rejects any
+traffic other then TCP from the application you're using. 
 
 Using torsocks
 --------------
 Torsocks allows you to use most socks-friendly applications in a safe way with Tor.
 Once you have installed torsocks, just launch it like so:
 
-  usewithtor [application]
+  torsocks [application]
 
 So, for example you can use ssh to a some.ssh.com by doing:
 
-  usewithtor ssh username@some.ssh.com 
-
-or launch pidgin by doing:
-
-  usewithtor pidgin 
-
-The following applications are known to be compatible with usewithtor:
-
-Type  Application   Comments
-COMM  ssh
-COMM  telnet        (plaintext passwords are not recommended with Tor)
-IM    pidgin
-IM    kopete
-IRC   konversation
-MAIL  claws-mail
-DEV   svn
-IRC   xchat
-IRC   irssi
-IRC   silc
-
-
-Differences between torsocks and tsocks
-----------------------------------------
-A complete history of changes is maintained in the Changelog. The initial
-working copy of torsocks was obtained through the following steps in June
-2008:
-
-  - Tsocks was downloaded from the project's sourceforge repository.
-    (http://sourceforge.net/project/showfiles.php?group_id=17338)
-  - All patches listed at http://wiki.noreply.org/noreply/TheOnionRouter/
-    TSocksPatches in March 2008 were applied. In particular, the patch
-    from Total Information Security that hooks DNS requests and passes
-    them to Tor. The original link for this patch is now dead and the
-    authors are no longer available at the email addresses supplied in
-    the patch's source.
-  - Weasel's getpeername() patch and some build-related patches from
-    https://giig.ugr.es/~rgarcia/tsocks/ were applied.
-  - All references to tsocks in the project source files were renamed
-    to torsocks.
-  - The project was then migrated to an automake/autoconf build system.
-
-To help with reconstructing the above steps a list of applied patches is
-available in the patches/ subdirectory of the torsocks source tree.
-
-Enhancements unique to torsocks
--------------------------------
-The first release of torsocks contained the following enhancements:
-
-  - Torifying reverse dns requests through gethostbyaddr()
-  - Blocking of UDP traffic from sendto() and its variants.
-  - Use of Tor-friendly defaults if no configuration file available.
-  - The addition of all RFC defined private address ranges to the
-    default configuration.
-
-Maintainers of Torsocks
------------------------
-Torsocks is maintained by: Robert Hogan (robert at roberthogan.net)
-                           Ruben Garcia (ruben at ugr.es)
-
-
-Links
------
-
-Original tsocks project (apparently abandoned):
-http://sourceforge.net/project/showfiles.php?group_id=17338
-
-Ruben's fork of tsocks on which this is based:
-https://giig.ugr.es/~rgarcia/tsocks/
-
-The Tor project's list of tsocks patches:
-http://wiki.noreply.org/noreply/TheOnionRouter/TSocksPatches
+  torsocks ssh username@some.ssh.com 
 
 The Tor project:
 https://www.torproject.org
