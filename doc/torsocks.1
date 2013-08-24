@@ -1,63 +1,80 @@
-.TH TORSOCKS 1 "" "TORSOCKS"
+.TH "TORSOCKS" "1" "August 24th, 2013" "" ""
 
 .SH NAME
-.BR torsocks
-\- Shell wrapper to simplify the use of the torsocks(8) library to
-transparently allow an application to use a SOCKS proxy. Basically a renamed, patched tsocks.
+torsocks \(em Shell wrapper to simplify the use of the torsocks(8) library to
+transparently torify an application.
+
 .SH SYNOPSIS
-.B torsocks
-.RB [application\ [application's\ arguments]]
-.br
-or
-.B torsocks
-.RB [on|off|--shell]
-.br
-or
-.B torsocks
+
+.PP
+torsocks [OPTIONS] [COMMAND [ARG ...]]
+
 .SH DESCRIPTION
-.B torsocks
-is a wrapper between the torsocks library and the application what you
-would like to run socksified.
-.SH SUMMARY
 
-By default, torsocks will assume that it should connect to the SOCKS proxy
-running at 127.0.0.1 on port 9050. This is the default address and port for
-Tor's socks server on most installations.
+\fBtorsocks\fP is a wrapper between the torsocks library and the application in
+order to make every Internet communication go through the Tor network.
 
-In order to use a configuration file, you must set the environment variable
-TORSOCKS_CONF_FILE with the location of the file.
+By default, torsocks will assume that it should connect to the Tor SOCKS proxy
+running at 127.0.0.1 on port 9050 being the defaults of the Tor daemon.
 
-If TORSOCKS_CONF_FILE is not set, torsocks will attempt to read the configuration
-file at @CONFDIR@/torsocks.conf. If that file cannot be read, torsocks will
-use sensible defaults for most Tor installations, i.e. it will assume that
-you want to use a SOCKS proxy running at 127.0.0.1 (localhost) on port 9050.
+In order to use a configuration file, torsocks tries to read the
+\fB@CONFDIR@/tor/torsocks.conf\fP file or look for the environment variable
+TORSOCKS_CONF_FILE with the location of the file. If that file cannot be read,
+torsocks will use sensible defaults for most Tor installations.
 
 For further information on configuration, see
-.B torsocks.conf(5).
+.BR torsocks.conf(5).
 
 .SH OPTIONS
-.IP \fB[application\ \fB[application's\ arguments]]
-run the application as specified with the environment (LD_PRELOAD) set
-such that torsocks(8) will transparently proxy SOCKS connections in
-that program
-.IP \fB[on|off]
-this option adds or removes torsocks(8) from the LD_PRELOAD environment
-variable. When torsocks(8) is in this variable all executed
-applications are automatically socksified. If you want to
-use this function, you HAVE to source the shell script from yours,
-like this: "source /usr/bin/torsocks" or ". /usr/bin/torsocks"
+
+.TP
+.BR "\-h, \-\-help, \-?"
+Show summary of possible options and commands.
+.TP
+.BR "\-\-shell"
+Create a new shell with @LDPRELOAD@ including \fBtorsocks(8)\fP.
+.TP
+.BR "on | off"
+This option adds or removes \fBtorsocks(8)\fP from the @LDPRELOAD@ environment
+variable for the current shell. If you want to use this option, you HAVE to
+source torsocks from yours.
 .br
-Example:
+
+.nf
+Add the torsocks library to @LDPRELOAD@
+$ . torsocks on
 .br
-". torsocks on" -- add the torsocks lib to LD_PRELOAD
-.br
-". torsocks off" -- remove the torsocks lib from LD_PRELOAD
-.IP \fB[show|sh]
-show the current value of the LD_PRELOAD variable
-.IP \fB[--shell]
-create a new shell with LD_PRELOAD including torsocks(8).
+Remove the torsocks library from @LDPRELOAD@
+$ . torsocks off
+.fi
+.TP
+.BR "show | sh"
+Show the current value of the @LDPRELOAD@ environment variable.
+
+.SH "ENVIRONMENT VARIABLES"
 .PP
+Please see \fBtorsocks(8)\fP for more detail on possible environment variables.
+.PP
+
+.SH "SEE ALSO"
+.BR torsocks(8),
+.BR torsocks.conf(5)
+
+.SH "CREDITS"
+
+.PP
+torsocks is distributed under the GNU General Public License version 2.
+.PP
+A Web site is available at https://www.torproject.org for more information.
+.PP
+You can also find the source code at https://git.torproject.org.
+.PP
+Mailing list for help is <tor-talk@lists.torproject.org> and for development
+use <tor-dev@lists.torproject.org>. You can find the project also on IRC server
+irc.oftc.net (OFTC) in #tor and #tor-dev.
+.PP
+
 .SH AUTHOR
-This script was created by Tamas SZERB <toma@rulez.org> for the debian
-package of tsocks. It (along with this manual page) have since been
-adapted into the torsocks project and modified.
+torsocks was originally written by Robert Hogan and has been rewritten by David
+Goulet <dgoulet@ev0ke.net> in 2013.
+.PP
