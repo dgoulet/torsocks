@@ -371,8 +371,10 @@ AC_CONFIG_FILES([
 	src/bin/torsocks
 	src/common/Makefile
 	src/lib/Makefile
+	tests/Makefile
+	tests/utils/Makefile
+	tests/utils/tap/Makefile
 	doc/Makefile
-	test/Makefile
 ])
 
 AC_OUTPUT

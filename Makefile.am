@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -I config
 
-SUBDIRS = src doc
+SUBDIRS = src doc tests
 
 dist_doc_DATA = ChangeLog FAQ
 
