@@ -1,5 +1,5 @@
 # Install configuration file
-confdir = $(CONFDIR)/
+confdir = $(CONFDIR)/tor
 dist_conf_DATA = torsocks.conf
 
 dist_man1_MANS = torsocks.1

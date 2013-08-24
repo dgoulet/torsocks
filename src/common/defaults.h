@@ -38,7 +38,8 @@
  */
 #define DEFAULT_DOMAIN_NAME_SIZE	255
 
-#define DEFAULT_CONF_FILE			"/etc/torsocks.conf"
+#define DEFAULT_CONF_FILENAME		"torsocks.conf"
+#define DEFAULT_CONF_FILE			CONFDIR "/tor/" DEFAULT_CONF_FILENAME
 #define DEFAULT_CONF_FILE_ENV		"TORSOCKS_CONF_FILE"
 
 /*
