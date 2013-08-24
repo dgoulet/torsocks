@@ -110,6 +110,8 @@ torify_app ()
 
 usage ()
 {
+	echo "torsocks @VERSION@"
+	echo ""
 	echo "$0 [OPTIONS] [COMMAND [arg ...]]"
 	echo ""
 	echo "usage: $0 command args"
