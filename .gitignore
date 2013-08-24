@@ -41,4 +41,4 @@ doc/usewithtor.1
 
 src/bin/torsocks
 
-test/test_torsocks
+tests/test_dns
