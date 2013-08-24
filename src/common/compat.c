@@ -19,7 +19,7 @@
 
 #include "compat.h"
 
-#ifdef __linux__
+#if (defined(__linux__) || defined(__FreeBSD__) || defined(__darwin__))
 
 /*
  * Initialize a pthread mutex. This never fails.
@@ -71,4 +71,4 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m)
 	assert(!ret);
 }
 
-#endif /* __linux__ */
+#endif /* __linux__, __darwin__, __FreeBSD__ */

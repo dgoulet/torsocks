@@ -163,6 +163,7 @@ char *utils_strsplit(char *separator, char **text, const char *search)
  *
  * Returns as for strcasecmp.
  */
+ATTR_HIDDEN
 int utils_strcasecmpend(const char *s1, const char *s2)
 {
 	size_t n1 = strlen(s1), n2 = strlen(s2);

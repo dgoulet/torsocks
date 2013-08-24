@@ -88,6 +88,7 @@ error:
  *
  * Return 0 on success or else a negative value.
  */
+ATTR_HIDDEN
 int onion_pool_init(struct onion_pool *pool, in_addr_t addr, uint8_t mask)
 {
 	int ret = 0;
@@ -139,6 +140,7 @@ error:
 /*
  * Destroy onion pool by freeing every entry.
  */
+ATTR_HIDDEN
 void onion_pool_destroy(struct onion_pool *pool)
 {
 	int i;
@@ -160,6 +162,7 @@ void onion_pool_destroy(struct onion_pool *pool)
  *
  * Return a newly allocated onion entry or else NULL.
  */
+ATTR_HIDDEN
 struct onion_entry *onion_entry_create(struct onion_pool *pool,
 		const char *onion_name)
 {
@@ -215,6 +218,7 @@ error:
  *
  * Return entry on success or else NULL.
  */
+ATTR_HIDDEN
 struct onion_entry *onion_entry_find_by_name(const char *onion_name,
 		struct onion_pool *pool)
 {
@@ -245,6 +249,7 @@ end:
  *
  * Return entry on success or else NULL.
  */
+ATTR_HIDDEN
 struct onion_entry *onion_entry_find_by_ip(in_addr_t ip,
 		struct onion_pool *pool)
 {

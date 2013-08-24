@@ -84,6 +84,7 @@ HT_GENERATE(connection_registry, connection, node, conn_hash_fct,
 /*
  * Acquire connection registry mutex.
  */
+ATTR_HIDDEN
 void connection_registry_lock(void)
 {
 	tsocks_mutex_lock(&connection_registry_mutex);
@@ -92,6 +93,7 @@ void connection_registry_lock(void)
 /*
  * Release connection registry mutex.
  */
+ATTR_HIDDEN
 void connection_registry_unlock(void)
 {
 	tsocks_mutex_unlock(&connection_registry_mutex);
@@ -100,6 +102,7 @@ void connection_registry_unlock(void)
 /*
  * Initialize connection registry.
  */
+ATTR_HIDDEN
 void connection_registry_init(void)
 {
 	HT_INIT(connection_registry, &connection_registry_root);
@@ -111,6 +114,7 @@ void connection_registry_init(void)
  *
  * Return 0 on success or else a negative value.
  */
+ATTR_HIDDEN
 int connection_addr_set(enum connection_domain domain, const char *ip,
 		in_port_t port, struct connection_addr *addr)
 {
@@ -170,6 +174,7 @@ error:
  *
  * Return a newly allocated connection object or else NULL.
  */
+ATTR_HIDDEN
 struct connection *connection_create(int fd, const struct sockaddr *dest)
 {
 	struct connection *conn = NULL;
@@ -211,6 +216,7 @@ error:
 /*
  * Return the matching element with the given key or NULL if not found.
  */
+ATTR_HIDDEN
 struct connection *connection_find(int key)
 {
 	struct connection c_tmp;
@@ -222,6 +228,7 @@ struct connection *connection_find(int key)
 /*
  * Insert a connection object into the hash table.
  */
+ATTR_HIDDEN
 void connection_insert(struct connection *conn)
 {
 	struct connection *c_tmp;
@@ -238,6 +245,7 @@ void connection_insert(struct connection *conn)
 /*
  * Remove a given connection object from the registry.
  */
+ATTR_HIDDEN
 void connection_remove(struct connection *conn)
 {
 	assert(conn);
@@ -247,6 +255,7 @@ void connection_remove(struct connection *conn)
 /*
  * Destroy a connection by freeing its memory.
  */
+ATTR_HIDDEN
 void connection_destroy(struct connection *conn)
 {
 	if (!conn) {
@@ -260,6 +269,7 @@ void connection_destroy(struct connection *conn)
 /*
  * Get a reference of the given connection object.
  */
+ATTR_HIDDEN
 void connection_get_ref(struct connection *c)
 {
 	ref_get(&c->refcount);
@@ -269,6 +279,7 @@ void connection_get_ref(struct connection *c)
  * Put back a reference of the given connection object. If the refcount drops
  * to 0, the release connection function is called which frees the object.
  */
+ATTR_HIDDEN
 void connection_put_ref(struct connection *c)
 {
 	ref_put(&c->refcount, release_conn);

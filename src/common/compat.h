@@ -22,10 +22,6 @@
 
 #define RTLD_NEXT	((void *) -1)
 
-#endif /* __linux__, __FreeBSD__, __darwin__ */
-
-#ifdef __linux__
-
 #include <pthread.h>
 
 typedef struct tsocks_mutex_t {
@@ -41,6 +37,6 @@ void tsocks_mutex_destroy(tsocks_mutex_t *m);
 void tsocks_mutex_lock(tsocks_mutex_t *m);
 void tsocks_mutex_unlock(tsocks_mutex_t *m);
 
-#endif /* __linux__ */
+#endif /* __linux__, __darwin__, __FreeBSD__ */
 
 #endif /* TORSOCKS_COMPAT_H */

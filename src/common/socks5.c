@@ -119,6 +119,7 @@ error:
  *
  * Return 0 on success or else a negative value.
  */
+ATTR_HIDDEN
 int socks5_connect(struct connection *conn)
 {
 	int ret;
@@ -160,6 +161,7 @@ error:
  *
  * Return 0 on success or else a negative errno value.
  */
+ATTR_HIDDEN
 int socks5_send_method(struct connection *conn)
 {
 	int ret = 0;
@@ -191,6 +193,7 @@ error:
  *
  * Return 0 on success or else a negative errno value.
  */
+ATTR_HIDDEN
 int socks5_recv_method(struct connection *conn)
 {
 	int ret;
@@ -228,6 +231,7 @@ error:
  *
  * Return 0 on success or else a negative value.
  */
+ATTR_HIDDEN
 int socks5_send_connect_request(struct connection *conn)
 {
 	int ret;
@@ -332,6 +336,7 @@ error:
  *
  * Return 0 on success or else a negative value.
  */
+ATTR_HIDDEN
 int socks5_recv_connect_reply(struct connection *conn)
 {
 	int ret;
@@ -426,6 +431,7 @@ error:
  *
  * Return 0 on success or else a negative value.
  */
+ATTR_HIDDEN
 int socks5_send_resolve_request(const char *hostname, struct connection *conn)
 {
 	int ret, ret_send;
@@ -487,6 +493,7 @@ error:
  *
  * Return 0 on success else a negative value.
  */
+ATTR_HIDDEN
 int socks5_recv_resolve_reply(struct connection *conn, void *addr,
 		size_t addrlen)
 {
@@ -563,6 +570,7 @@ error:
  *
  * Return 0 on success or else a negative value.
  */
+ATTR_HIDDEN
 int socks5_send_resolve_ptr_request(const void *ip, struct connection *conn)
 {
 	int ret, ret_send;
@@ -623,6 +631,7 @@ error:
  *
  * Return 0 on success else a negative value.
  */
+ATTR_HIDDEN
 int socks5_recv_resolve_ptr_reply(struct connection *conn, char **_hostname)
 {
 	int ret;

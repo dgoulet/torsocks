@@ -8,6 +8,8 @@
 #ifndef HT_H_INCLUDED_
 #define HT_H_INCLUDED_
 
+#include "macros.h"
+
 #define HT_HEAD(name, type)                                             \
   struct name {                                                         \
     /* The hash table itself. */                                        \
@@ -315,6 +317,7 @@ ht_string_hash(const char *s)
   /* Expand the internal table of 'head' until it is large enough to    \
    * hold 'size' elements.  Return 0 on success, -1 on allocation       \
    * failure. */                                                        \
+  ATTR_HIDDEN															\
   int                                                                   \
   name##_HT_GROW(struct name *head, unsigned size)                      \
   {                                                                     \
@@ -377,6 +380,7 @@ ht_string_hash(const char *s)
   }                                                                     \
   /* Free all storage held by 'head'.  Does not free 'head' itself, or  \
    * individual elements. */                                            \
+  ATTR_HIDDEN															\
   void                                                                  \
   name##_HT_CLEAR(struct name *head)                                    \
   {                                                                     \
@@ -387,6 +391,7 @@ ht_string_hash(const char *s)
   }                                                                     \
   /* Debugging helper: return false iff the representation of 'head' is \
    * internally consistent. */                                          \
+  ATTR_HIDDEN															\
   int                                                                   \
   name##_HT_REP_IS_BAD_(const struct name *head)                        \
   {                                                                     \

@@ -250,6 +250,7 @@ error:
  *
  * Return 0 on success or else a negative value.
  */
+ATTR_HIDDEN
 int config_file_read(const char *filename, struct configuration *config)
 {
 	int ret;
@@ -305,6 +306,7 @@ error:
  * Free everything inside a configuration file object. It is the caller
  * responsability to free the object if needed.
  */
+ATTR_HIDDEN
 void config_file_destroy(struct config_file *conf)
 {
 	assert(conf);
