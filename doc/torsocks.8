@@ -18,12 +18,12 @@ Please note that the ISC res_* API is currently not supported.
 Here is an example on how to use torsocks library with \fBssh(1)\fP:
 .br
 
-$ @LDPRELOAD@=/path/to/libtorsocks.so ssh -l kalexander -p 1234 prism.nsa.gov
+$ LD_PRELOAD=/path/to/libtorsocks.so ssh -l kalexander -p 1234 prism.nsa.gov
 [...]
 
 .SH SHELL USAGE
 
-Set @LDPRELOAD@ to load the library then use applications as normal. The syntax
+Set LD_PRELOAD to load the library then use applications as normal. The syntax
 to force preload of the library for different shells is specified below:
 
 Bash, Ksh and Bourne shell:
@@ -111,7 +111,7 @@ executables that make system calls directly with the system call trap (int
 0x80).
 
 .SH FILES
-@CONFDIR@/tor/torsocks.conf - default torsocks configuration file
+/etc/tor/torsocks.conf - default torsocks configuration file
 
 .SH SEE ALSO
 .BR torsocks.conf(5),

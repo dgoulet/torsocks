@@ -15,13 +15,13 @@ Your installation of torsocks includes a default configuration file
 that contains values sensible for use with most Tor installations. The
 installation location for your default configuration file is:
 
-  @CONFDIR@/tor/torsocks.conf
+/etc/tor/torsocks.conf
 
 In order to use a configuration file, you must set the environment variable
 TORSOCKS_CONF_FILE with the location of the file.
 
 If TORSOCKS_CONF_FILE is not set, torsocks will attempt to read the
-configuration file at @CONFDIR@/tor/torsocks.conf. If that file cannot be read,
+configuration file at /etc/tor/torsocks.conf. If that file cannot be read,
 torsocks will use sensible defaults for most Tor installations, i.e. it will
 assume that you want to use a SOCKS proxy running at 127.0.0.1 (localhost) on
 port 9050.

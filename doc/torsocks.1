@@ -18,7 +18,7 @@ By default, torsocks will assume that it should connect to the Tor SOCKS proxy
 running at 127.0.0.1 on port 9050 being the defaults of the Tor daemon.
 
 In order to use a configuration file, torsocks tries to read the
-\fB@CONFDIR@/tor/torsocks.conf\fP file or look for the environment variable
+\fB/etc/tor/torsocks.conf\fP file or look for the environment variable
 TORSOCKS_CONF_FILE with the location of the file. If that file cannot be read,
 torsocks will use sensible defaults for most Tor installations.
 
@@ -32,24 +32,24 @@ For further information on configuration, see
 Show summary of possible options and commands.
 .TP
 .BR "\-\-shell"
-Create a new shell with @LDPRELOAD@ including \fBtorsocks(8)\fP.
+Create a new shell with LD_PRELOAD including \fBtorsocks(8)\fP.
 .TP
 .BR "on | off"
-This option adds or removes \fBtorsocks(8)\fP from the @LDPRELOAD@ environment
+This option adds or removes \fBtorsocks(8)\fP from the LD_PRELOAD environment
 variable for the current shell. If you want to use this option, you HAVE to
 source torsocks from yours.
 .br
 
 .nf
-Add the torsocks library to @LDPRELOAD@
+Add the torsocks library to LD_PRELOAD
 $ . torsocks on
 .br
-Remove the torsocks library from @LDPRELOAD@
+Remove the torsocks library from LD_PRELOAD
 $ . torsocks off
 .fi
 .TP
 .BR "show | sh"
-Show the current value of the @LDPRELOAD@ environment variable.
+Show the current value of the LD_PRELOAD environment variable.
 
 .SH "ENVIRONMENT VARIABLES"
 .PP
