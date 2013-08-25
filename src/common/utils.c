@@ -18,6 +18,7 @@
  */
 
 #include <arpa/inet.h>
+#include <sys/socket.h>
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
