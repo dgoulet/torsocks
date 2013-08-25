@@ -188,6 +188,19 @@ struct hostent **__result, int *__h_errnop
 
 #endif /* __linux__ */
 
+#if defined(__FreeBSD__)
+#include <sys/syscall.h>
+#include <unistd.h>
+
+/* syscall(2) */
+#define LIBC_SYSCALL_NAME syscall
+#define LIBC_SYSCALL_NAME_STR XSTR(LIBC_SYSCALL_NAME)
+#define LIBC_SYSCALL_RET_TYPE int
+#define LIBC_SYSCALL_SIG int __number, ...
+#define LIBC_SYSCALL_ARGS __number
+
+#endif	/* __FreeBSD__ */
+
 /*
  * The following defines are libc function declarations using the macros
  * defined above on a per OS basis.
