@@ -105,12 +105,9 @@ AC_CHECK_FUNC(gethostbyname, AC_DEFINE([HAVE_GETHOSTBYNAME],[],[Description]), [
 		      "torsocks disabled"])])])
 
 
-dnl Our main libs to link against are -dl and -lresolv.
-AC_CHECK_LIB([dl], [dlopen],
-[
-	AC_DEFINE_UNQUOTED([TORSOCKS_HAVE_DL], 1, [Has libdl support.])
-	have_libdl=yes
-])
+dnl Do we have dlopen(3) without -ldl?
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[]],[[return dlopen ();]])], [have_builtin_dl=yes])
+AM_CONDITIONAL([HAVE_BUILTIN_DL], [test "$have_builtin_dl" = "yes"])
 
 dnl OpenBSD needs -lpthread. It also doesn't support AI_V4MAPPED.
 case $host in
