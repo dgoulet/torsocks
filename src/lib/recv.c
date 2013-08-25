@@ -64,20 +64,22 @@ LIBC_RECVMSG_RET_TYPE tsocks_recvmsg(LIBC_RECVMSG_SIG)
 	 * further.
 	 */
 	if (cmsg->cmsg_type == SCM_RIGHTS || cmsg->cmsg_level == SOL_SOCKET) {
-		socklen_t optlen;
-		int sock_dom;
+                struct sockaddr_storage addr;
+                socklen_t addrlen;
+                sa_family_t family = AF_UNSPEC;
 
 		memcpy(&fd, CMSG_DATA(cmsg), sizeof(fd));
 
-		/* Get socket domain. */
-		optlen = sizeof(sock_dom);
-		ret = getsockopt(fd, SOL_SOCKET, SO_DOMAIN, &sock_dom, &optlen);
+		/* Get socket protocol family. */
+                addrlen = sizeof(addr);
+		ret = getsockname(fd, (struct sockaddr *) &addr, &addrlen);
 		if (ret < 0) {
-			/* Use the getsockopt() errno value. */
+			/* Use the getsockname() errno value. */
 			goto end;
 		}
+                family = ((struct sockaddr *) &addr)->sa_family;
 
-		if (sock_dom == AF_INET || sock_dom == AF_INET6) {
+                if (family == AF_INET || family == AF_INET6) {
 			ERR("[recvmsg] Inet socket passing detected. Aborting everything! "
 					"A non Tor socket could be used thus leaking information.");
 			exit(EXIT_FAILURE);
