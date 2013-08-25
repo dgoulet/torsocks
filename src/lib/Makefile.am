@@ -10,6 +10,7 @@ libtorsocks_la_SOURCES = torsocks.c torsocks.h \
                          connect.c gethostbyname.c getaddrinfo.c close.c \
                          getpeername.c socket.c syscall.c socketpair.c recv.c
 
-libtorsocks_la_LIBADD = \
-		$(top_builddir)/src/common/libcommon.la \
-		-ldl
+libtorsocks_la_LIBADD = $(top_builddir)/src/common/libcommon.la
+if ! HAVE_BUILTIN_DL
+libtorsocks_la_LIBADD += -ldl
+endif
