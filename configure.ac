@@ -54,7 +54,7 @@ AC_CHECK_HEADER(fcntl.h,,AC_MSG_ERROR("fcntl.h not found"))
 dnl Other headers we're interested in
 AC_CHECK_HEADERS(unistd.h)
 
-dnl Checks for library functions.
+dnl Checks for required library functions.
 AC_CHECK_FUNCS(strcspn strdup strerror strspn strtol mmap strcasecmp \
    strncasecmp strtol,,[AC_MSG_ERROR("Required function not found")])
 
@@ -106,7 +106,7 @@ AC_CHECK_FUNC(gethostbyname, AC_DEFINE([HAVE_GETHOSTBYNAME],[],[Description]), [
 
 
 dnl Do we have dlopen(3) without -ldl?
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[]],[[return dlopen ();]])], [have_builtin_dl=yes])
+AC_CHECK_FUNC([dlopen], [have_builtin_dl=yes])
 AM_CONDITIONAL([HAVE_BUILTIN_DL], [test "$have_builtin_dl" = "yes"])
 
 dnl OpenBSD needs -lpthread. It also doesn't support AI_V4MAPPED.
