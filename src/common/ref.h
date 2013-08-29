@@ -20,6 +20,8 @@
 
 #include <assert.h>
 
+#include "compat.h"
+
 struct ref {
 	long count;
 };
