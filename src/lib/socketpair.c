@@ -21,6 +21,9 @@
 
 #include "torsocks.h"
 
+/* socketpair(2) */
+TSOCKS_LIBC_DECL(socketpair, LIBC_SOCKETPAIR_RET_TYPE, LIBC_SOCKETPAIR_SIG)
+
 /*
  * Torsocks call for socketpair(2)
  */

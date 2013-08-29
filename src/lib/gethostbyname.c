@@ -25,6 +25,35 @@
 
 #include "torsocks.h"
 
+struct hostent tsocks_he;
+char *tsocks_he_addr_list[2];
+char tsocks_he_addr[INET_ADDRSTRLEN];
+char tsocks_he_name[255];
+
+/* gethostbyname(3) */
+TSOCKS_LIBC_DECL(gethostbyname, LIBC_GETHOSTBYNAME_RET_TYPE,
+		LIBC_GETHOSTBYNAME_SIG)
+
+/* gethostbyname_r(3) */
+TSOCKS_LIBC_DECL(gethostbyname_r, LIBC_GETHOSTBYNAME_R_RET_TYPE,
+		LIBC_GETHOSTBYNAME_R_SIG)
+
+/* gethostbyname2(3) */
+TSOCKS_LIBC_DECL(gethostbyname2, LIBC_GETHOSTBYNAME2_RET_TYPE,
+		LIBC_GETHOSTBYNAME2_SIG)
+
+/* gethostbyname2_r(3) */
+TSOCKS_LIBC_DECL(gethostbyname2_r, LIBC_GETHOSTBYNAME2_R_RET_TYPE,
+		LIBC_GETHOSTBYNAME2_R_SIG)
+
+/* gethostbyaddr(3) */
+TSOCKS_LIBC_DECL(gethostbyaddr, LIBC_GETHOSTBYADDR_RET_TYPE,
+		LIBC_GETHOSTBYADDR_SIG)
+
+/* gethostbyaddr_r(3) */
+TSOCKS_LIBC_DECL(gethostbyaddr_r, LIBC_GETHOSTBYADDR_R_RET_TYPE,
+		LIBC_GETHOSTBYADDR_R_SIG)
+
 /*
  * Torsocks call for gethostbyname(3).
  *

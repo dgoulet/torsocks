@@ -24,6 +24,10 @@
 
 #include "torsocks.h"
 
+/* getaddrinfo(3) */
+TSOCKS_LIBC_DECL(getaddrinfo, LIBC_GETADDRINFO_RET_TYPE,
+		LIBC_GETADDRINFO_SIG)
+
 /*
  * Torsocks call for getaddrinfo(3).
  */

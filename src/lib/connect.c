@@ -25,6 +25,9 @@
 
 #include "torsocks.h"
 
+/* connect(2) */
+TSOCKS_LIBC_DECL(connect, LIBC_CONNECT_RET_TYPE, LIBC_CONNECT_SIG)
+
 /*
  * Torsocks call for connect(2).
  */

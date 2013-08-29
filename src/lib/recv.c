@@ -22,6 +22,9 @@
 
 #include "torsocks.h"
 
+/* recvmsg(2) */
+TSOCKS_LIBC_DECL(recvmsg, LIBC_RECVMSG_RET_TYPE, LIBC_RECVMSG_SIG)
+
 /*
  * Torsocks call for recvmsg(2)
  *
