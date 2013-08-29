@@ -22,6 +22,12 @@
 
 #include "torsocks.h"
 
+/* syscall(2) */
+TSOCKS_LIBC_DECL(syscall, LIBC_SYSCALL_RET_TYPE, LIBC_SYSCALL_SIG)
+
+/* close(2) */
+TSOCKS_LIBC_DECL(close, LIBC_CLOSE_RET_TYPE, LIBC_CLOSE_SIG)
+
 /*
  * Handle close syscall to be called with tsocks call.
  */

@@ -22,6 +22,10 @@
 
 #include "torsocks.h"
 
+/* getpeername(2) */
+TSOCKS_LIBC_DECL(getpeername, LIBC_GETPEERNAME_RET_TYPE,
+		LIBC_GETPEERNAME_SIG)
+
 /*
  * Torsocks call for getpeername(2).
  */
