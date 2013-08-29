@@ -18,6 +18,10 @@
 #ifndef TORSOCKS_COMPAT_H
 #define TORSOCKS_COMPAT_H
 
+#if (defined(__APPLE__) && defined(__MACH__) && !defined(__darwin__))
+#define __darwin__	1
+#endif
+
 #if (defined(__linux__) || defined(__FreeBSD__) || defined(__darwin__))
 
 #define RTLD_NEXT	((void *) -1)
