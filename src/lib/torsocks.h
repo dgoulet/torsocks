@@ -188,7 +188,8 @@ struct hostent **__result, int *__h_errnop
 
 #endif /* __linux__ */
 
-#if defined(__FreeBSD__)
+#if (defined(__FreeBSD__) || defined(__darwin__))
+
 #include <sys/syscall.h>
 #include <unistd.h>
 
@@ -199,7 +200,7 @@ struct hostent **__result, int *__h_errnop
 #define LIBC_SYSCALL_SIG int __number, ...
 #define LIBC_SYSCALL_ARGS __number
 
-#endif	/* __FreeBSD__ */
+#endif /* __FreeBSD__, __darwin__ */
 
 /*
  * The following defines are libc function declarations using the macros
