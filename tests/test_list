@@ -1,2 +1,3 @@
 ./test_dns
 ./unit/test_onion
+./unit/test_connection
