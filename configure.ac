@@ -360,6 +360,7 @@ AC_CONFIG_FILES([
 	src/common/Makefile
 	src/lib/Makefile
 	tests/Makefile
+	tests/unit/Makefile
 	tests/utils/Makefile
 	tests/utils/tap/Makefile
 	doc/Makefile

@@ -42,3 +42,4 @@ doc/usewithtor.1
 src/bin/torsocks
 
 tests/test_dns
+tests/unit/test_onion
