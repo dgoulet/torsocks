@@ -1,3 +1,20 @@
+2013-09-02 torsocks 2.0.0-rc2
+	* Fix: remove FAQ file from Makefile
+	* Fix: remove out of date and inaccurate FAQ
+	* Tests: add connection object unit test
+	* Fix: Improve README file
+	* Tests: add onion pool subsystem unit test
+	* Use extern for tsocks_libc_* in torsocks.h
+	* Define LIBC_SYSCALL_ for OS X
+	* Make sure __darwin__ is defined
+	* Fix: explicitly ignore fileno return value
+	* Use AC_CHECK_FUNC rather than AC_LINK_IFELSE.
+	* Find out if we really need libdl.
+	* Define LIBC_SYSCALL_ for FreeBSD.
+	* Use SYS_ from <sys/syscall.h>.
+	* Include <sys/socket.h> for AF_INET*.
+	* Use getsockname(2) for finding out socket address family
+
 2013-08-24 torsocks 2.0.0-rc1
 	* Major rewrite from version 1.4
 	* Libc TCP communication support
