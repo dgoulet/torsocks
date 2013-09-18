@@ -44,3 +44,5 @@ src/bin/torsocks
 tests/test_dns
 tests/unit/test_onion
 tests/unit/test_connection
+tests/unit/test_utils
+tests/unit/test_config-file

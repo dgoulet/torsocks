@@ -1,0 +1,19 @@
+# This is the configuration for libtorsocks (transparent socks) for use
+# with tor, which is providing a socks server on port 9050 by default.
+#
+# Lines beginning with # and blank lines are ignored
+# Much more documentation than provided in these comments can be found in
+#
+# torsocks.conf(5), torsocks(1) and torsocks(8) manpages.
+
+# Default Tor address and port. By default, Tor will listen on localhost for
+# any SOCKS connection and relay the traffic on the Tor network.
+TorAddress 127.0.0.1
+TorPort 9050
+
+# Tor hidden sites do not have real IP addresses. This specifies what range of
+# IP addresses will be handed to the application as "cookies" for .onion names.
+# Of course, you should pick a block of addresses which you aren't going to
+# ever need to actually connect to. This is similar to the MapAddress feature
+# of the main tor daemon.
+OnionAddrRange 127.42.42.0/24
