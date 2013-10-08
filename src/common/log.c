@@ -163,9 +163,10 @@ int log_init(int level, const char *filepath, enum log_time_status t_status)
 		}
 	} else {
 		/* The default output is stderr if no filepath is given. */
-		(void) fileno(stderr);
-		if (errno != EBADF) {
+		ret = fileno(stderr);
+		if (ret < 0 && errno != EBADF) {
 			logconfig.fp = stderr;
+			ret = 0;
 		}
 	}
 
