@@ -59,7 +59,10 @@
 # Modified by Robert Hogan <robert@roberthogan.net> April 16th 2006
 # Modified by David Goulet <dgoulet@ev0ke.net> 2013
 
-LIBDIR="@prefix@/@libdir@/torsocks"
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+LIBDIR="${libdir}/torsocks"
 LIB_NAME="libtorsocks"
 SHLIB_EXT="@SHLIB_EXT@"
 SHLIB="${LIBDIR}/${LIB_NAME}.${SHLIB_EXT}"
