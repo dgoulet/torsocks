@@ -43,4 +43,46 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 
 #endif /* __linux__, __darwin__, __FreeBSD__ */
 
+#if defined(__linux__)
+
+#if defined(__i386)
+#include <asm-generic/unistd.h>
+#else
+#include <unistd.h>
+#endif /* defined __i386 */
+
+#include <sys/syscall.h>
+
+/*
+ * Some old system requires kernel headers for those values. If they are not
+ * defined, set them to a non syscall value. Just to be clear, if the value is
+ * undefined (here -1), tsocks syscall() will DENY the real syscall if catched.
+ */
+#ifndef __NR_socket
+#define __NR_socket -1
+#endif
+#ifndef __NR_connect
+#define __NR_connect -1
+#endif
+#ifndef __NR_close
+#define __NR_close -1
+#endif
+
+#define TSOCKS_NR_SOCKET    __NR_socket
+#define TSOCKS_NR_CONNECT   __NR_connect
+#define TSOCKS_NR_CLOSE     __NR_close
+
+#endif /* __linux__ */
+
+#if (defined(__FreeBSD__) || defined(__darwin__))
+
+#include <sys/syscall.h>
+#include <unistd.h>
+
+#define TSOCKS_NR_SOCKET    SYS_socket
+#define TSOCKS_NR_CONNECT   SYS_connect
+#define TSOCKS_NR_CLOSE     SYS_close
+
+#endif /* __FreeBSD__, __darwin__ */
+
 #endif /* TORSOCKS_COMPAT_H */

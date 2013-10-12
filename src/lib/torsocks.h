@@ -176,8 +176,6 @@ struct hostent **__result, int *__h_errnop
 #if (defined(__linux__))
 
 #define _GNU_SOURCE
-#include <unistd.h>
-#include <sys/syscall.h>
 
 /* syscall(2) */
 #define LIBC_SYSCALL_NAME syscall
@@ -189,9 +187,6 @@ struct hostent **__result, int *__h_errnop
 #endif /* __linux__ */
 
 #if (defined(__FreeBSD__) || defined(__darwin__))
-
-#include <sys/syscall.h>
-#include <unistd.h>
 
 /* syscall(2) */
 #define LIBC_SYSCALL_NAME syscall

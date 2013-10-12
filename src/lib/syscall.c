@@ -80,13 +80,13 @@ LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int __number, va_list args)
 	DBG("[syscall] Syscall libc wrapper number %ld called", __number);
 
 	switch (__number) {
-	case SYS_socket:
+	case TSOCKS_NR_SOCKET:
 		ret = handle_socket(args);
 		break;
-	case SYS_connect:
+	case TSOCKS_NR_CONNECT:
 		ret = handle_connect(args);
 		break;
-	case SYS_close:
+	case TSOCKS_NR_CLOSE:
 		ret = handle_close(args);
 		break;
 	default:
