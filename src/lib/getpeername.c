@@ -43,10 +43,10 @@ LIBC_GETPEERNAME_RET_TYPE tsocks_getpeername(LIBC_GETPEERNAME_SIG)
 		ret = -1;
 		goto end;
 	}
-	connection_registry_unlock();
 
 	errno = 0;
 end:
+	connection_registry_unlock();
 	return ret;
 }
 
