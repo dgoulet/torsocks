@@ -45,7 +45,7 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 
 #if defined(__linux__)
 
-#if defined(__i386)
+#if defined(__i386) || defined(__s390__) || defined(__s390x__)
 #include <asm-generic/unistd.h>
 #else
 #include <unistd.h>
