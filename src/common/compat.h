@@ -22,7 +22,7 @@
 #define __darwin__	1
 #endif
 
-#if (defined(__linux__) || defined(__FreeBSD__) || defined(__darwin__))
+#if (defined(__GLIBC__) || defined(__FreeBSD__) || defined(__darwin__))
 
 #define RTLD_NEXT	((void *) -1)
 
@@ -41,7 +41,9 @@ void tsocks_mutex_destroy(tsocks_mutex_t *m);
 void tsocks_mutex_lock(tsocks_mutex_t *m);
 void tsocks_mutex_unlock(tsocks_mutex_t *m);
 
-#endif /* __linux__, __darwin__, __FreeBSD__ */
+#else
+#error "OS not supported."
+#endif /* __GLIBC__, __darwin__, __FreeBSD__ */
 
 #if defined(__linux__)
 
@@ -74,7 +76,7 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 
 #endif /* __linux__ */
 
-#if (defined(__FreeBSD__) || defined(__darwin__))
+#if (defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__darwin__))
 
 #include <sys/syscall.h>
 #include <unistd.h>
@@ -83,6 +85,6 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 #define TSOCKS_NR_CONNECT   SYS_connect
 #define TSOCKS_NR_CLOSE     SYS_close
 
-#endif /* __FreeBSD__, __darwin__ */
+#endif /* __FreeBSD__, __FreeBSD_kernel__, __darwin__ */
 
 #endif /* TORSOCKS_COMPAT_H */

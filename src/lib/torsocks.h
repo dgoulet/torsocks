@@ -33,7 +33,7 @@
 #define TSOCKS_DECL(name, type, sig) \
 	extern type tsocks_##name(sig);
 
-#if (defined(__linux__) || defined(__FreeBSD__) || defined(__darwin__))
+#if (defined(__GLIBC__) || defined(__FreeBSD__) || defined(__darwin__))
 
 /* connect(2) */
 #include <sys/types.h>
@@ -171,7 +171,7 @@ struct hostent **__result, int *__h_errnop
 
 #else
 #error "OS not supported."
-#endif /* __linux__ , __FreeBSD__, __darwin__ */
+#endif /* __GLIBC__ , __FreeBSD__, __darwin__ */
 
 #if (defined(__linux__))
 
@@ -196,6 +196,17 @@ struct hostent **__result, int *__h_errnop
 #define LIBC_SYSCALL_ARGS __number
 
 #endif /* __FreeBSD__, __darwin__ */
+
+#if defined(__GLIBC__) && defined(__FreeBSD_kernel__)
+
+/* syscall(2) */
+#define LIBC_SYSCALL_NAME syscall
+#define LIBC_SYSCALL_NAME_STR XSTR(LIBC_SYSCALL_NAME)
+#define LIBC_SYSCALL_RET_TYPE long int
+#define LIBC_SYSCALL_SIG long int __number, ...
+#define LIBC_SYSCALL_ARGS __number
+
+#endif /* __GLIBC__ && __FreeBSD_kernel__ */
 
 /*
  * The following defines are libc function declarations using the macros

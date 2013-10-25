@@ -26,7 +26,7 @@ struct ref {
 	long count;
 };
 
-#if (defined(__linux__) || defined(__FreeBSD__) || defined(__darwin__))
+#if (defined(__GLIBC__) || defined(__FreeBSD__) || defined(__darwin__))
 
 /*
  * Get a reference by incrementing the refcount.
@@ -57,6 +57,6 @@ static inline void ref_put(struct ref *r,
 
 #else
 #error "OS not supported"
-#endif /* __linux__, __FreeBSD__, __darwin__ */
+#endif /* __GLIBC__, __FreeBSD__, __darwin__ */
 
 #endif /* TORSOCKS_REF_H */
