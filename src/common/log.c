@@ -137,7 +137,7 @@ int log_init(int level, const char *filepath, enum log_time_status t_status)
 {
 	int ret = 0;
 
-	/* Reset logconfig. Useful if this is call multiple times. */
+	/* Reset logconfig. Useful if this is called multiple times. */
 	memset(&logconfig, 0, sizeof(logconfig));
 
 	if (level < MSGNONE || level > MSGDEBUG) {
@@ -164,7 +164,7 @@ int log_init(int level, const char *filepath, enum log_time_status t_status)
 	} else {
 		/* The default output is stderr if no filepath is given. */
 		ret = fileno(stderr);
-		if (ret < 0 && errno != EBADF) {
+		if (ret >= 0 && errno != EBADF) {
 			logconfig.fp = stderr;
 			ret = 0;
 		}
