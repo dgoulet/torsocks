@@ -143,8 +143,5 @@ error:
  */
 LIBC_CONNECT_DECL
 {
-	/* Find symbol if not already set. Exit if not found. */
-	tsocks_libc_connect = tsocks_find_libc_symbol(LIBC_CONNECT_NAME_STR,
-			TSOCKS_SYM_EXIT_NOT_FOUND);
 	return tsocks_connect(LIBC_CONNECT_ARGS);
 }

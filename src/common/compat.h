@@ -69,10 +69,18 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 #ifndef __NR_close
 #define __NR_close -1
 #endif
+#ifndef __NR_mmap
+#define __NR_mmap -1
+#endif
+#ifndef __NR_munmap
+#define __NR_munmap -1
+#endif
 
 #define TSOCKS_NR_SOCKET    __NR_socket
 #define TSOCKS_NR_CONNECT   __NR_connect
 #define TSOCKS_NR_CLOSE     __NR_close
+#define TSOCKS_NR_MMAP      __NR_mmap
+#define TSOCKS_NR_MUNMAP    __NR_munmap
 
 #endif /* __linux__ */
 
@@ -84,6 +92,8 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 #define TSOCKS_NR_SOCKET    SYS_socket
 #define TSOCKS_NR_CONNECT   SYS_connect
 #define TSOCKS_NR_CLOSE     SYS_close
+#define TSOCKS_NR_MMAP      SYS_mmap
+#define TSOCKS_NR_MUNMAP    SYS_munmap
 
 #endif /* __FreeBSD__, __FreeBSD_kernel__, __darwin__ */
 

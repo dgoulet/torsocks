@@ -119,12 +119,39 @@ static void init_config(void)
  */
 static void init_libc_symbols(void)
 {
-	tsocks_libc_connect = tsocks_find_libc_symbol(LIBC_CONNECT_NAME_STR,
-			TSOCKS_SYM_EXIT_NOT_FOUND);
-	tsocks_libc_close = tsocks_find_libc_symbol(LIBC_CLOSE_NAME_STR,
-			TSOCKS_SYM_EXIT_NOT_FOUND);
-	tsocks_libc_socket = tsocks_find_libc_symbol(LIBC_SOCKET_NAME_STR,
-			TSOCKS_SYM_EXIT_NOT_FOUND);
+	int ret;
+	void *libc_ptr;
+
+	dlerror();
+	libc_ptr = dlopen(LIBC_PATH, RTLD_LAZY);
+	if (!libc_ptr) {
+		ERR("Unable to dlopen() library " LIBC_PATH "(%s)", dlerror());
+		goto error;
+	}
+
+	dlerror();
+	tsocks_libc_connect = dlsym(libc_ptr, LIBC_CONNECT_NAME_STR);
+	tsocks_libc_close = dlsym(libc_ptr, LIBC_CLOSE_NAME_STR);
+	tsocks_libc_socket = dlsym(libc_ptr, LIBC_SOCKET_NAME_STR);
+	tsocks_libc_syscall = dlsym(libc_ptr, LIBC_SYSCALL_NAME_STR);
+	if (!tsocks_libc_connect || !tsocks_libc_close || !tsocks_libc_socket
+			|| !tsocks_libc_syscall) {
+		ERR("Unable to lookup symbols in " LIBC_PATH "(%s)", dlerror());
+		goto error;
+	}
+
+	ret = dlclose(libc_ptr);
+	if (ret != 0) {
+		ERR("dlclose: %s", dlerror());
+	}
+	return;
+
+error:
+	ret = dlclose(libc_ptr);
+	if (ret != 0) {
+		ERR("dlclose: %s", dlerror());
+	}
+	clean_exit(EXIT_FAILURE);
 }
 
 /*

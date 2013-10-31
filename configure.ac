@@ -65,26 +65,6 @@ AC_CHECK_FUNCS(strcspn strdup strerror strspn strtol mmap strcasecmp \
 #    in torsocks.c and elsewhere is platform-dependent.
 ##############################################################################
 
-dnl First find the library that contains connect() (obviously
-dnl the most important library for us). Once we've found it
-dnl we chuck it on the end of LIBS, that lib may end up there
-dnl more than once (since we do our search with an empty libs
-dnl list) but that isn't a problem
-OLDLIBS="${LIBS}"
-LIBS=
-CONNECTLIB=
-for LIB in c socket; do
-  AC_CHECK_LIB("${LIB}",connect,[
-    CONNECTLIB="${LIB}"
-    break
-  ],)
-done
-LIBS="${OLDLIBS} -l${CONNECTLIB}"
-if test "${CONNECTLIB}" = ""; then
-  AC_MSG_ERROR('Could not find library containing connect()')
-fi
-
-
 dnl Check for socket
 AC_CHECK_FUNC(socket,, [
   AC_CHECK_LIB(socket, socket,,AC_MSG_ERROR("socket function not found"))])
@@ -131,123 +111,38 @@ case $host in
     ;;
 esac
 
-
-##############################################################################
-# 3. Check if we need to use --enable-oldmethod, regardless of what was
-#    given on the ./configure command line.
-##############################################################################
-
-dnl If we're using gcc here define _GNU_SOURCE
-AC_MSG_CHECKING(for RTLD_NEXT from dlfcn.h)
-AC_EGREP_CPP(yes,
-[
- #include <dlfcn.h>
- #ifdef RTLD_NEXT
-	yes
- #endif
-], [
-  AC_MSG_RESULT(yes)
-], [
-  AC_MSG_RESULT(no)
-  AC_MSG_CHECKING(for RTLD_NEXT from dlfcn.h with _GNU_SOURCE)
-  AC_EGREP_CPP(yes,
-  [
-   #define _GNU_SOURCE
-   #include <dlfcn.h>
-   #ifdef RTLD_NEXT
-	yes
-   #endif
-  ], [
-    AC_MSG_RESULT(yes)
-    AC_DEFINE([USE_GNU_SOURCE],[],[Description])
-  ], [
-    AC_MSG_RESULT(no)
-    AC_DEFINE([USE_OLD_DLSYM],[],[Description])
-    oldmethod="yes"
-  ])   
-])
-
 if test "x${enable_envconf}" = "x"; then
   AC_DEFINE([ALLOW_ENV_CONFIG],[],[Description])
 fi
 
-##############################################################################
-# 3. If --enable-oldmethod was requested, perform the necessary checks
-##############################################################################
-
-if test "${enable_oldmethod}" = "yes"; then
-  AC_DEFINE([USE_OLD_DLSYM],[],[Description])
-  oldmethod="yes"
+dnl Check that find is available, it should be somehere
+dnl in the path
+AC_CHECK_PROG(FIND, find, find)
+if test "${FIND}" = ""; then
+	AC_MSG_ERROR('find not found in path')
 fi
 
-dnl If we have to use the old method of overriding connect (i.e no
-dnl RTLD_NEXT) we need to know the location of the library that
-dnl contains connect(), select(), poll() and close()
-if test "${oldmethod}" = "yes"; then
-  dnl We need to find the path to the library, to do
-  dnl this we use find on the usual suspects, i.e /lib and
-  dnl /usr/lib
-
-  dnl Check that find is available, it should be somehere
-  dnl in the path
-  AC_CHECK_PROG(FIND, find, find)
-  if test "${FIND}" = ""; then
-    AC_MSG_ERROR('find not found in path')
-  fi
-
-  dnl Find tail, it should always be somewhere in the path
-  dnl but for safety's sake
-  AC_CHECK_PROG(TAIL, tail, tail)
-  if test "${TAIL}" = ""; then
-    AC_MSG_ERROR('tail not found in path')
-  fi
-
-  dnl Now find the library we need
-  AC_MSG_CHECKING(location of lib${CONNECTLIB}.so)
-  LIBCONNECT=
-  for DIR in '/lib' '/usr/lib'; do
-    if test "${LIBCONNECT}" = ""; then
-      LIBCONNECT=`$FIND $DIR -name "lib${CONNECTLIB}.so.?" 2>/dev/null | $TAIL -1`
-    fi
-  done
-  AC_DEFINE_UNQUOTED([LIBCONNECT],["${LIBCONNECT}"],[Description])
-  if test "${LIBCONNECT}" = ""; then
-     AC_MSG_ERROR("not found!")
-  fi
-
-  AC_MSG_RESULT($LIBCONNECT)
-
-  dnl Now find the resolve library we need
-  AC_MSG_CHECKING(location of libresolv.so)
-  LIBRESOLV=
-  for DIR in '/lib' '/usr/lib'; do
-    if test "${LIBRESOLV}" = ""; then
-      LIBRESOLV=`$FIND $DIR -name "libresolv.so.?" 2>/dev/null | $TAIL -1`
-    fi
-  done
-  AC_DEFINE_UNQUOTED([LIBRESOLV],["${LIBRESOLV}"],[Description])
-  if test "${LIBRESOLV}" = ""; then
-     AC_MSG_ERROR("not found!")
-  fi
-
-  AC_MSG_RESULT($LIBRESOLV)
-
-  dnl close() should be in libc, find it
-  AC_MSG_CHECKING(location of libc.so)
-  LIBC=
-  for DIR in '/lib' '/usr/lib'; do
-    if test "${LIBC}" = ""; then
-      LIBC=`$FIND $DIR -name "libc.so.?" 2>/dev/null | $TAIL -1`
-    fi
-  done
-
-  AC_DEFINE_UNQUOTED([LIBC],["${LIBC}"],[Description])
-  if test "${LIBC}" = ""; then
-     AC_MSG_ERROR("not found!")
-  fi
-
-  AC_MSG_RESULT($LIBC)
+dnl Find tail, it should always be somewhere in the path
+dnl but for safety's sake
+AC_CHECK_PROG(TAIL, tail, tail)
+if test "${TAIL}" = ""; then
+	AC_MSG_ERROR('tail not found in path')
 fi
+
+dnl Get libc full system path. Use prefix or some hardcoded standard
+dnl location on Unixish system.
+AC_MSG_CHECKING(location of libc.so)
+for DIR in "$prefix/lib" "$prefix/usr/lib" '/lib' '/usr/lib'; do
+	if test "${LIBC_PATH}" = ""; then
+		LIBC_PATH=`$FIND $DIR -name "libc.so.?" 2>/dev/null | $TAIL -1`
+	fi
+done
+AC_DEFINE_UNQUOTED([LIBC_PATH],["${LIBC_PATH}"],[Description])
+if test "${LIBC_PATH}" = ""; then
+	AC_MSG_ERROR("not found!")
+fi
+
+AC_MSG_RESULT($LIBC_PATH)
 
 ##############################################################################
 # 5. Determine how to preload libtorsocks.so on this system.

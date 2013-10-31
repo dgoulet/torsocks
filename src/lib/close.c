@@ -20,6 +20,9 @@
 
 #include "torsocks.h"
 
+/* close(2) */
+TSOCKS_LIBC_DECL(close, LIBC_CLOSE_RET_TYPE, LIBC_CLOSE_SIG)
+
 /*
  * Torsocks call for close(2).
  */
@@ -58,7 +61,5 @@ LIBC_CLOSE_RET_TYPE tsocks_close(LIBC_CLOSE_SIG)
  */
 LIBC_CLOSE_DECL
 {
-	tsocks_libc_close = tsocks_find_libc_symbol(LIBC_CLOSE_NAME_STR,
-			TSOCKS_SYM_EXIT_NOT_FOUND);
 	return tsocks_close(LIBC_CLOSE_ARGS);
 }

@@ -17,6 +17,7 @@
 
 #include <assert.h>
 #include <stdarg.h>
+#include <sys/mman.h>
 
 #include <common/log.h>
 
@@ -24,9 +25,6 @@
 
 /* syscall(2) */
 TSOCKS_LIBC_DECL(syscall, LIBC_SYSCALL_RET_TYPE, LIBC_SYSCALL_SIG)
-
-/* close(2) */
-TSOCKS_LIBC_DECL(close, LIBC_CLOSE_RET_TYPE, LIBC_CLOSE_SIG)
 
 /*
  * Handle close syscall to be called with tsocks call.
@@ -71,11 +69,45 @@ static LIBC_CONNECT_RET_TYPE handle_connect(va_list args)
 }
 
 /*
+ * Handle mmap(2) syscall.
+ */
+static LIBC_SYSCALL_RET_TYPE handle_mmap(va_list args)
+{
+	void *addr;
+	size_t len;
+	int prot, flags, fd;
+	off_t offset;
+
+	addr = va_arg(args, __typeof__(addr));
+	len = va_arg(args, __typeof__(len));
+	prot = va_arg(args, __typeof__(prot));
+	flags = va_arg(args, __typeof__(flags));
+	fd = va_arg(args, __typeof__(fd));
+	offset = va_arg(args, __typeof__(offset));
+
+	return (LIBC_SYSCALL_RET_TYPE) mmap(addr, len, prot, flags, fd, offset);
+}
+
+/*
+ * Handle munmap(2) syscall.
+ */
+static LIBC_SYSCALL_RET_TYPE handle_munmap(va_list args)
+{
+	void *addr;
+	size_t len;
+
+	addr = va_arg(args, __typeof__(addr));
+	len = va_arg(args, __typeof__(len));
+
+	return (LIBC_SYSCALL_RET_TYPE) munmap(addr, len);
+}
+
+/*
  * Torsocks call for syscall(2)
  */
 LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int __number, va_list args)
 {
-	long int ret;
+	LIBC_SYSCALL_RET_TYPE ret;
 
 	DBG("[syscall] Syscall libc wrapper number %ld called", __number);
 
@@ -88,6 +120,32 @@ LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int __number, va_list args)
 		break;
 	case TSOCKS_NR_CLOSE:
 		ret = handle_close(args);
+		break;
+	case TSOCKS_NR_MMAP:
+		/*
+		 * The mmap/munmap syscall are handled here for a very specific case so
+		 * buckle up here for the explanation :).
+		 *
+		 * Considering an application that handles its own memory using a
+		 * malloc(2) hook for instance *AND* mmap() is called with syscall(),
+		 * we have to route the call to the libc in order to complete the
+		 * syscall() symbol lookup.
+		 *
+		 * The lookup process of the libdl (using dlsym(3)) calls at some point
+		 * malloc for a temporary buffer so we end up in this torsocks wrapper
+		 * when mmap() is called to create a new memory region for the
+		 * application (remember the malloc hook). When getting here, the libc
+		 * syscall() symbol is NOT yet populated because we are in the lookup
+		 * code path. For this, we directly call mmap/munmap using the libc so
+		 * the lookup can be completed.
+		 *
+		 * This crazy situation is present in Mozilla Firefox which handles its
+		 * own memory using mmap() called by syscall(). Same for munmap().
+		 */
+		ret = handle_mmap(args);
+		break;
+	case TSOCKS_NR_MUNMAP:
+		ret = handle_munmap(args);
 		break;
 	default:
 		/*
@@ -111,10 +169,6 @@ LIBC_SYSCALL_DECL
 {
 	LIBC_SYSCALL_RET_TYPE ret;
 	va_list args;
-
-	/* Find symbol if not already set. Exit if not found. */
-	tsocks_libc_syscall = tsocks_find_libc_symbol(LIBC_SYSCALL_NAME_STR,
-			TSOCKS_SYM_EXIT_NOT_FOUND);
 
 	va_start(args, __number);
 	ret = tsocks_syscall(__number, args);

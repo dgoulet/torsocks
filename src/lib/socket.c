@@ -53,8 +53,5 @@ LIBC_SOCKET_RET_TYPE tsocks_socket(LIBC_SOCKET_SIG)
  */
 LIBC_SOCKET_DECL
 {
-	/* Find symbol if not already set. Exit if not found. */
-	tsocks_libc_socket = tsocks_find_libc_symbol(LIBC_SOCKET_NAME_STR,
-			TSOCKS_SYM_EXIT_NOT_FOUND);
 	return tsocks_socket(LIBC_SOCKET_ARGS);
 }
