@@ -10,6 +10,8 @@ LIBCOMMON=$(top_builddir)/src/common/libcommon.la
 
 noinst_PROGRAMS = test_onion test_connection test_utils test_config-file
 
+EXTRA_DIST = fixtures
+
 test_onion_SOURCES = test_onion.c
 test_onion_LDADD = $(LIBTAP) $(LIBCOMMON)
 
