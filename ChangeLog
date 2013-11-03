@@ -1,3 +1,19 @@
+2013-11-03 torsocks 2.0.0-rc3
+	* Fix: add fixtures directory to EXTRA_DIST
+	* Fix: add fixtures.h to makefile.am as EXTRA_DIST
+	* Fix: remove DBG call in syscall()
+	* Fix: don't lookup symbol if already found
+	* Lookup symbols in libc in constructor
+	* Fix: bad ret value check for default logging
+	* Add compatibility with GNU/kFreeBSD
+	* Fix compatibility with s390 and s390x architectures
+	* Fix: missing registry unlock on error
+	* Fix: undefined syscall values for x86
+	* Fix: check fileno returned value
+	* Fix: torsocks.in libdir path with lib prefix
+	* Tests: add config-file tests
+	* Tests: add utils unit tests
+
 2013-09-02 torsocks 2.0.0-rc2
 	* Fix: remove FAQ file from Makefile
 	* Fix: remove out of date and inaccurate FAQ
