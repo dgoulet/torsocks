@@ -109,8 +109,6 @@ LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int __number, va_list args)
 {
 	LIBC_SYSCALL_RET_TYPE ret;
 
-	DBG("[syscall] Syscall libc wrapper number %ld called", __number);
-
 	switch (__number) {
 	case TSOCKS_NR_SOCKET:
 		ret = handle_socket(args);
