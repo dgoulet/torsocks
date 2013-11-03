@@ -99,7 +99,10 @@ error:
  */
 LIBC_GETADDRINFO_DECL
 {
-	tsocks_libc_getaddrinfo = tsocks_find_libc_symbol(LIBC_GETADDRINFO_NAME_STR,
-			TSOCKS_SYM_EXIT_NOT_FOUND);
+	if (!tsocks_libc_getaddrinfo) {
+		tsocks_libc_getaddrinfo = tsocks_find_libc_symbol(
+				LIBC_GETADDRINFO_NAME_STR, TSOCKS_SYM_EXIT_NOT_FOUND);
+	}
+
 	return tsocks_getaddrinfo(LIBC_GETADDRINFO_ARGS);
 }

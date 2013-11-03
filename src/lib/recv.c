@@ -99,8 +99,11 @@ end:
  */
 LIBC_RECVMSG_DECL
 {
-	/* Find symbol if not already set. Exit if not found. */
-	tsocks_libc_recvmsg = tsocks_find_libc_symbol(LIBC_RECVMSG_NAME_STR,
-			TSOCKS_SYM_EXIT_NOT_FOUND);
+	if (!tsocks_libc_recvmsg) {
+		/* Find symbol if not already set. Exit if not found. */
+		tsocks_libc_recvmsg = tsocks_find_libc_symbol(LIBC_RECVMSG_NAME_STR,
+				TSOCKS_SYM_EXIT_NOT_FOUND);
+	}
+
 	return tsocks_recvmsg(LIBC_RECVMSG_ARGS);
 }

@@ -57,8 +57,10 @@ LIBC_GETPEERNAME_DECL
 {
 	int ret;
 
-	tsocks_libc_getpeername = tsocks_find_libc_symbol(LIBC_GETPEERNAME_NAME_STR,
-			TSOCKS_SYM_EXIT_NOT_FOUND);
+	if (!tsocks_libc_getpeername) {
+		tsocks_libc_getpeername = tsocks_find_libc_symbol(
+				LIBC_GETPEERNAME_NAME_STR, TSOCKS_SYM_EXIT_NOT_FOUND);
+	}
 
 	ret = tsocks_libc_getpeername(LIBC_GETPEERNAME_ARGS);
 	if (ret < 0) {

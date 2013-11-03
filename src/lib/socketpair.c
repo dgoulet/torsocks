@@ -54,8 +54,11 @@ LIBC_SOCKETPAIR_RET_TYPE tsocks_socketpair(LIBC_SOCKETPAIR_SIG)
  */
 LIBC_SOCKETPAIR_DECL
 {
-	/* Find symbol if not already set. Exit if not found. */
-	tsocks_libc_socketpair = tsocks_find_libc_symbol(LIBC_SOCKETPAIR_NAME_STR,
-			TSOCKS_SYM_EXIT_NOT_FOUND);
+	if (!tsocks_libc_socketpair) {
+		/* Find symbol if not already set. Exit if not found. */
+		tsocks_libc_socketpair = tsocks_find_libc_symbol(
+				LIBC_SOCKETPAIR_NAME_STR, TSOCKS_SYM_EXIT_NOT_FOUND);
+	}
+
 	return tsocks_socketpair(LIBC_SOCKETPAIR_ARGS);
 }
