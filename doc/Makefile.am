@@ -6,5 +6,5 @@ dist_man1_MANS = torsocks.1
 dist_man5_MANS = torsocks.conf.5
 dist_man8_MANS = torsocks.8
 
-dist_data_DATA = socks/SOCKS5 socks/socks-extensions.txt notes/DEBUG
+dist_doc_DATA = socks/SOCKS5 socks/socks-extensions.txt notes/DEBUG
 
