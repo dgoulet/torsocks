@@ -68,6 +68,7 @@ static LIBC_CONNECT_RET_TYPE handle_connect(va_list args)
 	return tsocks_connect(sockfd, addr, addrlen);
 }
 
+#if (defined(__linux__) || defined(__darwin__))
 /*
  * Handle mmap(2) syscall.
  */
@@ -87,6 +88,7 @@ static LIBC_SYSCALL_RET_TYPE handle_mmap(va_list args)
 
 	return (LIBC_SYSCALL_RET_TYPE) mmap(addr, len, prot, flags, fd, offset);
 }
+#endif /* __linux__, __darwin__ */
 
 /*
  * Handle munmap(2) syscall.
@@ -120,6 +122,14 @@ LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int __number, va_list args)
 		ret = handle_close(args);
 		break;
 	case TSOCKS_NR_MMAP:
+#if (defined(__NetBSD__) || defined(__FreeBSD__)) && defined(__x86_64)
+		/*
+		 * On an 64 bit *BSD system, __syscall(2) should be used for mmap().
+		 * This is NOT suppose to happen but for protection we deny that call.
+		 */
+		ret = -1;
+		errno = ENOSYS;
+#else
 		/*
 		 * The mmap/munmap syscall are handled here for a very specific case so
 		 * buckle up here for the explanation :).
@@ -141,6 +151,7 @@ LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int __number, va_list args)
 		 * own memory using mmap() called by syscall(). Same for munmap().
 		 */
 		ret = handle_mmap(args);
+#endif /* __NetBSD__, __FreeBSD__, __x86_64 */
 		break;
 	case TSOCKS_NR_MUNMAP:
 		ret = handle_munmap(args);
@@ -174,3 +185,70 @@ LIBC_SYSCALL_DECL
 
 	return ret;
 }
+
+/* Only used for *BSD systems. */
+#if (defined(__NetBSD__) || defined(__FreeBSD__))
+
+/* __syscall(2) */
+TSOCKS_LIBC_DECL(__syscall, LIBC___SYSCALL_RET_TYPE, LIBC___SYSCALL_SIG)
+
+/*
+ * Handle *BSD mmap(2) syscall.
+ */
+static LIBC___SYSCALL_RET_TYPE handle_bsd_mmap(va_list args)
+{
+	void *addr;
+	size_t len;
+	int prot, flags, fd;
+	off_t offset;
+
+	addr = va_arg(args, __typeof__(addr));
+	len = va_arg(args, __typeof__(len));
+	prot = va_arg(args, __typeof__(prot));
+	flags = va_arg(args, __typeof__(flags));
+	fd = va_arg(args, __typeof__(fd));
+	offset = va_arg(args, __typeof__(offset));
+
+	return (LIBC___SYSCALL_RET_TYPE) mmap(addr, len, prot, flags, fd, offset);
+}
+
+LIBC___SYSCALL_RET_TYPE tsocks___syscall(quad_t __number, va_list args)
+{
+	LIBC_SYSCALL_RET_TYPE ret;
+
+	switch (__number) {
+	case TSOCKS_NR_MMAP:
+		/*
+		 * Please see the mmap comment in the syscall() function to understand
+		 * why mmap is being hijacked.
+		 */
+		ret = handle_bsd_mmap(args);
+		break;
+	default:
+		/*
+		 * Deny call since we have no idea if this call can leak or not data
+		 * off the Tor network.
+		 */
+		WARN("[syscall] Unsupported __syscall number %ld. Denying the call",
+				__number);
+		ret = -1;
+		errno = ENOSYS;
+		break;
+	}
+
+	return ret;
+}
+
+LIBC___SYSCALL_DECL
+{
+	LIBC___SYSCALL_RET_TYPE ret;
+	va_list args;
+
+	va_start(args, __number);
+	ret = tsocks___syscall(__number, args);
+	va_end(args);
+
+	return ret;
+}
+
+#endif /* __NetBSD__, __FreeBSD__ */

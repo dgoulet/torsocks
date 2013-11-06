@@ -208,6 +208,25 @@ struct hostent **__result, int *__h_errnop
 
 #endif /* __GLIBC__ && __FreeBSD_kernel__ */
 
+/* __syscall(2) */
+#if defined(__FreeBSD__)
+
+#define LIBC___SYSCALL_NAME __syscall
+#define LIBC___SYSCALL_NAME_STR XSTR(LIBC___SYSCALL_NAME)
+#define LIBC___SYSCALL_RET_TYPE off_t
+#define LIBC___SYSCALL_SIG quad_t __number, ...
+#define LIBC___SYSCALL_ARGS __number
+
+#elif defined(__NetBSD__)
+
+#define LIBC___SYSCALL_NAME __syscall
+#define LIBC___SYSCALL_NAME_STR XSTR(LIBC___SYSCALL_NAME)
+#define LIBC___SYSCALL_RET_TYPE quad_t
+#define LIBC___SYSCALL_SIG quad_t __number, ...
+#define LIBC___SYSCALL_ARGS __number
+
+#endif /* __FreeBSD__, __NetBSD__ */
+
 /*
  * The following defines are libc function declarations using the macros
  * defined above on a per OS basis.
@@ -240,6 +259,13 @@ TSOCKS_DECL(socketpair, LIBC_SOCKETPAIR_RET_TYPE, LIBC_SOCKETPAIR_SIG)
 extern TSOCKS_LIBC_DECL(syscall, LIBC_SYSCALL_RET_TYPE, LIBC_SYSCALL_SIG)
 #define LIBC_SYSCALL_DECL \
 		LIBC_SYSCALL_RET_TYPE LIBC_SYSCALL_NAME(LIBC_SYSCALL_SIG)
+
+/* __syscall(2) */
+#if (defined(__FreeBSD__) || defined(__NetBSD__))
+extern TSOCKS_LIBC_DECL(__syscall, LIBC___SYSCALL_RET_TYPE, LIBC___SYSCALL_SIG)
+#define LIBC___SYSCALL_DECL \
+		LIBC___SYSCALL_RET_TYPE LIBC___SYSCALL_NAME(LIBC___SYSCALL_SIG)
+#endif /* __FreeBSD__, __NetBSD__ */
 
 /* close(2) */
 extern TSOCKS_LIBC_DECL(close, LIBC_CLOSE_RET_TYPE, LIBC_CLOSE_SIG)
