@@ -146,8 +146,14 @@ int socks5_connect(struct connection *conn)
 	do {
 		/* Use the original libc connect() to the Tor. */
 		ret = tsocks_libc_connect(conn->fd, socks5_addr, sizeof(*socks5_addr));
-	} while (ret < 0 && (errno == EINTR || errno == EINPROGRESS));
+	} while (ret < 0 &&
+			(errno == EINTR || errno == EINPROGRESS || errno == EALREADY));
 	if (ret < 0) {
+		/* The non blocking socket is now connected. */
+		if (errno == EISCONN) {
+			ret = 0;
+			goto error;
+		}
 		ret = -errno;
 		PERROR("socks5 libc connect");
 	}
