@@ -22,6 +22,8 @@
 
 #include <netinet/in.h>
 
+#include "compat.h"
+
 char *utils_strsplit(char *separator, char **text, const char *search);
 int utils_strcasecmpend(const char *s1, const char *s2);
 int utils_tokenize_ignore_comments(const char *_line, size_t size, char **tokens);
@@ -29,6 +31,14 @@ int utils_tokenize_ignore_comments(const char *_line, size_t size, char **tokens
 int utils_is_address_ipv4(const char *ip);
 int utils_is_address_ipv6(const char *ip);
 
-int utils_is_ipv4_local(in_addr_t addr);
+/*
+ * Check if the given IPv4 is in the loopback net (127.x.x.x).
+ *
+ * Return 1 if so else 0 if not.
+ */
+static inline int utils_is_ipv4_local(in_addr_t addr)
+{
+	return IN_LOOPBACK(addr);
+}
 
 #endif /* TORSOCKS_UTILS_H */
