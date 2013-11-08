@@ -34,6 +34,12 @@ LIBC_SOCKET_RET_TYPE tsocks_socket(LIBC_SOCKET_SIG)
 
 	switch (__type) {
 	case SOCK_STREAM:
+		if (__domain == AF_INET6) {
+			/* Tor does not handle IPv6 at the moment. Reject it. */
+			ERR("Socket is IPv6. Tor does not handle AF_INET6 connection.");
+			errno = EINVAL;
+			return -1;
+		}
 		break;
 	default:
 		if (__domain == AF_INET || __domain == AF_INET6) {
