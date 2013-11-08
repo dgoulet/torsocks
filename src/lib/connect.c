@@ -71,16 +71,6 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 
 	inet_addr = (struct sockaddr_in *) __addr;
 
-	/* Check if address is local IPv4. */
-	if (__addr->sa_family == AF_INET &&
-			utils_is_ipv4_local(inet_addr->sin_addr.s_addr)) {
-		WARN("[connect] Connection to a local address are denied since it "
-				"might be a TCP DNS query to a local DNS server. "
-				"Rejecting it for safety reasons.");
-		errno = EPERM;
-		goto error;
-	}
-
 	/*
 	 * Lock registry to get the connection reference if one. In this code path,
 	 * if a connection object is found, it will not be used since a double
@@ -104,7 +94,6 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 	on_entry = onion_entry_find_by_ip(inet_addr->sin_addr.s_addr,
 			&tsocks_onion_pool);
 	onion_pool_unlock(&tsocks_onion_pool);
-
 	if (on_entry) {
 		/*
 		 * Create a connection without a destination address since we will set
@@ -119,6 +108,19 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 		new_conn->dest_addr.hostname.addr = strdup(on_entry->hostname);
 		new_conn->dest_addr.hostname.port = inet_addr->sin_port;
 	} else {
+		/*
+		 * Check if address is local IPv4. At this point, we are sure it's not
+		 * a .onion cookie address that is by default in the loopback network.
+		 */
+		if (__addr->sa_family == AF_INET &&
+				utils_is_ipv4_local(inet_addr->sin_addr.s_addr)) {
+			WARN("[connect] Connection to a local address are denied since it "
+					"might be a TCP DNS query to a local DNS server. "
+					"Rejecting it for safety reasons.");
+			errno = EPERM;
+			goto error;
+		}
+
 		new_conn = connection_create(__sockfd, __addr);
 		if (!new_conn) {
 			errno = ENOMEM;
