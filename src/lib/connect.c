@@ -73,7 +73,7 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 
 	/* Check if address is local IPv4. */
 	if (__addr->sa_family == AF_INET &&
-			utils_is_ipv4_local(be32toh(inet_addr->sin_addr.s_addr))) {
+			utils_is_ipv4_local(inet_addr->sin_addr.s_addr)) {
 		WARN("[connect] Connection to a local address are denied since it "
 				"might be a TCP DNS query to a local DNS server. "
 				"Rejecting it for safety reasons.");

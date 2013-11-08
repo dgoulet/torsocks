@@ -103,10 +103,11 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 
 /*
  * Shamelessly taken from linux/in.h of the libc. This is consider trivial code
- * by the GPL license thus copying it as is should be OK.
+ * by the GPL license thus copying it as is should be OK. Slight modification
+ * was made to make the check in host byte order.
  */
 #ifndef IN_LOOPBACK
-#define IN_LOOPBACK(a)      ((((long int) (a)) & 0xff000000) == 0x7f000000)
+#define IN_LOOPBACK(a)      ((((long int) (a)) & 0x000000ff) == 0x0000007f)
 #endif
 
 #endif /* TORSOCKS_COMPAT_H */
