@@ -22,6 +22,7 @@
 #include <common/connection.h>
 #include <common/log.h>
 #include <common/onion.h>
+#include <common/utils.h>
 
 #include "torsocks.h"
 
@@ -69,6 +70,16 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 			__addr->sa_family == AF_INET ? "AF_INET" : "AF_INET6", sock_type);
 
 	inet_addr = (struct sockaddr_in *) __addr;
+
+	/* Check if address is local IPv4. */
+	if (__addr->sa_family == AF_INET &&
+			utils_is_ipv4_local(be32toh(inet_addr->sin_addr.s_addr))) {
+		WARN("[connect] Connection to a local address are denied since it "
+				"might be a TCP DNS query to a local DNS server. "
+				"Rejecting it for safety reasons.");
+		errno = EPERM;
+		goto error;
+	}
 
 	/*
 	 * Lock registry to get the connection reference if one. In this code path,

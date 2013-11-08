@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "compat.h"
 #include "macros.h"
 #include "utils.h"
 
@@ -175,4 +176,18 @@ int utils_strcasecmpend(const char *s1, const char *s2)
 	} else {
 		return strncasecmp(s1 + (n1 - n2), s2, n2);
 	}
+}
+
+
+/*
+ * Check if the given IPv4 is in the loopback net (127.x.x.x).
+ *
+ * Return 1 if so else 0 if not.
+ */
+ATTR_HIDDEN
+int utils_is_ipv4_local(in_addr_t addr)
+{
+	assert(addr);
+
+	return IN_LOOPBACK(addr);
 }

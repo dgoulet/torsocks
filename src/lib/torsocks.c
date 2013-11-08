@@ -322,6 +322,40 @@ error:
 }
 
 /*
+ * Lookup the local host table (usually /etc/hosts) for a given hostname.
+ *
+ * If found, ip_addr is populated and 0 is returned.
+ * If NOT found, -1 is return and ip_addr is untouched.
+ */
+static int hosts_file_resolve(const char *hostname, uint32_t *ip_addr)
+{
+	int ret;
+	struct hostent *host;
+
+	assert(hostname);
+	assert(ip_addr);
+
+	DBG("Looking in local host table for %s", hostname);
+
+	/* Query the local host table if the hostname is present. */
+	while ((host = gethostent()) != NULL) {
+		if (strncasecmp(hostname, host->h_name, strlen(hostname)) == 0) {
+			/* IP is found, copying and returning success. */
+			memcpy(ip_addr, host->h_addr_list[0], sizeof(uint32_t));
+			ret = 0;
+			goto end;
+		}
+	}
+
+	/* Not found. */
+	ret = -1;
+
+end:
+	endhostent();
+	return ret;
+}
+
+/*
  * Initiate a SOCK5 connection to the Tor network using the given connection.
  * The socks5 API will use the torsocks configuration object to find the tor
  * daemon.
@@ -368,6 +402,11 @@ int tsocks_tor_resolve(const char *hostname, uint32_t *ip_addr)
 
 	assert(hostname);
 	assert(ip_addr);
+
+	ret = hosts_file_resolve(hostname, ip_addr);
+	if (!ret) {
+		goto end;
+	}
 
 	DBG("Resolving %s on the Tor network", hostname);
 

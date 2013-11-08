@@ -101,4 +101,12 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 
 #endif /* __FreeBSD__, __FreeBSD_kernel__, __darwin__, __NetBSD__ */
 
+/*
+ * Shamelessly taken from linux/in.h of the libc. This is consider trivial code
+ * by the GPL license thus copying it as is should be OK.
+ */
+#ifndef IN_LOOPBACK
+#define IN_LOOPBACK(a)      ((((long int) (a)) & 0xff000000) == 0x7f000000)
+#endif
+
 #endif /* TORSOCKS_COMPAT_H */

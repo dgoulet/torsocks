@@ -29,4 +29,6 @@ int utils_tokenize_ignore_comments(const char *_line, size_t size, char **tokens
 int utils_is_address_ipv4(const char *ip);
 int utils_is_address_ipv6(const char *ip);
 
+int utils_is_ipv4_local(in_addr_t addr);
+
 #endif /* TORSOCKS_UTILS_H */
