@@ -46,34 +46,31 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 #endif /* __GLIBC__, __darwin__, __FreeBSD__, __NetBSD__ */
 
 #if defined(__linux__)
-
-#if defined(__i386) || defined(__s390__) || defined(__s390x__)
-#include <asm-generic/unistd.h>
-#else
 #include <unistd.h>
-#endif /* defined __i386 */
-
 #include <sys/syscall.h>
 
 /*
  * Some old system requires kernel headers for those values. If they are not
- * defined, set them to a non syscall value. Just to be clear, if the value is
- * undefined (here -1), tsocks syscall() will DENY the real syscall if catched.
+ * defined, set them to a bad syscall value. Just to be clear, if the value is
+ * undefined, tsocks syscall() will DENY the real syscall if catched.
+ *
+ * The values are not the same per syscall here so we don't end up with
+ * duplicates in the switch case in the tsocks sycall wrapper.
  */
 #ifndef __NR_socket
 #define __NR_socket -1
 #endif
 #ifndef __NR_connect
-#define __NR_connect -1
+#define __NR_connect -2
 #endif
 #ifndef __NR_close
-#define __NR_close -1
+#define __NR_close -3
 #endif
 #ifndef __NR_mmap
-#define __NR_mmap -1
+#define __NR_mmap -4
 #endif
 #ifndef __NR_munmap
-#define __NR_munmap -1
+#define __NR_munmap -5
 #endif
 
 #define TSOCKS_NR_SOCKET    __NR_socket
