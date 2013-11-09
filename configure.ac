@@ -115,34 +115,23 @@ if test "x${enable_envconf}" = "x"; then
   AC_DEFINE([ALLOW_ENV_CONFIG],[],[Description])
 fi
 
-dnl Check that find is available, it should be somehere
-dnl in the path
-AC_CHECK_PROG(FIND, find, find)
-if test "${FIND}" = ""; then
-	AC_MSG_ERROR('find not found in path')
-fi
-
-dnl Find tail, it should always be somewhere in the path
-dnl but for safety's sake
-AC_CHECK_PROG(TAIL, tail, tail)
-if test "${TAIL}" = ""; then
-	AC_MSG_ERROR('tail not found in path')
-fi
-
 dnl Get libc full system path. Use prefix or some hardcoded standard
 dnl location on Unixish system.
-AC_MSG_CHECKING(location of libc.so)
-for DIR in "$prefix/lib" "$prefix/usr/lib" '/lib' '/usr/lib'; do
-	if test "${LIBC_PATH}" = ""; then
-		LIBC_PATH=`$FIND $DIR -name "libc.so.?" 2>/dev/null | $TAIL -1`
-	fi
-done
-AC_DEFINE_UNQUOTED([LIBC_PATH],["${LIBC_PATH}"],[Description])
-if test "${LIBC_PATH}" = ""; then
-	AC_MSG_ERROR("not found!")
-fi
-
-AC_MSG_RESULT($LIBC_PATH)
+AC_MSG_CHECKING(file name of the C library)
+AS_CASE([$host_os],
+	[darwin*], [libc_name="libSystem.dylib"],
+	[linux*],
+	[
+		libc_name=`ldd /bin/ls | grep libc | cut -d ' ' -f 1 | tr -d '\t'`
+		if test "${libc_name}" == ""; then
+			# Default libc on most system.
+			libc_name="libc.so.6"
+		fi
+	],
+	[libc_name="libc.so"]
+)
+AC_DEFINE_UNQUOTED([LIBC_NAME],["${libc_name}"], [Description])
+AC_MSG_RESULT($libc_name)
 
 ##############################################################################
 # 5. Determine how to preload libtorsocks.so on this system.

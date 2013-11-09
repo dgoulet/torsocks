@@ -123,9 +123,9 @@ static void init_libc_symbols(void)
 	void *libc_ptr;
 
 	dlerror();
-	libc_ptr = dlopen(LIBC_PATH, RTLD_LAZY);
+	libc_ptr = dlopen(LIBC_NAME, RTLD_LAZY);
 	if (!libc_ptr) {
-		ERR("Unable to dlopen() library " LIBC_PATH "(%s)", dlerror());
+		ERR("Unable to dlopen() library " LIBC_NAME "(%s)", dlerror());
 		goto error;
 	}
 
@@ -136,7 +136,7 @@ static void init_libc_symbols(void)
 	tsocks_libc_syscall = dlsym(libc_ptr, LIBC_SYSCALL_NAME_STR);
 	if (!tsocks_libc_connect || !tsocks_libc_close || !tsocks_libc_socket
 			|| !tsocks_libc_syscall) {
-		ERR("Unable to lookup symbols in " LIBC_PATH "(%s)", dlerror());
+		ERR("Unable to lookup symbols in " LIBC_NAME "(%s)", dlerror());
 		goto error;
 	}
 
