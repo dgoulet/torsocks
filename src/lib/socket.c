@@ -43,7 +43,16 @@ LIBC_SOCKET_RET_TYPE tsocks_socket(LIBC_SOCKET_SIG)
 		break;
 	default:
 		if (__domain == AF_INET || __domain == AF_INET6) {
-			WARN("Non TCP inet socket denied. Tor network can't handle it.");
+			/*
+			 * Print this message only in debug mode. Very often, applications
+			 * uses the libc to do DNS resolution which first tries with UDP
+			 * and then with TCP. It's not critical for the user to know that a
+			 * non TCP socket has been denied and since the libc has a fallback
+			 * that works, this message most of the time, simply polutes the
+			 * application's output which can cause issues with external
+			 * applications parsing the output.
+			 */
+			DBG("Non TCP inet socket denied. Tor network can't handle it.");
 			errno = EINVAL;
 			return -1;
 		}
