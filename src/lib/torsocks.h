@@ -342,5 +342,6 @@ void *tsocks_find_libc_symbol(const char *symbol,
 		enum tsocks_sym_action action);
 int tsocks_tor_resolve(const char *hostname, uint32_t *ip_addr);
 int tsocks_tor_resolve_ptr(const char *addr, char **ip, int af);
+void tsocks_cleanup(void);
 
 #endif /* TORSOCKS_H */

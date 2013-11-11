@@ -242,12 +242,7 @@ static void __attribute__((constructor)) tsocks_init(void)
  */
 static void __attribute__((destructor)) tsocks_exit(void)
 {
-	/* Cleanup every entries in the onion pool. */
-	onion_pool_destroy(&tsocks_onion_pool);
-	/* Cleanup allocated memory in the config file. */
-	config_file_destroy(&tsocks_config.conf_file);
-	/* Clean up logging. */
-	log_destroy();
+	tsocks_cleanup();
 }
 
 /*
@@ -528,4 +523,17 @@ void *tsocks_find_libc_symbol(const char *symbol,
 	}
 
 	return fct_ptr;
+}
+
+/*
+ * Cleanup torsocks library memory and open fd.
+ */
+void tsocks_cleanup(void)
+{
+	/* Cleanup every entries in the onion pool. */
+	onion_pool_destroy(&tsocks_onion_pool);
+	/* Cleanup allocated memory in the config file. */
+	config_file_destroy(&tsocks_config.conf_file);
+	/* Clean up logging. */
+	log_destroy();
 }
