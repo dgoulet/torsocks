@@ -23,7 +23,7 @@
 
 /*
  * _exit() and _Exit are hijacked here so we can cleanup torsocks library
- * safely since the constructor is *not* called for these functions.
+ * safely since the destructor is *not* called for these functions.
  */
 
 void _exit(int status)
