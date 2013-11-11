@@ -47,6 +47,9 @@ struct configuration tsocks_config;
  */
 struct onion_pool tsocks_onion_pool;
 
+/* Indicate if the library was cleaned up previously. */
+unsigned int tsocks_cleaned_up = 0;
+
 /*
  * Set to 1 if the binary is set with suid or 0 if not. This is set once during
  * initialization so after that it can be read without any protection.
@@ -530,10 +533,16 @@ void *tsocks_find_libc_symbol(const char *symbol,
  */
 void tsocks_cleanup(void)
 {
+	if (tsocks_cleaned_up) {
+		return;
+	}
+
 	/* Cleanup every entries in the onion pool. */
 	onion_pool_destroy(&tsocks_onion_pool);
 	/* Cleanup allocated memory in the config file. */
 	config_file_destroy(&tsocks_config.conf_file);
 	/* Clean up logging. */
 	log_destroy();
+
+	tsocks_cleaned_up = 1;
 }

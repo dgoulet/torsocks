@@ -337,6 +337,8 @@ extern struct configuration tsocks_config;
 /* Global pool for .onion address. Initialized once in the constructor. */
 extern struct onion_pool tsocks_onion_pool;
 
+extern unsigned int tsocks_cleaned_up;
+
 int tsocks_connect_to_tor(struct connection *conn);
 void *tsocks_find_libc_symbol(const char *symbol,
 		enum tsocks_sym_action action);
