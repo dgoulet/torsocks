@@ -12,6 +12,3 @@ libtorsocks_la_SOURCES = torsocks.c torsocks.h \
                          exit.c
 
 libtorsocks_la_LIBADD = $(top_builddir)/src/common/libcommon.la
-if ! HAVE_BUILTIN_DL
-libtorsocks_la_LIBADD += -ldl
-endif

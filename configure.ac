@@ -32,31 +32,28 @@ dnl Check if the C compiler accepts -Wall
 AC_MSG_CHECKING(if the C compiler accepts -Wall)
 OLDCFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS -Wall"
-AC_TRY_COMPILE(,,AC_MSG_RESULT(yes),[
-   CFLAGS="$OLDCFLAGS"
-   AC_MSG_RESULT(no)])
+AC_TRY_COMPILE(,,
+	[AC_MSG_RESULT(yes)],
+	[
+		CFLAGS="$OLDCFLAGS"
+		AC_MSG_RESULT(no)
+	]
+)
 
 dnl Checks for standard header files.
 AC_HEADER_STDC
 
-dnl Check for the dynamic loader function header
-AC_CHECK_HEADER(dlfcn.h,,AC_MSG_ERROR("dlfcn.h not found"))
-
-dnl Check for the socket header
-AC_CHECK_HEADER(sys/socket.h,,AC_MSG_ERROR("sys/socket.h not found"))
-
-dnl Check for the arpa/inet.h header (inet_ntoa and inet_addr)
-AC_CHECK_HEADER(arpa/inet.h,,AC_MSG_ERROR("arpa/inet.h not found"))
-
-dnl Check for the fcntl header
-AC_CHECK_HEADER(fcntl.h,,AC_MSG_ERROR("fcntl.h not found"))
-
-dnl Other headers we're interested in
-AC_CHECK_HEADERS(unistd.h)
+AC_CHECK_HEADERS(dlfcn.h sys/syscall.h sys/socket.h arpa/inet.h \
+                 assert.h netdb.h errno.h stdarg.h time.h,,
+	[AC_MSG_ERROR("Required header not found")]
+)
 
 dnl Checks for required library functions.
-AC_CHECK_FUNCS(strcspn strdup strerror strspn strtol mmap strcasecmp \
-   strncasecmp strtol,,[AC_MSG_ERROR("Required function not found")])
+AC_CHECK_FUNCS(strcspn strdup strerror strcasecmp strncasecmp mmap munmap \
+               socket connect close syscall recv send memset memcpy strlen \
+               strncpy strcmp malloc calloc strstr strtoul free,,
+	[AC_MSG_ERROR("Required function not found")]
+)
 
 ##############################################################################
 # 3. Determine libraries we need to include when linking libtorsocks.
@@ -65,54 +62,55 @@ AC_CHECK_FUNCS(strcspn strdup strerror strspn strtol mmap strcasecmp \
 #    in torsocks.c and elsewhere is platform-dependent.
 ##############################################################################
 
-dnl Check for socket
-AC_CHECK_FUNC(socket,, [
-  AC_CHECK_LIB(socket, socket,,AC_MSG_ERROR("socket function not found"))])
-
 dnl Check for a function to convert an ascii ip address
 dnl to a sin_addr.
-AC_CHECK_FUNC(inet_aton, AC_DEFINE([HAVE_INET_ATON],[],[Description]), [
-  AC_CHECK_FUNC(inet_addr, AC_DEFINE([HAVE_INET_ADDR],[],[Description]), [
-    AC_CHECK_LIB(nsl, inet_addr, [ AC_DEFINE([HAVE_INET_ADDR],[],[Description])
-                                   LIBS="${LIBS} -lnsl" ], [
-		AC_MSG_ERROR("Neither inet_aton or inet_addr present")])])])
-
+AC_CHECK_FUNC(inet_aton, AC_DEFINE([HAVE_INET_ATON],[],[Description]),
+	[AC_CHECK_FUNC(inet_addr, AC_DEFINE([HAVE_INET_ADDR],[],[Description]),
+		[AC_CHECK_LIB(nsl, inet_addr,
+			[
+				AC_DEFINE([HAVE_INET_ADDR],[],[Description])
+				LIBS="${LIBS} -lnsl"
+			],
+			[AC_MSG_ERROR("Neither inet_aton or inet_addr present")]
+		)]
+	)]
+)
 
 dnl Look for gethostbyname (needed by torsocks)
-AC_CHECK_FUNC(gethostbyname, AC_DEFINE([HAVE_GETHOSTBYNAME],[],[Description]), [
-  AC_CHECK_LIB(xnet, gethostbyname, AC_DEFINE([HAVE_GETHOSTBYNAME],[],[Description]), [
-	       AC_MSG_ERROR(["gethostbyname not found, name lookups in " \
-		      "torsocks disabled"])])])
+AC_CHECK_FUNC(gethostbyname, AC_DEFINE([HAVE_GETHOSTBYNAME],[],[Description]),
+	[AC_CHECK_LIB(xnet, gethostbyname, AC_DEFINE([HAVE_GETHOSTBYNAME],[],[Description]),
+		[AC_MSG_ERROR(["gethostbyname not found, name lookups in torsocks disabled"])]
+	)]
+)
 
-
-dnl Do we have dlopen(3) without -ldl?
-AC_CHECK_FUNC([dlopen], [have_builtin_dl=yes])
-AM_CONDITIONAL([HAVE_BUILTIN_DL], [test "$have_builtin_dl" = "yes"])
+dnl Do we have dlopen(3) in libdl?
+AC_SEARCH_LIBS([dlopen], [dl],,
+	[AC_MSG_ERROR("dlopen function not found in libdl")]
+)
 
 dnl OpenBSD needs -lpthread. It also doesn't support AI_V4MAPPED.
 case $host in
 *-*-openbsd*)
-  AC_DEFINE(OPENBSD, 1, "Define to handle OpenBSD")
-  AC_SEARCH_LIBS(pthread_create, [pthread])
-  AC_SEARCH_LIBS(pthread_detach, [pthread])
-    ;;
+	AC_DEFINE(OPENBSD, 1, "Define to handle OpenBSD")
+	AC_SEARCH_LIBS(pthread_create, [pthread])
+	;;
 *-*-freebsd*)
-  AC_DEFINE(FREEBSD, 1, "Define to handle FreeBSD")
-    ;;
+	AC_DEFINE(FREEBSD, 1, "Define to handle FreeBSD")
+	;;
 *-*-darwin*)
-  dnl Needed to compile tests.
-  dnl See https://bugs.g10code.com/gnupg/issue1292:
-  dnl "On OS X (at least in 10.6 and I believe starting at 10.3) the DNS resolution
-  dnl services fail to compile.  This is a result of the addition of BIND9 compatible
-  dnl resolution libraries on OS X that are being picked up by the configure script
-  dnl instead of -lresolv causing the tests for useable resolution services to fail
-  dnl thus disabling features like pka auto lookup."
-  LIBS="-lresolv $LIBS"
-    ;;
+	dnl Needed to compile tests.
+	dnl See https://bugs.g10code.com/gnupg/issue1292:
+	dnl "On OS X (at least in 10.6 and I believe starting at 10.3) the DNS resolution
+	dnl services fail to compile.  This is a result of the addition of BIND9 compatible
+	dnl resolution libraries on OS X that are being picked up by the configure script
+	dnl instead of -lresolv causing the tests for useable resolution services to fail
+	dnl thus disabling features like pka auto lookup."
+	LIBS="-lresolv $LIBS"
+	;;
 esac
 
 if test "x${enable_envconf}" = "x"; then
-  AC_DEFINE([ALLOW_ENV_CONFIG],[],[Description])
+	AC_DEFINE([ALLOW_ENV_CONFIG],[],[Description])
 fi
 
 dnl Get libc full system path. Use prefix or some hardcoded standard
@@ -154,9 +152,12 @@ darwin*)
     AC_MSG_CHECKING(if the linker accepts -dynamiclib)
     OLDLDFLAGS="$TORSOCKSLDFLAGS"
     TORSOCKSLDFLAGS="$TORSOCKSLDFLAGS -dynamiclib"
-    AC_TRY_COMPILE(,,AC_MSG_RESULT(yes),[
-       TORSOCKSLDFLAGS="$OLDLDFLAGS"
-       AC_MSG_RESULT(no)])
+    AC_TRY_COMPILE(,, [AC_MSG_RESULT(yes)],
+		[
+			TORSOCKSLDFLAGS="$OLDLDFLAGS"
+			AC_MSG_RESULT(no)
+		]
+	)
 
     # dnl Check if the linker accepts -multiply_defined suppress; necessary on Mac OS X
     # AC_MSG_CHECKING(if the linker accepts -multiply_defined suppress)
@@ -173,16 +174,16 @@ darwin*)
     LDPRELOAD="LD_PRELOAD"
     TORSOCKSLDFLAGS="$TORSOCKSLDFLAGS -single_module"
     AC_TRY_COMPILE(,,
-       [
-          SHLIB_EXT="dylib"
-          LDPRELOAD="DYLD_INSERT_LIBRARIES"
-          AC_MSG_RESULT(yes)
-       ], [
-          TORSOCKSLDFLAGS="$OLDLDFLAGS"
-          AC_MSG_RESULT(no)
-       ]
+		[
+			SHLIB_EXT="dylib"
+			LDPRELOAD="DYLD_INSERT_LIBRARIES"
+			AC_MSG_RESULT(yes)
+		],
+		[
+			TORSOCKSLDFLAGS="$OLDLDFLAGS"
+			AC_MSG_RESULT(no)
+		]
     )
-
     ;;
 *)
     SHLIB_EXT="so"
