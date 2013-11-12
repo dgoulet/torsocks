@@ -32,7 +32,9 @@ missing
 stamp-h1
 tags
 
-config/*
+config/
+!config/ax_check_compile_flag.m4
+!config/ax_check_link_flag .m4
 
 doc/torsocks.1
 doc/torsocks.8
