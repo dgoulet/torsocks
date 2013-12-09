@@ -172,6 +172,6 @@ case "$1" in
 		echo "Torsocks @VERSION@"
 		;;
 	*)
-		torify_app $@
+		torify_app "$@"
 		;;
 esac
