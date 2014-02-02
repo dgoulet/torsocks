@@ -5,16 +5,16 @@ What is torsocks?
 
 Torsocks allows you to use most applications in a safe way with Tor. It ensures
 that DNS requests are handled safely and explicitly rejects any traffic other
-then TCP from the application you're using.
+than TCP from the application you're using.
 
 Torsocks is an ELF shared library that is loaded before all others. The library
 overrides every needed Internet communication libc function calls such as
 connect(2) or gethostbyname(3).
 
 This process is transparent to the user and if torsocks detects any
-communication that can't go through the Tor network such as UDP traffic for
-instance, the connection is denied. If, in some wayt, there is no way for
-torsocks to provide the Tor anonymity guarantee with your application, torsocks
+communication that can't go through the Tor network such as UDP traffic, for
+instance, the connection is denied. If, for any reason, there is no way for
+torsocks to provide the Tor anonymity guarantee to your application, torsocks
 will force the application to quit and stop everything.
 
 Installation
