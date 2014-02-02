@@ -120,7 +120,7 @@ AS_CASE([$host_os],
 	[darwin*], [libc_name="libSystem.dylib"],
 	[linux*],
 	[
-		libc_name=`ldd /bin/ls | grep libc | cut -d ' ' -f 1 | tr -d '\t'`
+		libc_name=`ldd /bin/ls | grep "libc\." | cut -d ' ' -f 1 | tr -d '\t'`
 		if test "${libc_name}" == ""; then
 			# Default libc on most system.
 			libc_name="libc.so.6"

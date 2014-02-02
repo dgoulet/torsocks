@@ -45,14 +45,9 @@ static ssize_t recv_data(int fd, void *buf, size_t len)
 		read_len = recv(fd, buf + index, read_left, 0);
 		if (read_len < 0) {
 			ret = -errno;
-			if (errno == EINTR) {
-				/* Try again after interruption. */
-				continue;
-			} else if (errno == EAGAIN || errno == EWOULDBLOCK) {
-				if (index) {
-					/* Return the number of bytes received up to this point. */
-					ret = index;
-				}
+			if (errno == EINTR || errno == EAGAIN ||
+				errno == EWOULDBLOCK) {
+				/* Try again. */
 				continue;
 			} else {
 				PERROR("recv socks5 data");
@@ -89,16 +84,11 @@ static ssize_t send_data(int fd, const void *buf, size_t len)
 		sent_len = send(fd, buf + index, sent_left, 0);
 		if (sent_len < 0) {
 			ret = -errno;
-			if (errno == EINTR) {
+			if (errno == EINTR || errno == EAGAIN ||
+				errno == EWOULDBLOCK) {
 				/* Send again after interruption. */
 				continue;
-			} else if (errno == EAGAIN || errno == EWOULDBLOCK) {
-				if (index) {
-					/* Return the number of bytes sent up to this point. */
-					ret = index;
-				}
-				continue;
-			} else {
+		} else {
 				PERROR("send socks5 data");
 				goto error;
 			}
