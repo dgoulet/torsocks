@@ -98,13 +98,8 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 
 #endif /* __FreeBSD__, __FreeBSD_kernel__, __darwin__, __NetBSD__ */
 
-/*
- * Shamelessly taken from linux/in.h of the libc. This is consider trivial code
- * by the GPL license thus copying it as is should be OK. Slight modification
- * was made to make the check in host byte order.
- */
-#ifndef IN_LOOPBACK
-#define IN_LOOPBACK(a)      ((((long int) (a)) & 0x000000ff) == 0x0000007f)
-#endif
+#define TSOCKS_CLASSA_NET   0xff000000
+#define TSOCKS_LOOPBACK_NET 0x7f000000
+#define TSOCKS_IN6_INIT     { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 }
 
 #endif /* TORSOCKS_COMPAT_H */

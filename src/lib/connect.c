@@ -109,11 +109,10 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 		new_conn->dest_addr.hostname.port = inet_addr->sin_port;
 	} else {
 		/*
-		 * Check if address is local IPv4. At this point, we are sure it's not
-		 * a .onion cookie address that is by default in the loopback network.
+		 * Check if address is localhost. At this point, we are sure it's not a
+		 * .onion cookie address that is by default in the loopback network.
 		 */
-		if (__addr->sa_family == AF_INET &&
-				utils_is_ipv4_local(inet_addr->sin_addr.s_addr)) {
+		if (utils_sockaddr_is_localhost(__addr)) {
 			WARN("[connect] Connection to a local address are denied since it "
 					"might be a TCP DNS query to a local DNS server. "
 					"Rejecting it for safety reasons.");

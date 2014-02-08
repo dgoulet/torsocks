@@ -18,12 +18,14 @@
  */
 
 #include <arpa/inet.h>
+#include <netinet/in.h>
 #include <sys/socket.h>
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "compat.h"
 #include "macros.h"
 #include "utils.h"
 
@@ -175,4 +177,31 @@ int utils_strcasecmpend(const char *s1, const char *s2)
 	} else {
 		return strncasecmp(s1 + (n1 - n2), s2, n2);
 	}
+}
+
+/*
+ * Return 1 if the given sockaddr is localhost else 0
+ */
+ATTR_HIDDEN
+int utils_sockaddr_is_localhost(const struct sockaddr *sa)
+{
+	int is_localhost;
+
+	assert(sa);
+
+	if (sa->sa_family == AF_INET) {
+		const struct sockaddr_in *sin = (const struct sockaddr_in *) sa;
+		is_localhost = ((ntohl(sin->sin_addr.s_addr) & TSOCKS_CLASSA_NET) ==
+				TSOCKS_LOOPBACK_NET);
+	} else if (sa->sa_family == AF_INET6) {
+		const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *) sa;
+		static const uint8_t addr[] = TSOCKS_IN6_INIT;
+		is_localhost = !memcmp(sin6->sin6_addr.s6_addr, addr,
+				sizeof(sin6->sin6_addr.s6_addr));
+	} else {
+		/* Unknown sockaddr family thus not localhost. */
+		is_localhost = 0;
+	}
+
+	return is_localhost;
 }
