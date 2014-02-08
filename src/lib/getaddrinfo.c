@@ -66,7 +66,7 @@ LIBC_GETADDRINFO_RET_TYPE tsocks_getaddrinfo(LIBC_GETADDRINFO_SIG)
 		break;
 	}
 
-	ret = inet_pton(af, __node, &addr);
+	ret = inet_pton(af, __node, addr);
 	if (ret == 0) {
 		/* The node most probably is a DNS name. */
 		ret = tsocks_tor_resolve(__node, (uint32_t *) addr);
