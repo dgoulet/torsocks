@@ -398,6 +398,7 @@ int tsocks_tor_resolve(const char *hostname, uint32_t *ip_addr)
 		ret = -errno;
 		goto error;
 	}
+	conn.dest_addr.domain = CONNECTION_DOMAIN_INET;
 
 	ret = setup_tor_connection(&conn);
 	if (ret < 0) {
@@ -446,6 +447,7 @@ int tsocks_tor_resolve_ptr(const char *addr, char **ip, int af)
 		ret = -errno;
 		goto error;
 	}
+	conn.dest_addr.domain = CONNECTION_DOMAIN_INET;
 
 	ret = setup_tor_connection(&conn);
 	if (ret < 0) {

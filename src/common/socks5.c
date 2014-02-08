@@ -123,17 +123,25 @@ ATTR_HIDDEN
 int socks5_connect(struct connection *conn)
 {
 	int ret;
+	socklen_t len;
 	struct sockaddr *socks5_addr = NULL;
 
 	assert(conn);
 	assert(conn->fd >= 0);
 
-	switch (tsocks_config.socks5_addr.domain) {
+	/*
+	 * We use the connection domain here since the connect() call MUST match
+	 * the right socket family. Thus, trying to establish a connection to a
+	 * remote IPv6, we have to connect to the Tor daemon in v6.
+	 */
+	switch (conn->dest_addr.domain) {
 	case CONNECTION_DOMAIN_INET:
 		socks5_addr = (struct sockaddr *) &tsocks_config.socks5_addr.u.sin;
+		len = sizeof(tsocks_config.socks5_addr.u.sin);
 		break;
 	case CONNECTION_DOMAIN_INET6:
 		socks5_addr = (struct sockaddr *) &tsocks_config.socks5_addr.u.sin6;
+		len = sizeof(tsocks_config.socks5_addr.u.sin6);
 		break;
 	default:
 		ERR("Socks5 connect domain unknown %d",
@@ -145,7 +153,7 @@ int socks5_connect(struct connection *conn)
 
 	do {
 		/* Use the original libc connect() to the Tor. */
-		ret = tsocks_libc_connect(conn->fd, socks5_addr, sizeof(*socks5_addr));
+		ret = tsocks_libc_connect(conn->fd, socks5_addr, len);
 	} while (ret < 0 &&
 			(errno == EINTR || errno == EINPROGRESS || errno == EALREADY));
 	if (ret < 0) {
