@@ -30,6 +30,20 @@
 #include "utils.h"
 
 /*
+ * Hardcoded list of localhost hostname. In order to resolve these for an
+ * application, usually we would need to check in /etc/hosts by using
+ * gethostent() but in order to avoid DNS resolution outside of Tor (even local
+ * file), only the localhost is resolved and the rest is sent through Tor.
+ */
+static const char *localhost_names_v4[] = {
+	"localhost", "ip-localhost", NULL,
+};
+
+static const char *localhost_names_v6[] = {
+	"localhost", "ip6-loopback", "ip6-localhost", NULL,
+};
+
+/*
  * Return 1 if the given IP belongs in the af domain else return a negative
  * value.
  */
@@ -46,6 +60,35 @@ static int check_addr(const char *ip, int af)
 	}
 
 	return ret;
+}
+
+/*
+ * Given a name string and a list NULL terminated of strings, this will try to
+ * match the name.
+ *
+ * Return the entry in the list if match else NULL.
+ */
+static const char *match_name(const char *name, const char **list)
+{
+	unsigned int count = 0;
+	const char *entry;
+
+	assert(name);
+	assert(list);
+
+	while ((entry = list[count]) != NULL) {
+		int ret;
+
+		ret = strcmp(entry, name);
+		if (!ret) {
+			/* Match. */
+			goto end;
+		}
+		count++;
+	}
+
+end:
+	return entry;
 }
 
 /*
@@ -195,7 +238,7 @@ int utils_sockaddr_is_localhost(const struct sockaddr *sa)
 				TSOCKS_LOOPBACK_NET);
 	} else if (sa->sa_family == AF_INET6) {
 		const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *) sa;
-		static const uint8_t addr[] = TSOCKS_IN6_INIT;
+		static const uint8_t addr[] = TSOCKS_LOOPBACK6;
 		is_localhost = !memcmp(sin6->sin6_addr.s6_addr, addr,
 				sizeof(sin6->sin6_addr.s6_addr));
 	} else {
@@ -204,4 +247,62 @@ int utils_sockaddr_is_localhost(const struct sockaddr *sa)
 	}
 
 	return is_localhost;
+}
+
+/*
+ * Try to match a given name to localhost names (v4 and v6).
+ *
+ * If a match is found, the address in network byte order is copied in the
+ * buffer thus len must match the size of the given address family and 1 is
+ * returned.
+ *
+ * If NO match is found, 0 is return and buf is untouched.
+ *
+ * If len is the wrong size, -EINVAL is returned and buf is untouched.
+ */
+ATTR_HIDDEN
+int utils_localhost_resolve(const char *name, int af, void *buf, size_t len)
+{
+	const char *entry;
+
+	assert(name);
+	assert(buf);
+
+	if (af == AF_INET) {
+		const in_addr_t addr = TSOCKS_LOOPBACK;
+
+		entry = match_name(name, localhost_names_v4);
+		if (entry) {
+			if (len < sizeof(in_addr_t)) {
+				/* Size of buffer is not large enough. */
+				goto error;
+			}
+			memcpy(buf, &addr, sizeof(addr));
+			goto match;
+		}
+	} else if (af == AF_INET6) {
+		const uint8_t addr[] = TSOCKS_LOOPBACK6;
+
+		entry = match_name(name, localhost_names_v6);
+		if (entry) {
+			if (len < sizeof(addr)) {
+				/* Size of buffer is not large enough. */
+				goto error;
+			}
+			memcpy(buf, addr, sizeof(addr));
+			goto match;
+		}
+	} else {
+		/* Unknown family type. */
+		assert(0);
+		goto error;
+	}
+
+	/* No match. */
+	return 0;
+match:
+	/* Match found. */
+	return 1;
+error:
+	return -EINVAL;
 }

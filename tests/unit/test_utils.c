@@ -23,7 +23,7 @@
 
 #include <tap/tap.h>
 
-#define NUM_TESTS 10
+#define NUM_TESTS 22
 
 static void test_is_address_ipv4(void)
 {
@@ -58,6 +58,53 @@ static void test_is_address_ipv6(void)
 
 	ret = utils_is_address_ipv6("192.168.0.1");
 	ok(ret == -1, "Invalid IPv6 address when IPv4");
+}
+
+static void test_localhost_resolve(void)
+{
+	int ret = 0;
+	in_addr_t ipv4, loopback = TSOCKS_LOOPBACK;
+	struct in6_addr ipv6;
+	const uint8_t loopback6[] = TSOCKS_LOOPBACK6;
+
+	diag("Utils localhost resolve test");
+
+	ret = utils_localhost_resolve("localhost", AF_INET, &ipv4, sizeof(ipv4));
+	ok(ret == 1, "localhost resolved successfully");
+	ok(memcmp(&ipv4, &loopback, sizeof(ipv4)) == 0,
+			"localhost IPv4 address matches");
+
+	ret = utils_localhost_resolve("ip-localhost", AF_INET, &ipv4, sizeof(ipv4));
+	ok(ret == 1, "ip-localhost resolved successfully");
+	ok(memcmp(&ipv4, &loopback, sizeof(ipv4)) == 0,
+			"ip-localhost IPv4 address matches");
+
+	ret = utils_localhost_resolve("nsa.gov", AF_INET, &ipv4, sizeof(ipv4));
+	ok(ret == 0, "nsa.gov did NOT resolved successfully");
+
+	/* Len smaller than buffer size. */
+	ret = utils_localhost_resolve("localhost", AF_INET, &ipv4, 1);
+	ok(ret == -EINVAL, "localhost len of buffer was too small");
+
+	/* IPV6 */
+
+	ret = utils_localhost_resolve("localhost", AF_INET6, &ipv6, sizeof(ipv6));
+	ok(ret == 1, "localhost v6 resolved successfully");
+	ok(memcmp(&ipv6, &loopback6, sizeof(in6addr_loopback)) == 0,
+			"localhost IPv6 address matches");
+
+	ret = utils_localhost_resolve("ip6-localhost", AF_INET6, &ipv6,
+			sizeof(ipv6));
+	ok(ret == 1, "ip6-localhost resolved successfully");
+	ok(memcmp(&ipv6, &loopback6, sizeof(in6addr_loopback)) == 0,
+			"localhost IPv6 address matches");
+
+	ret = utils_localhost_resolve("nsa.gov", AF_INET6, &ipv6, sizeof(ipv6));
+	ok(ret == 0, "nsa.gov did NOT resolved successfully");
+
+	/* Len smaller than buffer size. */
+	ret = utils_localhost_resolve("localhost", AF_INET6, &ipv6, 1);
+	ok(ret == -EINVAL, "localhost v6 len of buffer was too small");
 }
 
 static void helper_reset_tokens(char **tokens)
@@ -108,6 +155,7 @@ int main(int argc, char **argv)
 
 	test_is_address_ipv4();
 	test_is_address_ipv6();
+	test_localhost_resolve();
 	test_utils_tokenize_ignore_comments();
 
 	return exit_status();

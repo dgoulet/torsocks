@@ -31,5 +31,6 @@ int utils_tokenize_ignore_comments(const char *_line, size_t size, char **tokens
 int utils_is_address_ipv4(const char *ip);
 int utils_is_address_ipv6(const char *ip);
 int utils_sockaddr_is_localhost(const struct sockaddr *sa);
+int utils_localhost_resolve(const char *name, int af, void *buf, size_t len);
 
 #endif /* TORSOCKS_UTILS_H */
