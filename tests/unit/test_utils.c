@@ -16,6 +16,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <arpa/inet.h>
 #include <stdio.h>
 
 #include <common/utils.h>
@@ -23,7 +24,7 @@
 
 #include <tap/tap.h>
 
-#define NUM_TESTS 22
+#define NUM_TESTS 26
 
 static void test_is_address_ipv4(void)
 {
@@ -107,6 +108,35 @@ static void test_localhost_resolve(void)
 	ok(ret == -EINVAL, "localhost v6 len of buffer was too small");
 }
 
+static void test_sockaddr_is_localhost(void)
+{
+	int ret;
+	struct sockaddr_in sin;
+	struct sockaddr_in6 sin6;
+
+	diag("Utils sockaddr is localhost");
+
+	sin.sin_family = AF_INET;
+	sin.sin_addr.s_addr = TSOCKS_LOOPBACK;
+	ret = utils_sockaddr_is_localhost((const struct sockaddr *) &sin);
+	ok(ret == 1, "Loopback matches localhost");
+
+	(void) inet_pton(sin.sin_family, "127.8.42.42", &sin.sin_addr.s_addr);
+	ret = utils_sockaddr_is_localhost((const struct sockaddr *) &sin);
+	ok(ret == 1, "127.8.42.42 matches localhost");
+
+	(void) inet_pton(sin.sin_family, "128.8.42.42", &sin.sin_addr.s_addr);
+	ret = utils_sockaddr_is_localhost((const struct sockaddr *) &sin);
+	ok(ret == 0, "128.8.42.42 does NO match localhost");
+
+	/* IPv6 */
+
+	sin6.sin6_family = AF_INET6;
+	(void) inet_pton(sin6.sin6_family, "::1", &sin6.sin6_addr.s6_addr);
+	ret = utils_sockaddr_is_localhost((const struct sockaddr *) &sin6);
+	ok(ret == 1, "::1 matches localhost");
+}
+
 static void helper_reset_tokens(char **tokens)
 {
 	assert(tokens);
@@ -156,6 +186,7 @@ int main(int argc, char **argv)
 	test_is_address_ipv4();
 	test_is_address_ipv6();
 	test_localhost_resolve();
+	test_sockaddr_is_localhost();
 	test_utils_tokenize_ignore_comments();
 
 	return exit_status();
