@@ -416,7 +416,7 @@ int tsocks_tor_resolve(const char *hostname, uint32_t *ip_addr)
 		goto error;
 	}
 
-	ret = close(conn.fd);
+	ret = tsocks_libc_close(conn.fd);
 	if (ret < 0) {
 		PERROR("close");
 	}
@@ -465,7 +465,7 @@ int tsocks_tor_resolve_ptr(const char *addr, char **ip, int af)
 		goto error;
 	}
 
-	ret = close(conn.fd);
+	ret = tsocks_libc_close(conn.fd);
 	if (ret < 0) {
 		PERROR("close");
 	}
