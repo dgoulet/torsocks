@@ -402,25 +402,24 @@ int tsocks_tor_resolve(const char *hostname, uint32_t *ip_addr)
 
 	ret = setup_tor_connection(&conn);
 	if (ret < 0) {
-		goto error;
+		goto end_close;
 	}
 
 	ret = socks5_send_resolve_request(hostname, &conn);
 	if (ret < 0) {
-		goto error;
+		goto end_close;
 	}
 
 	/* Force IPv4 resolution for now. */
 	ret = socks5_recv_resolve_reply(&conn, ip_addr, sizeof(uint32_t));
 	if (ret < 0) {
-		goto error;
+		goto end_close;
 	}
 
-	ret = tsocks_libc_close(conn.fd);
-	if (ret < 0) {
+end_close:
+	if (tsocks_libc_close(conn.fd) < 0) {
 		PERROR("close");
 	}
-
 end:
 error:
 	return ret;
@@ -451,22 +450,22 @@ int tsocks_tor_resolve_ptr(const char *addr, char **ip, int af)
 
 	ret = setup_tor_connection(&conn);
 	if (ret < 0) {
-		goto error;
+		goto end_close;
 	}
 
 	ret = socks5_send_resolve_ptr_request(addr, &conn);
 	if (ret < 0) {
-		goto error;
+		goto end_close;
 	}
 
 	/* Force IPv4 resolution for now. */
 	ret = socks5_recv_resolve_ptr_reply(&conn, ip);
 	if (ret < 0) {
-		goto error;
+		goto end_close;
 	}
 
-	ret = tsocks_libc_close(conn.fd);
-	if (ret < 0) {
+end_close:
+	if (tsocks_libc_close(conn.fd) < 0) {
 		PERROR("close");
 	}
 
