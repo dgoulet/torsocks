@@ -371,6 +371,7 @@ int tsocks_tor_resolve(const char *hostname, uint32_t *ip_addr)
 			sizeof(uint32_t));
 	if (ret) {
 		/* Found to be a localhost name. */
+		ret = 0;
 		goto end;
 	}
 
