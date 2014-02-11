@@ -20,9 +20,9 @@ will force the application to quit and stop everything.
 Installation
 -----------------
 
-  $ ./configure
-  $ make
-  $ sudo make install
+    $ ./configure
+    $ make
+    $ sudo make install
 
 If you are compiling it from the git repository, run ./autogen.sh before the
 configure script.
@@ -32,15 +32,15 @@ Using torsocks
 
 Once you have installed torsocks, just launch it like so:
 
-  $ torsocks [application]
+    $ torsocks [application]
 
 So, for example you can use ssh to a some.ssh.com by doing:
 
-  $ torsocks ssh username@some.ssh.com
+    $ torsocks ssh username@some.ssh.com
 
 You can use the torsocks library without the script provided:
 
-  $ LD_PRELOAD=/full/path/to/libtorsocks.so your_app
+    $ LD_PRELOAD=/full/path/to/libtorsocks.so your_app
 
 For more details, please see the torsocks.1, torsocks.8 and torsocks.conf.5 man
 pages. Also, you can use -h, --help for all the possible options of the
