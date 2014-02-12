@@ -3,3 +3,4 @@
 ./unit/test_connection
 ./unit/test_utils
 ./unit/test_config-file
+./unit/test_socks5
