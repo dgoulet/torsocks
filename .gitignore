@@ -48,3 +48,4 @@ tests/unit/test_onion
 tests/unit/test_connection
 tests/unit/test_utils
 tests/unit/test_config-file
+tests/unit/test_socks5

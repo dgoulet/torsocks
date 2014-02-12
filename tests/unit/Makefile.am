@@ -2,13 +2,16 @@ AM_CFLAGS = -I$(top_srcdir)/include \
 			-I$(top_srcdir)/src \
 			-I$(top_srcdir)/tests/utils/ \
 			-I$(srcdir) \
+			-I$(top_srcdir)/src/lib \
 			-DTORSOCKS_FIXTURE_PATH=\"`pwd`/fixtures/\"
 
 LIBTAP=$(top_builddir)/tests/utils/tap/libtap.la
 
 LIBCOMMON=$(top_builddir)/src/common/libcommon.la
 
-noinst_PROGRAMS = test_onion test_connection test_utils test_config-file
+LIBTORSOCKS=$(top_builddir)/src/lib/libtorsocks.la
+
+noinst_PROGRAMS = test_onion test_connection test_utils test_config-file test_socks5
 
 EXTRA_DIST = fixtures
 
@@ -23,3 +26,6 @@ test_utils_LDADD = $(LIBTAP) $(LIBCOMMON)
 
 test_config_file_SOURCES = test_config-file.c
 test_config_file_LDADD = $(LIBTAP) $(LIBCOMMON)
+
+test_socks5_SOURCES = test_socks5.c
+test_socks5_LDADD = $(LIBTAP) $(LIBCOMMON) $(LIBTORSOCKS)
