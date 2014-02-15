@@ -523,7 +523,7 @@ int socks5_recv_resolve_reply(struct connection *conn, void *addr,
 	} buffer;
 
 	assert(conn);
-	assert(conn >= 0);
+	assert(conn->fd >= 0);
 	assert(addr);
 
 	ret_recv = recv_data(conn->fd, &buffer, sizeof(buffer.msg));
@@ -657,7 +657,7 @@ int socks5_recv_resolve_ptr_reply(struct connection *conn, char **_hostname)
 	} buffer;
 
 	assert(conn);
-	assert(conn >= 0);
+	assert(conn->fd >= 0);
 	assert(_hostname);
 
 	ret_recv = recv_data(conn->fd, &buffer, sizeof(buffer));
