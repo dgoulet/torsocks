@@ -612,7 +612,7 @@ int socks5_send_resolve_ptr_request(const void *ip, struct connection *conn)
 		memcpy(req.addr.ipv4, ip, 4);
 	} else if (inet_ntop(AF_INET6, ip, ip_str, sizeof(ip_str))) {
 		msg.atyp = SOCKS5_ATYP_IPV6;
-		memcpy(req.addr.ipv4, ip, 16);
+		memcpy(req.addr.ipv6, ip, 16);
 	} else {
 		ERR("Unknown address domain of %d", ip);
 		ret = -EINVAL;
