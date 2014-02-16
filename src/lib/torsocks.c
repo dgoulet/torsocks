@@ -454,7 +454,7 @@ int tsocks_tor_resolve_ptr(const char *addr, char **ip, int af)
 		goto end_close;
 	}
 
-	ret = socks5_send_resolve_ptr_request(addr, &conn);
+	ret = socks5_send_resolve_ptr_request(&conn, addr, af);
 	if (ret < 0) {
 		goto end_close;
 	}

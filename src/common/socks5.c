@@ -585,11 +585,10 @@ error:
  * Return 0 on success or else a negative value.
  */
 ATTR_HIDDEN
-int socks5_send_resolve_ptr_request(const void *ip, struct connection *conn)
+int socks5_send_resolve_ptr_request(struct connection *conn, const void *ip, int af)
 {
 	int ret, ret_send;
 	char buffer[20];	/* Can't go higher than that (with IPv6). */
-	char ip_str[INET6_ADDRSTRLEN];
 	size_t msg_len, data_len;
 	struct socks5_request msg;
 	struct socks5_request_resolve_ptr req;
@@ -607,13 +606,16 @@ int socks5_send_resolve_ptr_request(const void *ip, struct connection *conn)
 	/* Always zeroed. */
 	msg.rsv = 0;
 
-	if (inet_ntop(AF_INET, ip, ip_str, sizeof(ip_str))) {
+	switch (af) {
+	case AF_INET:
 		msg.atyp = SOCKS5_ATYP_IPV4;
 		memcpy(req.addr.ipv4, ip, 4);
-	} else if (inet_ntop(AF_INET6, ip, ip_str, sizeof(ip_str))) {
+		break;
+	case AF_INET6:
 		msg.atyp = SOCKS5_ATYP_IPV6;
 		memcpy(req.addr.ipv6, ip, 16);
-	} else {
+		break;
+	default:
 		ERR("Unknown address domain of %d", ip);
 		ret = -EINVAL;
 		goto error;
