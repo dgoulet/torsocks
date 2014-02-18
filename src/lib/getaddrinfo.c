@@ -39,17 +39,17 @@ LIBC_GETADDRINFO_RET_TYPE tsocks_getaddrinfo(LIBC_GETADDRINFO_SIG)
 	void *addr;
 	char *ip_str, ipv4[INET_ADDRSTRLEN], ipv6[INET6_ADDRSTRLEN];
 	socklen_t ip_str_size;
-	const char *node;
+	const char *tmp_node;
 
-	DBG("[getaddrinfo] Requesting %s hostname", __node);
+	DBG("[getaddrinfo] Requesting %s hostname", node);
 
-	if (!__node) {
+	if (!node) {
 		ret = EAI_NONAME;
 		goto error;
 	}
 
 	/* Use right domain for the next step. */
-	switch (__hints->ai_family) {
+	switch (hints->ai_family) {
 	default:
 		/* Default value is to use IPv4. */
 	case AF_INET:
@@ -66,24 +66,24 @@ LIBC_GETADDRINFO_RET_TYPE tsocks_getaddrinfo(LIBC_GETADDRINFO_SIG)
 		break;
 	}
 
-	ret = inet_pton(af, __node, addr);
+	ret = inet_pton(af, node, addr);
 	if (ret == 0) {
 		/* The node most probably is a DNS name. */
-		ret = tsocks_tor_resolve(__node, (uint32_t *) addr);
+		ret = tsocks_tor_resolve(node, (uint32_t *) addr);
 		if (ret < 0) {
 			ret = EAI_FAIL;
 			goto error;
 		}
 
 		(void) inet_ntop(af, addr, ip_str, ip_str_size);
-		node = ip_str;
-		DBG("[getaddrinfo] Node %s resolved to %s", __node, node);
+		tmp_node = ip_str;
+		DBG("[getaddrinfo] Node %s resolved to %s", node,tmp_node);
 	} else {
-		node = __node;
-		DBG("[getaddrinfo] Node %s will be passed to the libc call", node);
+		tmp_node = node;
+		DBG("[getaddrinfo] Node %s will be passed to the libc call", tmp_node);
 	}
 
-	ret = tsocks_libc_getaddrinfo(node, __service, __hints, __res);
+	ret = tsocks_libc_getaddrinfo(tmp_node, service, hints, res);
 	if (ret) {
 		goto error;
 	}

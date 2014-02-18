@@ -40,18 +40,17 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 	struct onion_entry *on_entry;
 	struct sockaddr_in *inet_addr;
 
-	DBG("Connect catched on fd %d", __sockfd);
+	DBG("Connect catched on fd %d", sockfd);
 
 	optlen = sizeof(sock_type);
-	ret = getsockopt(__sockfd, SOL_SOCKET, SO_TYPE, &sock_type, &optlen);
+	ret = getsockopt(sockfd, SOL_SOCKET, SO_TYPE, &sock_type, &optlen);
 	if (ret < 0) {
 		/* Use the getsockopt() errno value. */
 		goto error;
 	}
 
 	/* We can't handle a non inet socket. */
-	if (__addr->sa_family != AF_INET &&
-			__addr->sa_family != AF_INET6) {
+	if (addr->sa_family != AF_INET && addr->sa_family != AF_INET6) {
 		DBG("[conect] Connection is not IPv4/v6. Ignoring.");
 		goto libc_connect;
 	}
@@ -67,9 +66,9 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 	}
 
 	DBG("[connect] Socket family %s and type %d",
-			__addr->sa_family == AF_INET ? "AF_INET" : "AF_INET6", sock_type);
+			addr->sa_family == AF_INET ? "AF_INET" : "AF_INET6", sock_type);
 
-	inet_addr = (struct sockaddr_in *) __addr;
+	inet_addr = (struct sockaddr_in *) addr;
 
 	/*
 	 * Lock registry to get the connection reference if one. In this code path,
@@ -78,7 +77,7 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 	 * quickly unlocked and no reference is needed.
 	 */
 	connection_registry_lock();
-	new_conn = connection_find(__sockfd);
+	new_conn = connection_find(sockfd);
 	connection_registry_unlock();
 	if (new_conn) {
 		/* Double connect() for the same fd. */
@@ -99,7 +98,7 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 		 * Create a connection without a destination address since we will set
 		 * the onion address name found before.
 		 */
-		new_conn = connection_create(__sockfd, NULL);
+		new_conn = connection_create(sockfd, NULL);
 		if (!new_conn) {
 			errno = ENOMEM;
 			goto error;
@@ -112,7 +111,7 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 		 * Check if address is localhost. At this point, we are sure it's not a
 		 * .onion cookie address that is by default in the loopback network.
 		 */
-		if (utils_sockaddr_is_localhost(__addr)) {
+		if (utils_sockaddr_is_localhost(addr)) {
 			WARN("[connect] Connection to a local address are denied since it "
 					"might be a TCP DNS query to a local DNS server. "
 					"Rejecting it for safety reasons.");
@@ -120,7 +119,7 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 			goto error;
 		}
 
-		new_conn = connection_create(__sockfd, __addr);
+		new_conn = connection_create(sockfd, addr);
 		if (!new_conn) {
 			errno = ENOMEM;
 			goto error;

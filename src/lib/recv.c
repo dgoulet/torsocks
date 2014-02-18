@@ -39,24 +39,24 @@ LIBC_RECVMSG_RET_TYPE tsocks_recvmsg(LIBC_RECVMSG_SIG)
 	char dummy, recv_fd[CMSG_SPACE(sizeof(fd))];
 	struct iovec iov[1];
 	struct cmsghdr *cmsg;
-	struct msghdr msg;
+	struct msghdr msg_hdr;
 
-	memset(&msg, 0, sizeof(msg));
+	memset(&msg_hdr, 0, sizeof(msg_hdr));
 
 	/* Prepare to receive the structures */
 	iov[0].iov_base = &dummy;
 	iov[0].iov_len = 1;
-	msg.msg_iov = iov;
-	msg.msg_iovlen = 1;
-	msg.msg_control = recv_fd;
-	msg.msg_controllen = sizeof(recv_fd);
+	msg_hdr.msg_iov = iov;
+	msg_hdr.msg_iovlen = 1;
+	msg_hdr.msg_control = recv_fd;
+	msg_hdr.msg_controllen = sizeof(recv_fd);
 
 	do {
 		/* Just peek the data to inspect the payload for fd. */
-		ret = tsocks_libc_recvmsg(__sockfd, &msg, MSG_PEEK);
+		ret = tsocks_libc_recvmsg(sockfd, &msg_hdr, MSG_PEEK);
 	} while (ret < 0 && errno == EINTR);
 
-	cmsg = CMSG_FIRSTHDR(&msg);
+	cmsg = CMSG_FIRSTHDR(&msg_hdr);
 	if (!cmsg) {
 		goto end;
 	}

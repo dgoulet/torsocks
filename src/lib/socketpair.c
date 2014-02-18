@@ -30,13 +30,13 @@ TSOCKS_LIBC_DECL(socketpair, LIBC_SOCKETPAIR_RET_TYPE, LIBC_SOCKETPAIR_SIG)
 LIBC_SOCKETPAIR_RET_TYPE tsocks_socketpair(LIBC_SOCKETPAIR_SIG)
 {
 	DBG("[socketpair] Creating socket with domain %d, type %d and protocol %d",
-			__domain, __type, __protocol);
+			domain, type, protocol);
 
-	switch (__type) {
+	switch (type) {
 	case SOCK_STREAM:
 		break;
 	default:
-		if (__domain == AF_INET || __domain == AF_INET6) {
+		if (domain == AF_INET || domain == AF_INET6) {
 			ERR("Non TCP socketpair denied. Tor network can't handle it. "
 					"Stopping everything!");
 			errno = EINVAL;
@@ -46,7 +46,7 @@ LIBC_SOCKETPAIR_RET_TYPE tsocks_socketpair(LIBC_SOCKETPAIR_SIG)
 	}
 
 	/* Stream socket for INET/INET6 is good so open it. */
-	return tsocks_libc_socketpair(__domain, __type, __protocol, __sv);
+	return tsocks_libc_socketpair(domain, type, protocol, sv);
 }
 
 /*

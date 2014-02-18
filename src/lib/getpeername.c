@@ -34,10 +34,10 @@ LIBC_GETPEERNAME_RET_TYPE tsocks_getpeername(LIBC_GETPEERNAME_SIG)
 	int ret = 0;
 	struct connection *conn;
 
-	DBG("[getpeername] Requesting address on socket %d", __sockfd);
+	DBG("[getpeername] Requesting address on socket %d", sockfd);
 
 	connection_registry_lock();
-	conn = connection_find(__sockfd);
+	conn = connection_find(sockfd);
 	if (!conn) {
 		errno = ENOTCONN;
 		ret = -1;

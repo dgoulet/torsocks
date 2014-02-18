@@ -30,11 +30,11 @@ TSOCKS_LIBC_DECL(socket, LIBC_SOCKET_RET_TYPE, LIBC_SOCKET_SIG)
 LIBC_SOCKET_RET_TYPE tsocks_socket(LIBC_SOCKET_SIG)
 {
 	DBG("[socket] Creating socket with domain %d, type %d and protocol %d",
-			__domain, __type, __protocol);
+			domain, type, protocol);
 
-	switch (__type) {
+	switch (type) {
 	case SOCK_STREAM:
-		if (__domain == AF_INET6) {
+		if (domain == AF_INET6) {
 			/* Tor does not handle IPv6 at the moment. Reject it. */
 			ERR("Socket is IPv6. Tor does not handle AF_INET6 connection.");
 			errno = EINVAL;
@@ -42,7 +42,7 @@ LIBC_SOCKET_RET_TYPE tsocks_socket(LIBC_SOCKET_SIG)
 		}
 		break;
 	default:
-		if (__domain == AF_INET || __domain == AF_INET6) {
+		if (domain == AF_INET || domain == AF_INET6) {
 			/*
 			 * Print this message only in debug mode. Very often, applications
 			 * uses the libc to do DNS resolution which first tries with UDP
@@ -60,7 +60,7 @@ LIBC_SOCKET_RET_TYPE tsocks_socket(LIBC_SOCKET_SIG)
 	}
 
 	/* Stream socket for INET/INET6 is good so open it. */
-	return tsocks_libc_socket(__domain, __type, __protocol);
+	return tsocks_libc_socket(domain, type, protocol);
 }
 
 /*

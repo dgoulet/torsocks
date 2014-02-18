@@ -107,11 +107,11 @@ static LIBC_SYSCALL_RET_TYPE handle_munmap(va_list args)
 /*
  * Torsocks call for syscall(2)
  */
-LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int __number, va_list args)
+LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int number, va_list args)
 {
 	LIBC_SYSCALL_RET_TYPE ret;
 
-	switch (__number) {
+	switch (number) {
 	case TSOCKS_NR_SOCKET:
 		ret = handle_socket(args);
 		break;
@@ -162,7 +162,7 @@ LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int __number, va_list args)
 		 * off the Tor network.
 		 */
 		WARN("[syscall] Unsupported syscall number %ld. Denying the call",
-				__number);
+				number);
 		ret = -1;
 		errno = ENOSYS;
 		break;
@@ -179,8 +179,8 @@ LIBC_SYSCALL_DECL
 	LIBC_SYSCALL_RET_TYPE ret;
 	va_list args;
 
-	va_start(args, __number);
-	ret = tsocks_syscall(__number, args);
+	va_start(args, number);
+	ret = tsocks_syscall(number, args);
 	va_end(args);
 
 	return ret;
@@ -212,11 +212,11 @@ static LIBC___SYSCALL_RET_TYPE handle_bsd_mmap(va_list args)
 	return (LIBC___SYSCALL_RET_TYPE) mmap(addr, len, prot, flags, fd, offset);
 }
 
-LIBC___SYSCALL_RET_TYPE tsocks___syscall(quad_t __number, va_list args)
+LIBC___SYSCALL_RET_TYPE tsocks___syscall(quad_t number, va_list args)
 {
 	LIBC_SYSCALL_RET_TYPE ret;
 
-	switch (__number) {
+	switch (number) {
 	case TSOCKS_NR_MMAP:
 		/*
 		 * Please see the mmap comment in the syscall() function to understand
@@ -230,7 +230,7 @@ LIBC___SYSCALL_RET_TYPE tsocks___syscall(quad_t __number, va_list args)
 		 * off the Tor network.
 		 */
 		WARN("[syscall] Unsupported __syscall number %ld. Denying the call",
-				__number);
+				number);
 		ret = -1;
 		errno = ENOSYS;
 		break;
@@ -244,8 +244,8 @@ LIBC___SYSCALL_DECL
 	LIBC___SYSCALL_RET_TYPE ret;
 	va_list args;
 
-	va_start(args, __number);
-	ret = tsocks___syscall(__number, args);
+	va_start(args, number);
+	ret = tsocks___syscall(number, args);
 	va_end(args);
 
 	return ret;

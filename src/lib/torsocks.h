@@ -43,27 +43,27 @@
 #define LIBC_CONNECT_NAME_STR XSTR(LIBC_CONNECT_NAME)
 #define LIBC_CONNECT_RET_TYPE int
 #define LIBC_CONNECT_SIG \
-	int __sockfd, const struct sockaddr *__addr, socklen_t __addrlen
+	int sockfd, const struct sockaddr *addr, socklen_t addrlen
 #define LIBC_CONNECT_ARGS \
-	__sockfd, __addr, __addrlen
+	sockfd, addr, addrlen
 
 /* socket(2) */
 #define LIBC_SOCKET_NAME socket
 #define LIBC_SOCKET_NAME_STR XSTR(LIBC_SOCKET_NAME)
 #define LIBC_SOCKET_RET_TYPE int
 #define LIBC_SOCKET_SIG \
-	int __domain, int __type, int __protocol
+	int domain, int type, int protocol
 #define LIBC_SOCKET_ARGS \
-	__domain, __type, __protocol
+	domain, type, protocol
 
 /* socketpair(2) */
 #define LIBC_SOCKETPAIR_NAME socketpair
 #define LIBC_SOCKETPAIR_NAME_STR XSTR(LIBC_SOCKETPAIR_NAME)
 #define LIBC_SOCKETPAIR_RET_TYPE int
 #define LIBC_SOCKETPAIR_SIG \
-	int __domain, int __type, int __protocol, int __sv[2]
+	int domain, int type, int protocol, int sv[2]
 #define LIBC_SOCKETPAIR_ARGS \
-	__domain, __type, __protocol, __sv
+	domain, type, protocol, sv
 
 /* close(2) */
 #include <unistd.h>
@@ -71,8 +71,8 @@
 #define LIBC_CLOSE_NAME close
 #define LIBC_CLOSE_NAME_STR XSTR(LIBC_CLOSE_NAME)
 #define LIBC_CLOSE_RET_TYPE int
-#define LIBC_CLOSE_SIG int __fd
-#define LIBC_CLOSE_ARGS __fd
+#define LIBC_CLOSE_SIG int fd
+#define LIBC_CLOSE_ARGS fd
 
 /* gethostbyname(3) - DEPRECATED in glibc. */
 #include <netdb.h>
@@ -91,35 +91,35 @@ extern char tsocks_he_name[255];
 #define LIBC_GETHOSTBYNAME_NAME gethostbyname
 #define LIBC_GETHOSTBYNAME_NAME_STR XSTR(LIBC_GETHOSTBYNAME_NAME)
 #define LIBC_GETHOSTBYNAME_RET_TYPE struct hostent *
-#define LIBC_GETHOSTBYNAME_SIG const char *__name
-#define LIBC_GETHOSTBYNAME_ARGS __name
+#define LIBC_GETHOSTBYNAME_SIG const char *name
+#define LIBC_GETHOSTBYNAME_ARGS name
 
 /* gethostbyname2(3) - GNU extension to avoid static data. */
 #define LIBC_GETHOSTBYNAME2_NAME gethostbyname2
 #define LIBC_GETHOSTBYNAME2_NAME_STR XSTR(LIBC_GETHOSTBYNAME2_NAME)
 #define LIBC_GETHOSTBYNAME2_RET_TYPE struct hostent *
-#define LIBC_GETHOSTBYNAME2_SIG const char *__name, int __af
-#define LIBC_GETHOSTBYNAME2_ARGS __name, __af
+#define LIBC_GETHOSTBYNAME2_SIG const char *name, int af
+#define LIBC_GETHOSTBYNAME2_ARGS name, af
 
 /* GNU extension. Reentrant version. */
 #define LIBC_GETHOSTBYNAME_R_NAME gethostbyname_r
 #define LIBC_GETHOSTBYNAME_R_NAME_STR XSTR(LIBC_GETHOSTBYNAME_R_NAME)
 #define LIBC_GETHOSTBYNAME_R_RET_TYPE int
-#define LIBC_GETHOSTBYNAME_R_SIG const char *__name, \
-	struct hostent *__ret, char *__buf, size_t __buflen, \
-	struct hostent **__result, int *__h_errnop
-#define LIBC_GETHOSTBYNAME_R_ARGS __name, __ret, __buf, \
-	__buflen, __result, __h_errnop
+#define LIBC_GETHOSTBYNAME_R_SIG const char *name, \
+	struct hostent *hret, char *buf, size_t buflen, \
+	struct hostent **result, int *h_errnop
+#define LIBC_GETHOSTBYNAME_R_ARGS name, hret, buf, \
+	buflen, result, h_errnop
 
 /* GNU extension. Reentrant version 2. */
 #define LIBC_GETHOSTBYNAME2_R_NAME gethostbyname2_r
 #define LIBC_GETHOSTBYNAME2_R_NAME_STR XSTR(LIBC_GETHOSTBYNAME2_R_NAME)
 #define LIBC_GETHOSTBYNAME2_R_RET_TYPE int
-#define LIBC_GETHOSTBYNAME2_R_SIG const char *__name, int __af, \
-	struct hostent *__ret, char *__buf, size_t __buflen, \
-struct hostent **__result, int *__h_errnop
-#define LIBC_GETHOSTBYNAME2_R_ARGS __name, __af, __ret, __buf, \
-	__buflen, __result, __h_errnop
+#define LIBC_GETHOSTBYNAME2_R_SIG const char *name, int af, \
+	struct hostent *hret, char *buf, size_t buflen, \
+struct hostent **result, int *h_errnop
+#define LIBC_GETHOSTBYNAME2_R_ARGS name, af, hret, buf, \
+	buflen, result, h_errnop
 
 /* gethostbyaddr(3) - DEPRECATED in glibc. */
 #include <sys/socket.h>
@@ -127,18 +127,18 @@ struct hostent **__result, int *__h_errnop
 #define LIBC_GETHOSTBYADDR_NAME gethostbyaddr
 #define LIBC_GETHOSTBYADDR_NAME_STR XSTR(LIBC_GETHOSTBYADDR_NAME)
 #define LIBC_GETHOSTBYADDR_RET_TYPE struct hostent *
-#define LIBC_GETHOSTBYADDR_SIG const void *__addr, socklen_t __len, int __type
-#define LIBC_GETHOSTBYADDR_ARGS __addr, __len, __type
+#define LIBC_GETHOSTBYADDR_SIG const void *addr, socklen_t len, int type
+#define LIBC_GETHOSTBYADDR_ARGS addr, len, type
 
 /* GNU extension. Reentrant version. */
 #define LIBC_GETHOSTBYADDR_R_NAME gethostbyaddr_r
 #define LIBC_GETHOSTBYADDR_R_NAME_STR XSTR(LIBC_GETHOSTBYADDR_R_NAME)
 #define LIBC_GETHOSTBYADDR_R_RET_TYPE int
-#define LIBC_GETHOSTBYADDR_R_SIG const void *__addr, socklen_t __len, int __type, \
-	struct hostent *__ret, char *__buf, size_t __buflen, \
-	struct hostent **__result, int *__h_errnop
-#define LIBC_GETHOSTBYADDR_R_ARGS __addr, __len, __type, __ret, __buf, \
-	__buflen, __result, __h_errnop
+#define LIBC_GETHOSTBYADDR_R_SIG const void *addr, socklen_t len, int type, \
+	struct hostent *hret, char *buf, size_t buflen, \
+	struct hostent **result, int *h_errnop
+#define LIBC_GETHOSTBYADDR_R_ARGS addr, len, type, hret, buf, \
+	buflen, result, h_errnop
 
 /* getaddrinfo(3) */
 #include <netdb.h>
@@ -147,9 +147,9 @@ struct hostent **__result, int *__h_errnop
 #define LIBC_GETADDRINFO_NAME_STR XSTR(LIBC_GETADDRINFO_NAME)
 #define LIBC_GETADDRINFO_RET_TYPE int
 #define LIBC_GETADDRINFO_SIG \
-	const char *__node, const char *__service, const struct addrinfo *__hints,\
-	struct addrinfo **__res
-#define LIBC_GETADDRINFO_ARGS  __node, __service, __hints, __res
+	const char *node, const char *service, const struct addrinfo *hints,\
+	struct addrinfo **res
+#define LIBC_GETADDRINFO_ARGS  node, service, hints, res
 
 /* getpeername(2) */
 #include <sys/socket.h>
@@ -158,16 +158,16 @@ struct hostent **__result, int *__h_errnop
 #define LIBC_GETPEERNAME_NAME_STR XSTR(LIBC_GETPEERNAME_NAME)
 #define LIBC_GETPEERNAME_RET_TYPE int
 #define LIBC_GETPEERNAME_SIG \
-	int __sockfd, struct sockaddr *__addr, socklen_t *__addrlen
-#define LIBC_GETPEERNAME_ARGS  __sockfd, __addr, __addrlen
+	int sockfd, struct sockaddr *addr, socklen_t *addrlen
+#define LIBC_GETPEERNAME_ARGS  sockfd, addr, addrlen
 
 #define LIBC_RECVMSG_NAME recvmsg
 #define LIBC_RECVMSG_NAME_STR XSTR(LIBC_RECVMSG_NAME)
 #define LIBC_RECVMSG_RET_TYPE ssize_t
 #define LIBC_RECVMSG_SIG \
-	int __sockfd, struct msghdr *__msg, int __flags
+	int sockfd, struct msghdr *msg, int flags
 #define LIBC_RECVMSG_ARGS \
-	__sockfd, __msg, __flags
+	sockfd, msg, flags
 
 #else
 #error "OS not supported."
@@ -181,8 +181,8 @@ struct hostent **__result, int *__h_errnop
 #define LIBC_SYSCALL_NAME syscall
 #define LIBC_SYSCALL_NAME_STR XSTR(LIBC_SYSCALL_NAME)
 #define LIBC_SYSCALL_RET_TYPE long int
-#define LIBC_SYSCALL_SIG long int __number, ...
-#define LIBC_SYSCALL_ARGS __number
+#define LIBC_SYSCALL_SIG long int number, ...
+#define LIBC_SYSCALL_ARGS number
 
 #endif /* __linux__ */
 
@@ -192,8 +192,8 @@ struct hostent **__result, int *__h_errnop
 #define LIBC_SYSCALL_NAME syscall
 #define LIBC_SYSCALL_NAME_STR XSTR(LIBC_SYSCALL_NAME)
 #define LIBC_SYSCALL_RET_TYPE int
-#define LIBC_SYSCALL_SIG int __number, ...
-#define LIBC_SYSCALL_ARGS __number
+#define LIBC_SYSCALL_SIG int number, ...
+#define LIBC_SYSCALL_ARGS number
 
 #endif /* __FreeBSD__, __darwin__, __NetBSD__ */
 
@@ -203,8 +203,8 @@ struct hostent **__result, int *__h_errnop
 #define LIBC_SYSCALL_NAME syscall
 #define LIBC_SYSCALL_NAME_STR XSTR(LIBC_SYSCALL_NAME)
 #define LIBC_SYSCALL_RET_TYPE long int
-#define LIBC_SYSCALL_SIG long int __number, ...
-#define LIBC_SYSCALL_ARGS __number
+#define LIBC_SYSCALL_SIG long int number, ...
+#define LIBC_SYSCALL_ARGS number
 
 #endif /* __GLIBC__ && __FreeBSD_kernel__ */
 
@@ -214,16 +214,16 @@ struct hostent **__result, int *__h_errnop
 #define LIBC___SYSCALL_NAME __syscall
 #define LIBC___SYSCALL_NAME_STR XSTR(LIBC___SYSCALL_NAME)
 #define LIBC___SYSCALL_RET_TYPE off_t
-#define LIBC___SYSCALL_SIG quad_t __number, ...
-#define LIBC___SYSCALL_ARGS __number
+#define LIBC___SYSCALL_SIG quad_t number, ...
+#define LIBC___SYSCALL_ARGS number
 
 #elif defined(__NetBSD__)
 
 #define LIBC___SYSCALL_NAME __syscall
 #define LIBC___SYSCALL_NAME_STR XSTR(LIBC___SYSCALL_NAME)
 #define LIBC___SYSCALL_RET_TYPE quad_t
-#define LIBC___SYSCALL_SIG quad_t __number, ...
-#define LIBC___SYSCALL_ARGS __number
+#define LIBC___SYSCALL_SIG quad_t number, ...
+#define LIBC___SYSCALL_ARGS number
 
 #endif /* __FreeBSD__, __NetBSD__ */
 

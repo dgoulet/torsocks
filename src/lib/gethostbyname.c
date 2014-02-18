@@ -64,15 +64,15 @@ LIBC_GETHOSTBYNAME_RET_TYPE tsocks_gethostbyname(LIBC_GETHOSTBYNAME_SIG)
 	int ret;
 	uint32_t ip;
 
-	DBG("[gethostbyname] Requesting %s hostname", __name);
+	DBG("[gethostbyname] Requesting %s hostname", name);
 
-	if (!__name) {
+	if (!name) {
 		h_errno = HOST_NOT_FOUND;
 		goto error;
 	}
 
 	/* Resolve the given hostname through Tor. */
-	ret = tsocks_tor_resolve(__name, &ip);
+	ret = tsocks_tor_resolve(name, &ip);
 	if (ret < 0) {
 		goto error;
 	}
@@ -88,13 +88,13 @@ LIBC_GETHOSTBYNAME_RET_TYPE tsocks_gethostbyname(LIBC_GETHOSTBYNAME_SIG)
 	tsocks_he_addr_list[0] = tsocks_he_addr;
 	tsocks_he_addr_list[1] = NULL;
 
-	tsocks_he.h_name = (char *) __name;
+	tsocks_he.h_name = (char *) name;
 	tsocks_he.h_aliases = NULL;
 	tsocks_he.h_length = sizeof(in_addr_t);
 	tsocks_he.h_addrtype = AF_INET;
 	tsocks_he.h_addr_list = tsocks_he_addr_list;
 
-	DBG("Hostname %s resolved to %s", __name,
+	DBG("Hostname %s resolved to %s", name,
 			inet_ntoa(*((struct in_addr *) &ip)));
 
 	errno = 0;
@@ -124,12 +124,12 @@ LIBC_GETHOSTBYNAME2_RET_TYPE tsocks_gethostbyname2(LIBC_GETHOSTBYNAME2_SIG)
 	 * For now, there is no way of resolving a domain name to IPv6 through Tor
 	 * so only accept INET request thus using the original gethostbyname().
 	 */
-	if (__af != AF_INET) {
+	if (af != AF_INET) {
 		h_errno = HOST_NOT_FOUND;
 		return NULL;
 	}
 
-	return tsocks_gethostbyname(__name);
+	return tsocks_gethostbyname(name);
 }
 
 /*
@@ -155,24 +155,24 @@ LIBC_GETHOSTBYADDR_RET_TYPE tsocks_gethostbyaddr(LIBC_GETHOSTBYADDR_SIG)
 	 * Tor does not allow to resolve to an IPv6 pointer so only accept inet
 	 * return address.
 	 */
-	if (!__addr || __type != AF_INET) {
+	if (!addr || type != AF_INET) {
 		h_errno = HOST_NOT_FOUND;
 		goto error;
 	}
 
 	DBG("[gethostbyaddr] Requesting address %s of len %d and type %d",
-			inet_ntoa(*((struct in_addr *) __addr)), __len, __type);
+			inet_ntoa(*((struct in_addr *) addr)), len, type);
 
 	/* Reset static host entry of tsocks. */
 	memset(&tsocks_he, 0, sizeof(tsocks_he));
 	memset(tsocks_he_addr_list, 0, sizeof(tsocks_he_addr_list));
 	memset(tsocks_he_name, 0, sizeof(tsocks_he_name));
 
-	ret = tsocks_tor_resolve_ptr(__addr, &hostname, __type);
+	ret = tsocks_tor_resolve_ptr(addr, &hostname, type);
 	if (ret < 0) {
 		const char *ret_str;
 
-		ret_str = inet_ntop(__type, __addr, tsocks_he_name,
+		ret_str = inet_ntop(type, addr, tsocks_he_name,
 				sizeof(tsocks_he_name));
 		if (!ret_str) {
 			h_errno = HOST_NOT_FOUND;
@@ -181,13 +181,13 @@ LIBC_GETHOSTBYADDR_RET_TYPE tsocks_gethostbyaddr(LIBC_GETHOSTBYADDR_SIG)
 	} else {
 		memcpy(tsocks_he_name, hostname, sizeof(tsocks_he_name));
 		free(hostname);
-		tsocks_he_addr_list[0] = (char *) __addr;
+		tsocks_he_addr_list[0] = (char *) addr;
 	}
 
 	tsocks_he.h_name = tsocks_he_name;
 	tsocks_he.h_aliases = NULL;
 	tsocks_he.h_length = strlen(tsocks_he_name);
-	tsocks_he.h_addrtype = __type;
+	tsocks_he.h_addrtype = type;
 	tsocks_he.h_addr_list = tsocks_he_addr_list;
 
 	errno = 0;
@@ -221,53 +221,53 @@ LIBC_GETHOSTBYADDR_R_RET_TYPE tsocks_gethostbyaddr_r(LIBC_GETHOSTBYADDR_R_SIG)
 		char padding[];
 	} *data;
 
-	if (__buflen < sizeof(struct data)) {
+	if (buflen < sizeof(struct data)) {
 		ret = ERANGE;
 		goto error;
 	}
-	data = (struct data *) __buf;
+	data = (struct data *) buf;
 	memset(data, 0, sizeof(*data));
 
 	/*
 	 * Tor does not allow to resolve to an IPv6 pointer so only accept inet
 	 * return address.
 	 */
-	if (!__addr || __type != AF_INET) {
+	if (!addr || type != AF_INET) {
 		ret = HOST_NOT_FOUND;
-		if (__h_errnop) {
-			*__h_errnop = HOST_NOT_FOUND;
+		if (h_errnop) {
+			*h_errnop = HOST_NOT_FOUND;
 		}
 		goto error;
 	}
 
 	DBG("[gethostbyaddr_r] Requesting address %s of len %d and type %d",
-			inet_ntoa(*((struct in_addr *) __addr)), __len, __type);
+			inet_ntoa(*((struct in_addr *) addr)), len, type);
 
 	/* This call allocates hostname. On error, it's untouched. */
-	ret = tsocks_tor_resolve_ptr(__addr, &data->hostname, __type);
+	ret = tsocks_tor_resolve_ptr(addr, &data->hostname, type);
 	if (ret < 0) {
 		const char *ret_str;
 
-		ret_str = inet_ntop(__type, __addr, __buf, __buflen);
+		ret_str = inet_ntop(type, addr, buf, buflen);
 		if (!ret_str) {
 			ret = HOST_NOT_FOUND;
 			if (errno == ENOSPC) {
 				ret = ERANGE;
 			}
-			if (__h_errnop) {
-				*__h_errnop = HOST_NOT_FOUND;
+			if (h_errnop) {
+				*h_errnop = HOST_NOT_FOUND;
 			}
 			goto error;
 		}
 	}
 
 	/* Ease our life a bit. */
-	he = __ret;
+	he = hret;
 
 	if (!he) {
 		ret = NO_RECOVERY;
-		if (__h_errnop) {
-			*__h_errnop = NO_RECOVERY;
+		if (h_errnop) {
+			*h_errnop = NO_RECOVERY;
 		}
 		goto error;
 	}
@@ -276,8 +276,8 @@ LIBC_GETHOSTBYADDR_R_RET_TYPE tsocks_gethostbyaddr_r(LIBC_GETHOSTBYADDR_R_SIG)
 		he->h_name = data->hostname;
 	} else {
 		ret = NO_RECOVERY;
-		if (__h_errnop) {
-			*__h_errnop = NO_RECOVERY;
+		if (h_errnop) {
+			*h_errnop = NO_RECOVERY;
 		}
 		goto error;
 	}
@@ -285,12 +285,12 @@ LIBC_GETHOSTBYADDR_R_RET_TYPE tsocks_gethostbyaddr_r(LIBC_GETHOSTBYADDR_R_SIG)
 	he->h_aliases = NULL;
 	he->h_length = strlen(he->h_name);
 	/* Assign the address list within the data of the given buffer. */
-	data->addr_list[0] = (char *) __addr;
+	data->addr_list[0] = (char *) addr;
 	data->addr_list[1] = NULL;
 	he->h_addr_list = data->addr_list;
 
-	if (__result) {
-		*__result = he;
+	if (result) {
+		*result = he;
 	}
 
 	/* Everything went good. */
@@ -327,34 +327,34 @@ LIBC_GETHOSTBYNAME_R_RET_TYPE tsocks_gethostbyname_r(LIBC_GETHOSTBYNAME_R_SIG)
 		char padding[];
 	} *data;
 
-	DBG("[gethostbyname_r] Requesting %s hostname", __name);
+	DBG("[gethostbyname_r] Requesting %s hostname", name);
 
-	if (!__name) {
-		*__h_errnop = HOST_NOT_FOUND;
+	if (!name) {
+		*h_errnop = HOST_NOT_FOUND;
 		ret = -1;
 		goto error;
 	}
 
-	if (__buflen < sizeof(*data)) {
+	if (buflen < sizeof(*data)) {
 		ret = ERANGE;
 		goto error;
 	}
 
 	/* Resolve the given hostname through Tor. */
-	ret = tsocks_tor_resolve(__name, &ip);
+	ret = tsocks_tor_resolve(name, &ip);
 	if (ret < 0) {
 		goto error;
 	}
 
-	data = (struct data *) __buf;
+	data = (struct data *) buf;
 	memset(data, 0, sizeof(*data));
 	/* Ease our life a bit. */
-	he = __ret;
+	he = hret;
 
 	ret_str = inet_ntop(AF_INET, &ip, data->addr, sizeof(data->addr));
 	if (!ret_str) {
 		PERROR("inet_ntop");
-		*__h_errnop = NO_ADDRESS;
+		*h_errnop = NO_ADDRESS;
 		goto error;
 	}
 
@@ -363,12 +363,12 @@ LIBC_GETHOSTBYNAME_R_RET_TYPE tsocks_gethostbyname_r(LIBC_GETHOSTBYNAME_R_SIG)
 	data->addr_list[1] = NULL;
 	he->h_addr_list = data->addr_list;
 
-	he->h_name = (char *) __name;
+	he->h_name = (char *) name;
 	he->h_aliases = NULL;
 	he->h_length = sizeof(in_addr_t);
 	he->h_addrtype = AF_INET;
 
-	DBG("[gethostbyname_r] Hostname %s resolved to %s", __name,
+	DBG("[gethostbyname_r] Hostname %s resolved to %s", name,
 			inet_ntoa(*((struct in_addr *) &ip)));
 
 error:
@@ -390,19 +390,19 @@ LIBC_GETHOSTBYNAME_R_DECL
  */
 LIBC_GETHOSTBYNAME2_R_RET_TYPE tsocks_gethostbyname2_r(LIBC_GETHOSTBYNAME2_R_SIG)
 {
-	DBG("[gethostbyname2_r] Requesting %s hostname", __name);
+	DBG("[gethostbyname2_r] Requesting %s hostname", name);
 
 	/*
 	 * For now, there is no way of resolving a domain name to IPv6 through Tor
 	 * so only accept INET request thus using the original gethostbyname().
 	 */
-	if (__af != AF_INET) {
-		*__h_errnop = HOST_NOT_FOUND;
+	if (af != AF_INET) {
+		*h_errnop = HOST_NOT_FOUND;
 		return -1;
 	}
 
-	return tsocks_gethostbyname_r(__name, __ret, __buf, __buflen, __result,
-			__h_errnop);
+	return tsocks_gethostbyname_r(name, hret, buf, buflen, result,
+			h_errnop);
 }
 
 /*

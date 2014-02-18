@@ -30,10 +30,10 @@ LIBC_CLOSE_RET_TYPE tsocks_close(LIBC_CLOSE_SIG)
 {
 	struct connection *conn;
 
-	DBG("Close catched for fd %d", __fd);
+	DBG("Close catched for fd %d", fd);
 
 	connection_registry_lock();
-	conn = connection_find(__fd);
+	conn = connection_find(fd);
 	if (conn) {
 		/*
 		 * Remove from the registry so it's not visible anymore and thus using
@@ -53,7 +53,7 @@ LIBC_CLOSE_RET_TYPE tsocks_close(LIBC_CLOSE_SIG)
 	}
 
 	/* Return the original libc close. */
-	return tsocks_libc_close(__fd);
+	return tsocks_libc_close(fd);
 }
 
 /*
