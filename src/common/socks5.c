@@ -360,7 +360,7 @@ int socks5_recv_connect_reply(struct connection *conn)
 	size_t recv_len;
 
 	assert(conn);
-	assert(conn >= 0);
+	assert(conn->fd >= 0);
 
 	/* Beginning of the payload we are receiving. */
 	recv_len = sizeof(msg);
