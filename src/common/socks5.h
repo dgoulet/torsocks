@@ -92,14 +92,14 @@ struct socks5_request_ipv6 {
 struct socks5_request_domain {
 	uint8_t len;
 	/* Maximum size of len above. No NULL byte is needed. */
-	char name[UINT8_MAX];
+	unsigned char name[UINT8_MAX];
 	uint16_t port;
 };
 
 /* Use for the Tor resolve command. */
 struct socks5_request_resolve {
 	uint8_t len;
-	char name[UINT8_MAX];
+	unsigned char name[UINT8_MAX];
 };
 
 /* Use for the Tor resolve ptr command. */

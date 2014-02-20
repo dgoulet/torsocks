@@ -250,7 +250,7 @@ int socks5_send_connect_request(struct connection *conn)
 {
 	int ret;
 	/* Buffer to send won't go over a full TCP size. */
-	char buffer[1500];
+	unsigned char buffer[1500];
 	ssize_t buf_len, ret_send;
 	struct socks5_request msg;
 
@@ -355,7 +355,7 @@ int socks5_recv_connect_reply(struct connection *conn)
 {
 	int ret;
 	ssize_t ret_recv;
-	char buffer[22];	/* Maximum size possible (with IPv6). */
+	unsigned char buffer[22];	/* Maximum size possible (with IPv6). */
 	struct socks5_reply msg;
 	size_t recv_len;
 
@@ -453,7 +453,7 @@ int socks5_send_resolve_request(const char *hostname, struct connection *conn)
 	 * Can't go bigger than that. 4 bytes for the header, 1 for the name len
 	 * and 255 for the name.
 	 */
-	char buffer[260];
+	unsigned char buffer[260];
 	size_t name_len, msg_len, data_len;
 	struct socks5_request msg;
 	struct socks5_request_resolve req;
@@ -588,7 +588,7 @@ ATTR_HIDDEN
 int socks5_send_resolve_ptr_request(struct connection *conn, const void *ip, int af)
 {
 	int ret, ret_send;
-	char buffer[20];	/* Can't go higher than that (with IPv6). */
+	unsigned char buffer[20];	/* Can't go higher than that (with IPv6). */
 	size_t msg_len, data_len;
 	struct socks5_request msg;
 	struct socks5_request_resolve_ptr req;
