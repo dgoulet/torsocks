@@ -85,7 +85,7 @@ LIBC_GETADDRINFO_RET_TYPE tsocks_getaddrinfo(LIBC_GETADDRINFO_SIG)
 	ret = inet_pton(af, node, addr);
 	if (ret == 0) {
 		/* The node most probably is a DNS name. */
-		ret = tsocks_tor_resolve(node, (uint32_t *) addr);
+		ret = tsocks_tor_resolve(af, node, addr);
 		if (ret < 0) {
 			ret = EAI_FAIL;
 			goto error;

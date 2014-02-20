@@ -367,16 +367,30 @@ error:
  *
  * Return 0 on success else a negative value and the result addr is untouched.
  */
-int tsocks_tor_resolve(const char *hostname, uint32_t *ip_addr)
+int tsocks_tor_resolve(int af, const char *hostname, void *ip_addr)
 {
 	int ret;
+	size_t addr_len;
 	struct connection conn;
 
 	assert(hostname);
 	assert(ip_addr);
 
-	ret = utils_localhost_resolve(hostname, AF_INET, ip_addr,
-			sizeof(uint32_t));
+	if (af == AF_INET) {
+		addr_len = sizeof(uint32_t);
+		conn.dest_addr.domain = CONNECTION_DOMAIN_INET;
+	} else if (af == AF_INET6) {
+		addr_len = 16;
+		conn.dest_addr.domain = CONNECTION_DOMAIN_INET6;
+		/* Tor daemon does not support IPv6 DNS resolution yet. */
+		ret = -ENOSYS;
+		goto error;
+	} else {
+		ret = -EINVAL;
+		goto error;
+	}
+
+	ret = utils_localhost_resolve(hostname, af, ip_addr, addr_len);
 	if (ret) {
 		/* Found to be a localhost name. */
 		ret = 0;
@@ -401,13 +415,12 @@ int tsocks_tor_resolve(const char *hostname, uint32_t *ip_addr)
 		}
 	}
 
-	conn.fd = tsocks_libc_socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	conn.fd = tsocks_libc_socket(af, SOCK_STREAM, IPPROTO_TCP);
 	if (conn.fd < 0) {
 		PERROR("socket");
 		ret = -errno;
 		goto error;
 	}
-	conn.dest_addr.domain = CONNECTION_DOMAIN_INET;
 
 	ret = setup_tor_connection(&conn);
 	if (ret < 0) {
@@ -420,7 +433,7 @@ int tsocks_tor_resolve(const char *hostname, uint32_t *ip_addr)
 	}
 
 	/* Force IPv4 resolution for now. */
-	ret = socks5_recv_resolve_reply(&conn, ip_addr, sizeof(uint32_t));
+	ret = socks5_recv_resolve_reply(&conn, ip_addr, addr_len);
 	if (ret < 0) {
 		goto end_close;
 	}

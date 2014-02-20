@@ -383,7 +383,7 @@ extern unsigned int tsocks_cleaned_up;
 int tsocks_connect_to_tor(struct connection *conn);
 void *tsocks_find_libc_symbol(const char *symbol,
 		enum tsocks_sym_action action);
-int tsocks_tor_resolve(const char *hostname, uint32_t *ip_addr);
+int tsocks_tor_resolve(int af, const char *hostname, void *ip_addr);
 int tsocks_tor_resolve_ptr(const char *addr, char **ip, int af);
 void tsocks_cleanup(void);
 

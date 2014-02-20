@@ -72,7 +72,7 @@ LIBC_GETHOSTBYNAME_RET_TYPE tsocks_gethostbyname(LIBC_GETHOSTBYNAME_SIG)
 	}
 
 	/* Resolve the given hostname through Tor. */
-	ret = tsocks_tor_resolve(name, &ip);
+	ret = tsocks_tor_resolve(AF_INET, name, &ip);
 	if (ret < 0) {
 		goto error;
 	}
@@ -341,7 +341,7 @@ LIBC_GETHOSTBYNAME_R_RET_TYPE tsocks_gethostbyname_r(LIBC_GETHOSTBYNAME_R_SIG)
 	}
 
 	/* Resolve the given hostname through Tor. */
-	ret = tsocks_tor_resolve(name, &ip);
+	ret = tsocks_tor_resolve(AF_INET, name, &ip);
 	if (ret < 0) {
 		goto error;
 	}
