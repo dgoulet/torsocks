@@ -125,6 +125,10 @@ int utils_tokenize_ignore_comments(const char *_line, size_t size, char **tokens
 	assert(tokens);
 
 	line = strdup(_line);
+	if (!line) {
+		ret = -ENOMEM;
+		goto error;
+	}
 
 	/* Ignore line if it starts with a # meaning a comment. */
 	if (*line == '#') {
@@ -149,6 +153,10 @@ int utils_tokenize_ignore_comments(const char *_line, size_t size, char **tokens
 	c = strtok(line, " \t");
 	while (c != NULL) {
 		tokens[i] = strdup(c);
+		if (!tokens[i]) {
+			ret = -ENOMEM;
+			goto error;
+		}
 		c = strtok(NULL, " \t");
 		i++;
 	}

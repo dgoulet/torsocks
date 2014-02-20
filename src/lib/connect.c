@@ -113,8 +113,12 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 			goto error;
 		}
 		new_conn->dest_addr.domain = CONNECTION_DOMAIN_NAME;
-		new_conn->dest_addr.hostname.addr = strdup(on_entry->hostname);
 		new_conn->dest_addr.hostname.port = inet_addr->sin_port;
+		new_conn->dest_addr.hostname.addr = strdup(on_entry->hostname);
+		if (!new_conn->dest_addr.hostname.addr) {
+			errno = ENOMEM;
+			goto error;
+		}
 	} else {
 		/*
 		 * Check if address is localhost. At this point, we are sure it's not a

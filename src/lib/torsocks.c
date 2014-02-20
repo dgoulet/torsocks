@@ -92,6 +92,10 @@ static void init_config(void)
 	 */
 	if (!tsocks_config.conf_file.tor_address) {
 		tsocks_config.conf_file.tor_address = strdup(DEFAULT_TOR_ADDRESS);
+		if (!tsocks_config.conf_file.tor_address) {
+			/* Most likely ENOMEM thus we can't continue. */
+			clean_exit(EXIT_FAILURE);
+		}
 	}
 	if (tsocks_config.conf_file.tor_port == 0) {
 		tsocks_config.conf_file.tor_port = DEFAULT_TOR_PORT;
