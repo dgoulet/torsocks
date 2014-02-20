@@ -32,16 +32,14 @@ LIBC_SOCKET_RET_TYPE tsocks_socket(LIBC_SOCKET_SIG)
 	DBG("[socket] Creating socket with domain %d, type %d and protocol %d",
 			domain, type, protocol);
 
-	switch (type) {
-	case SOCK_STREAM:
+	if (type & SOCK_STREAM) {
 		if (domain == AF_INET6) {
 			/* Tor does not handle IPv6 at the moment. Reject it. */
 			ERR("Socket is IPv6. Tor does not handle AF_INET6 connection.");
 			errno = EINVAL;
 			return -1;
 		}
-		break;
-	default:
+	} else {
 		if (domain == AF_INET || domain == AF_INET6) {
 			/*
 			 * Print this message only in debug mode. Very often, applications
@@ -56,7 +54,6 @@ LIBC_SOCKET_RET_TYPE tsocks_socket(LIBC_SOCKET_SIG)
 			errno = EINVAL;
 			return -1;
 		}
-		break;
 	}
 
 	/* Stream socket for INET/INET6 is good so open it. */
