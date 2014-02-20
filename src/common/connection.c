@@ -22,7 +22,14 @@
 #include "connection.h"
 #include "macros.h"
 
-/* Connection registry mutex. */
+/*
+ * Connection registry mutex.
+ *
+ * MUST be acquired for each read/write operation on the connection registry
+ * declared below.
+ *
+ * This mutex is NOT nested anywhere.
+ */
 static TSOCKS_INIT_MUTEX(connection_registry_mutex);
 
 /*
