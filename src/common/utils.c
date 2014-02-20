@@ -119,7 +119,7 @@ ATTR_HIDDEN
 int utils_tokenize_ignore_comments(const char *_line, size_t size, char **tokens)
 {
 	int ret, i = 0, argc = 0;
-	char *c, *line = NULL;
+	char *c, *line = NULL, *saveptr;
 
 	assert(_line);
 	assert(tokens);
@@ -150,14 +150,14 @@ int utils_tokenize_ignore_comments(const char *_line, size_t size, char **tokens
 		goto error;
 	}
 
-	c = strtok(line, " \t");
+	c = strtok_r(line, " \t", &saveptr);
 	while (c != NULL) {
 		tokens[i] = strdup(c);
 		if (!tokens[i]) {
 			ret = -ENOMEM;
 			goto error;
 		}
-		c = strtok(NULL, " \t");
+		c = strtok_r(NULL, " \t", &saveptr);
 		i++;
 	}
 
