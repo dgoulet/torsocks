@@ -168,11 +168,13 @@ error:
 static void init_logging(void)
 {
 	int level;
-	const char *filepath = NULL, *level_str, *time_status_str;
+	const char *filepath = NULL, *level_str = NULL, *time_status_str = NULL;
 	enum log_time_status t_status;
 
 	/* Get log level from user or use default. */
-	level_str = getenv(DEFAULT_LOG_LEVEL_ENV);
+	if (!is_suid) {
+		level_str = getenv(DEFAULT_LOG_LEVEL_ENV);
+	}
 	if (level_str) {
 		level = atoi(level_str);
 	} else {
@@ -181,7 +183,9 @@ static void init_logging(void)
 	}
 
 	/* Get time status from user or use default. */
-	time_status_str = getenv(DEFAULT_LOG_TIME_ENV);
+	if (!is_suid) {
+		time_status_str = getenv(DEFAULT_LOG_TIME_ENV);
+	}
 	if (time_status_str) {
 		t_status = atoi(time_status_str);
 	} else {
