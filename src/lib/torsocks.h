@@ -169,6 +169,14 @@ struct hostent **result, int *h_errnop
 #define LIBC_RECVMSG_ARGS \
 	sockfd, msg, flags
 
+/* accept(2) */
+#define LIBC_ACCEPT_NAME accept
+#define LIBC_ACCEPT_NAME_STR XSTR(LIBC_ACCEPT_NAME)
+#define LIBC_ACCEPT_RET_TYPE int
+#define LIBC_ACCEPT_SIG \
+	int sockfd, struct sockaddr *addr, socklen_t *addrlen
+#define LIBC_ACCEPT_ARGS sockfd, addr, addrlen
+
 #else
 #error "OS not supported."
 #endif /* __GLIBC__ , __FreeBSD__, __darwin__, __NetBSD__ */
@@ -183,6 +191,14 @@ struct hostent **result, int *h_errnop
 #define LIBC_SYSCALL_RET_TYPE long int
 #define LIBC_SYSCALL_SIG long int number, ...
 #define LIBC_SYSCALL_ARGS number
+
+/* accept4(2) */
+#define LIBC_ACCEPT4_NAME accept4
+#define LIBC_ACCEPT4_NAME_STR XSTR(LIBC_ACCEPT4_NAME)
+#define LIBC_ACCEPT4_RET_TYPE int
+#define LIBC_ACCEPT4_SIG \
+	int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags
+#define LIBC_ACCEPT4_ARGS sockfd, addr, addrlen, flags
 
 #endif /* __linux__ */
 
@@ -320,6 +336,18 @@ extern TSOCKS_LIBC_DECL(getpeername, LIBC_GETPEERNAME_RET_TYPE,
 		LIBC_GETPEERNAME_SIG)
 #define LIBC_GETPEERNAME_DECL LIBC_GETPEERNAME_RET_TYPE \
 		LIBC_GETPEERNAME_NAME(LIBC_GETPEERNAME_SIG)
+
+/* accept(2) */
+extern TSOCKS_LIBC_DECL(accept, LIBC_ACCEPT_RET_TYPE, LIBC_ACCEPT_SIG)
+#define LIBC_ACCEPT_DECL LIBC_ACCEPT_RET_TYPE \
+		LIBC_ACCEPT_NAME(LIBC_ACCEPT_SIG)
+
+/* accept4(2) */
+#if (defined(__linux__))
+extern TSOCKS_LIBC_DECL(accept4, LIBC_ACCEPT4_RET_TYPE, LIBC_ACCEPT4_SIG)
+#define LIBC_ACCEPT4_DECL LIBC_ACCEPT4_RET_TYPE \
+		LIBC_ACCEPT4_NAME(LIBC_ACCEPT4_SIG)
+#endif
 
 /*
  * Those are actions to do during the lookup process of libc symbols. For
