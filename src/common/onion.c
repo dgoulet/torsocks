@@ -248,14 +248,24 @@ end:
  * Return entry on success or else NULL.
  */
 ATTR_HIDDEN
-struct onion_entry *onion_entry_find_by_ip(in_addr_t ip,
+struct onion_entry *onion_entry_find_by_addr(const struct sockaddr *sa,
 		struct onion_pool *pool)
 {
 	int i;
 	struct onion_entry *entry = NULL;
+	const struct sockaddr_in *sin;
+
+	assert(sa);
+
+	/* Onion cookie are only IPv4. */
+	if (sa->sa_family == AF_INET6) {
+		goto end;
+	}
+
+	sin = (const struct sockaddr_in *) sa;
 
 	DBG("[onion] Finding onion entry for IP %s",
-			inet_ntoa(*((struct in_addr *) &ip)));
+			inet_ntoa((*((struct in_addr *) &sin->sin_addr.s_addr))));
 
 	/*
 	 * XXX: This can be improved by simply getting the offset of the IP with
@@ -264,7 +274,7 @@ struct onion_entry *onion_entry_find_by_ip(in_addr_t ip,
 	 * entries is 45.
 	 */
 	for (i = 0; i < pool->count; i++) {
-		if (pool->entries[i]->ip == ip) {
+		if (pool->entries[i]->ip == sin->sin_addr.s_addr) {
 			entry = pool->entries[i];
 			DBG("[onion] Onion entry name %s found in pool.",
 					entry->hostname);

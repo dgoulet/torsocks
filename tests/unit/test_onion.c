@@ -34,6 +34,7 @@ static void test_onion_entry(struct onion_pool *pool)
 	const char *onion_addr1 = "87idq6tnejk5plpn.onion";
 	const char *onion_addr2 = "97idq6tnejk5plpn.onion";
 	const char *onion_addr1_typo = "87idq6tnejk5plpn.onio";
+	struct sockaddr_in sin;
 
 	diag("Onion entry subsystem initialization test");
 
@@ -71,7 +72,9 @@ static void test_onion_entry(struct onion_pool *pool)
 			inet_ntoa(*((struct in_addr *) &entry->ip))) == 0,
 		"Valid onion entry found by name");
 
-	entry = onion_entry_find_by_ip(inet_addr(DEFAULT_ONION_ADDR_RANGE), pool);
+	sin.sin_family = AF_INET;
+	sin.sin_addr.s_addr = inet_addr(DEFAULT_ONION_ADDR_RANGE);
+	entry = onion_entry_find_by_addr((const struct sockaddr *) &sin, pool);
 	ok(entry &&
 		pool->count == 1 &&
 		strcmp(entry->hostname, onion_addr1) == 0 &&

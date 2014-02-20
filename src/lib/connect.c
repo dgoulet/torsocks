@@ -38,7 +38,6 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 	socklen_t optlen;
 	struct connection *new_conn;
 	struct onion_entry *on_entry;
-	struct sockaddr_in *inet_addr;
 
 	DBG("Connect catched on fd %d", sockfd);
 
@@ -77,8 +76,6 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 	DBG("[connect] Socket family %s and type %d",
 			addr->sa_family == AF_INET ? "AF_INET" : "AF_INET6", sock_type);
 
-	inet_addr = (struct sockaddr_in *) addr;
-
 	/*
 	 * Lock registry to get the connection reference if one. In this code path,
 	 * if a connection object is found, it will not be used since a double
@@ -99,8 +96,7 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 	 * existing .onion address.
 	 */
 	onion_pool_lock(&tsocks_onion_pool);
-	on_entry = onion_entry_find_by_ip(inet_addr->sin_addr.s_addr,
-			&tsocks_onion_pool);
+	on_entry = onion_entry_find_by_addr(addr, &tsocks_onion_pool);
 	onion_pool_unlock(&tsocks_onion_pool);
 	if (on_entry) {
 		/*
@@ -113,7 +109,7 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 			goto error;
 		}
 		new_conn->dest_addr.domain = CONNECTION_DOMAIN_NAME;
-		new_conn->dest_addr.hostname.port = inet_addr->sin_port;
+		new_conn->dest_addr.hostname.port = utils_get_port_from_addr(addr);
 		new_conn->dest_addr.hostname.addr = strdup(on_entry->hostname);
 		if (!new_conn->dest_addr.hostname.addr) {
 			errno = ENOMEM;

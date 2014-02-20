@@ -112,7 +112,7 @@ struct onion_entry *onion_entry_create(struct onion_pool *pool,
 		const char *onion_name);
 struct onion_entry *onion_entry_find_by_name(const char *onion_name,
 		struct onion_pool *pool);
-struct onion_entry *onion_entry_find_by_ip(in_addr_t ip,
+struct onion_entry *onion_entry_find_by_addr(const struct sockaddr *sa,
 		struct onion_pool *pool);
 
 static inline void onion_pool_lock(struct onion_pool *pool)

@@ -33,12 +33,7 @@ LIBC_SOCKET_RET_TYPE tsocks_socket(LIBC_SOCKET_SIG)
 			domain, type, protocol);
 
 	if (type & SOCK_STREAM) {
-		if (domain == AF_INET6) {
-			/* Tor does not handle IPv6 at the moment. Reject it. */
-			ERR("Socket is IPv6. Tor does not handle AF_INET6 connection.");
-			errno = EINVAL;
-			return -1;
-		}
+		goto end;
 	} else {
 		if (domain == AF_INET || domain == AF_INET6) {
 			/*
@@ -56,6 +51,7 @@ LIBC_SOCKET_RET_TYPE tsocks_socket(LIBC_SOCKET_SIG)
 		}
 	}
 
+end:
 	/* Stream socket for INET/INET6 is good so open it. */
 	return tsocks_libc_socket(domain, type, protocol);
 }

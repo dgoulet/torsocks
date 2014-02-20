@@ -344,3 +344,27 @@ int utils_is_addr_any(const struct sockaddr *sa)
 end:
 	return ret;
 }
+
+/*
+ * For a given sockaddr, return the port value considering the address family
+ * structure.
+ *
+ * Return the port number in the sockaddr sa or -1 is family is not unknown.
+ */
+ATTR_HIDDEN
+int utils_get_port_from_addr(const struct sockaddr *sa)
+{
+	int port;
+
+	assert(sa);
+
+	if (sa->sa_family == AF_INET) {
+		port = ((const struct sockaddr_in *) sa)->sin_port;
+	} else if (sa->sa_family == AF_INET6) {
+		port = ((const struct sockaddr_in6 *) sa)->sin6_port;
+	} else {
+		port = -1;
+	}
+
+	return port;
+}

@@ -33,5 +33,6 @@ int utils_is_address_ipv6(const char *ip);
 int utils_sockaddr_is_localhost(const struct sockaddr *sa);
 int utils_localhost_resolve(const char *name, int af, void *buf, size_t len);
 int utils_is_addr_any(const struct sockaddr *sa);
+int utils_get_port_from_addr(const struct sockaddr *sa);
 
 #endif /* TORSOCKS_UTILS_H */
