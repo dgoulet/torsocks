@@ -48,6 +48,22 @@ LIBC_GETADDRINFO_RET_TYPE tsocks_getaddrinfo(LIBC_GETADDRINFO_SIG)
 		goto error;
 	}
 
+	/*
+	 * Quoting the getaddrinfo(3) man page:
+	 *
+	 * All  the  other  fields  in  the  structure pointed to by hints must
+	 * contain either 0 or a NULL pointer, as appropriate.  Specifying  hints
+	 * as  NULL  is equivalent  to  setting  ai_socktype  and  ai_protocol  to
+	 * 0;  ai_family to AF_UNSPEC; and ai_flags to (AI_V4MAPPED |
+	 * AI_ADDRCONFIG).
+	 *
+	 * This means that for sure the ai_family will be treated as AF_UNSPEC.
+	 */
+	if (!hints) {
+		tmp_node = node;
+		goto libc_call;
+	}
+
 	/* Use right domain for the next step. */
 	switch (hints->ai_family) {
 	default:
@@ -83,6 +99,7 @@ LIBC_GETADDRINFO_RET_TYPE tsocks_getaddrinfo(LIBC_GETADDRINFO_SIG)
 		DBG("[getaddrinfo] Node %s will be passed to the libc call", tmp_node);
 	}
 
+libc_call:
 	ret = tsocks_libc_getaddrinfo(tmp_node, service, hints, res);
 	if (ret) {
 		goto error;
