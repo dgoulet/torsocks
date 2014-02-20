@@ -65,6 +65,15 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 		goto error;
 	}
 
+	/*
+	 * Trying to connect to ANY address will evidently not work for Tor thus we
+	 * deny the call.
+	 */
+	if (utils_is_addr_any(addr)) {
+		errno = EINVAL;
+		goto error;
+	}
+
 	DBG("[connect] Socket family %s and type %d",
 			addr->sa_family == AF_INET ? "AF_INET" : "AF_INET6", sock_type);
 

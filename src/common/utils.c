@@ -306,3 +306,33 @@ match:
 error:
 	return -EINVAL;
 }
+
+/*
+ * For a given sockaddr, check if the IP address is ANY which is 0.0.0.0 for
+ * IPv4 and :: for IPv6.
+ *
+ * Return 1 if it is else 0.
+ */
+ATTR_HIDDEN
+int utils_is_addr_any(const struct sockaddr *sa)
+{
+	int ret;
+
+	assert(sa);
+
+	if (sa->sa_family == AF_INET) {
+		const struct sockaddr_in *sin = (const struct sockaddr_in *) sa;
+		ret = (sin->sin_addr.s_addr == TSOCKS_ANY);
+	} else if (sa->sa_family == AF_INET6) {
+		const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *) sa;
+		const uint8_t addr[] = TSOCKS_ANY6;
+		ret = !memcmp(sin6->sin6_addr.s6_addr, addr,
+				sizeof(sin6->sin6_addr.s6_addr));
+	} else {
+		ret = 0;
+		goto end;
+	}
+
+end:
+	return ret;
+}

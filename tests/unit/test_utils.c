@@ -24,7 +24,7 @@
 
 #include <tap/tap.h>
 
-#define NUM_TESTS 26
+#define NUM_TESTS 30
 
 static void test_is_address_ipv4(void)
 {
@@ -178,6 +178,41 @@ static void test_utils_tokenize_ignore_comments(void)
 	ok(nb_token == 0, "Returns 0 tokens for comment");
 }
 
+static void test_is_addr_any(void)
+{
+	int ret;
+	struct sockaddr_in sin;
+	struct sockaddr_in6 sin6;
+
+	sin.sin_family = AF_INET;
+	sin.sin_port = htons(42);
+	inet_pton(sin.sin_family, "0.0.0.0", &sin.sin_addr);
+
+	ret = utils_is_addr_any((const struct sockaddr *) &sin);
+	ok(ret == 1, "This address is 0.0.0.0");
+
+	sin.sin_family = AF_INET;
+	sin.sin_port = htons(42);
+	inet_pton(sin.sin_family, "1.0.0.0", &sin.sin_addr);
+
+	ret = utils_is_addr_any((const struct sockaddr *) &sin);
+	ok(ret == 0, "This address is NOT 0.0.0.0");
+
+	sin6.sin6_family = AF_INET6;
+	sin6.sin6_port = htons(42);
+	inet_pton(sin6.sin6_family, "::", &sin6.sin6_addr);
+
+	ret = utils_is_addr_any((const struct sockaddr *) &sin6);
+	ok(ret == 1, "This address is ::");
+
+	sin6.sin6_family = AF_INET6;
+	sin6.sin6_port = htons(42);
+	inet_pton(sin6.sin6_family, "fe80::1", &sin6.sin6_addr);
+
+	ret = utils_is_addr_any((const struct sockaddr *) &sin6);
+	ok(ret == 0, "This address is NOT ::");
+}
+
 int main(int argc, char **argv)
 {
 	/* Libtap call for the number of tests planned. */
@@ -188,6 +223,7 @@ int main(int argc, char **argv)
 	test_localhost_resolve();
 	test_sockaddr_is_localhost();
 	test_utils_tokenize_ignore_comments();
+	test_is_addr_any();
 
 	return exit_status();
 }
