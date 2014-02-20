@@ -177,6 +177,14 @@ struct hostent **result, int *h_errnop
 	int sockfd, struct sockaddr *addr, socklen_t *addrlen
 #define LIBC_ACCEPT_ARGS sockfd, addr, addrlen
 
+/* bind(2) */
+#define LIBC_BIND_NAME bind
+#define LIBC_BIND_NAME_STR XSTR(LIBC_BIND_NAME)
+#define LIBC_BIND_RET_TYPE int
+#define LIBC_BIND_SIG \
+	int sockfd, const struct sockaddr *addr, socklen_t addrlen
+#define LIBC_BIND_ARGS sockfd, addr, addrlen
+
 #else
 #error "OS not supported."
 #endif /* __GLIBC__ , __FreeBSD__, __darwin__, __NetBSD__ */
@@ -348,6 +356,11 @@ extern TSOCKS_LIBC_DECL(accept4, LIBC_ACCEPT4_RET_TYPE, LIBC_ACCEPT4_SIG)
 #define LIBC_ACCEPT4_DECL LIBC_ACCEPT4_RET_TYPE \
 		LIBC_ACCEPT4_NAME(LIBC_ACCEPT4_SIG)
 #endif
+
+/* bind(2) */
+extern TSOCKS_LIBC_DECL(bind, LIBC_BIND_RET_TYPE, LIBC_BIND_SIG)
+#define LIBC_BIND_DECL LIBC_BIND_RET_TYPE \
+		LIBC_BIND_NAME(LIBC_BIND_SIG)
 
 /*
  * Those are actions to do during the lookup process of libc symbols. For
