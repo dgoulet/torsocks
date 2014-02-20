@@ -19,12 +19,12 @@
 
 #include "torsocks.h"
 
-TSOCKS_LIBC_DECL(bind, LIBC_BIND_RET_TYPE, LIBC_BIND_SIG)
+TSOCKS_LIBC_DECL(listen, LIBC_LISTEN_RET_TYPE, LIBC_LISTEN_SIG)
 
 /*
- * Torsocks call for bind(2).
+ * Torsocks call for listen(2).
  */
-LIBC_BIND_RET_TYPE tsocks_bind(LIBC_BIND_SIG)
+LIBC_LISTEN_RET_TYPE tsocks_listen(LIBC_LISTEN_SIG)
 {
 	DBG("[accept] Syscall denied since inbound connection are not allowed.");
 
@@ -38,9 +38,9 @@ LIBC_BIND_RET_TYPE tsocks_bind(LIBC_BIND_SIG)
 }
 
 /*
- * Libc hijacked symbol bind(2).
+ * Libc hijacked symbol listen(2).
  */
-LIBC_BIND_DECL
+LIBC_LISTEN_DECL
 {
-	return tsocks_bind(LIBC_BIND_ARGS);
+	return tsocks_listen(LIBC_LISTEN_ARGS);
 }
