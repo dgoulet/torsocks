@@ -152,6 +152,10 @@ static int set_tor_address(const char *addr, struct configuration *config)
 		config->conf_file.tor_domain = CONNECTION_DOMAIN_INET6;
 	}
 	config->conf_file.tor_address = strdup(addr);
+	if (!config->conf_file.tor_address) {
+		ret = -ENOMEM;
+		goto error;
+	}
 
 	DBG("Config file setting tor address to %s", addr);
 	ret = 0;
