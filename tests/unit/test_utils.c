@@ -24,7 +24,7 @@
 
 #include <tap/tap.h>
 
-#define NUM_TESTS 30
+#define NUM_TESTS 31
 
 static void test_is_address_ipv4(void)
 {
@@ -154,6 +154,14 @@ static void test_utils_tokenize_ignore_comments(void)
 	char *tokens[DEFAULT_MAX_CONF_TOKEN];
 
 	diag("Utils tokenize line test");
+
+	helper_reset_tokens(tokens);
+	strcpy(line, "a\tb");
+	nb_token = utils_tokenize_ignore_comments(line, sizeof(tokens), tokens);
+	ok(nb_token == 2 &&
+		(0 == strcmp(tokens[0], "a")) &&
+		(0 == strcmp(tokens[1], "b")),
+		"Returns 2 tokens");
 
 	helper_reset_tokens(tokens);
 	strcpy(line, "foo bar");
