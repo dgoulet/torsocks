@@ -211,7 +211,7 @@ struct connection *connection_create(int fd, const struct sockaddr *dest)
 	}
 
 	conn->fd = fd;
-	conn->refcount.count = 1;
+	connection_get_ref(conn);
 
 	return conn;
 
