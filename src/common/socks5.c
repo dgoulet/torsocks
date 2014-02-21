@@ -32,7 +32,7 @@
  *
  * Return the number of bytes received or a negative errno error.
  */
-static ssize_t recv_data(int fd, void *buf, size_t len)
+static ssize_t recv_data_impl(int fd, void *buf, size_t len)
 {
 	ssize_t ret, read_len, read_left, index;
 
@@ -71,12 +71,17 @@ error:
 }
 
 /*
+ * Initialize recv_data function pointer.
+ */
+static ssize_t (*recv_data)(int, void *, size_t) = recv_data_impl;
+
+/*
  * Send data to a given file descriptor using send(2). This handles partial
  * send and EINTR.
  *
  * Return the number of bytes sent or a negative errno error.
  */
-static ssize_t send_data(int fd, const void *buf, size_t len)
+static ssize_t send_data_impl(int fd, const void *buf, size_t len)
 {
 	ssize_t ret, sent_len, sent_left, index;
 
@@ -113,6 +118,11 @@ static ssize_t send_data(int fd, const void *buf, size_t len)
 error:
 	return ret;
 }
+
+/*
+ * Initialize send_data function pointer.
+ */
+static ssize_t (*send_data)(int, const void *, size_t) = send_data_impl;
 
 /*
  * Connect to socks5 server address from the global configuration.
@@ -360,7 +370,7 @@ int socks5_recv_connect_reply(struct connection *conn)
 	size_t recv_len;
 
 	assert(conn);
-	assert(conn >= 0);
+	assert(conn->fd >= 0);
 
 	/* Beginning of the payload we are receiving. */
 	recv_len = sizeof(msg);
@@ -706,4 +716,28 @@ int socks5_recv_resolve_ptr_reply(struct connection *conn, char **_hostname)
 error:
 	free(hostname);
 	return ret;
+}
+
+/*
+ * Initialize the function pointers send_data and recv_data. Passing in a NULL
+ * value will reset them to the original implementations.
+ *
+ * Note that where send_data and recv_data are defined they are initialized to
+ * the default implementations.
+ */
+ATTR_HIDDEN
+void socks5_init(ssize_t (*new_send_data)(int, const void *, size_t),
+		ssize_t (*new_recv_data)(int, void *, size_t))
+{
+	if (NULL == new_send_data) {
+		send_data = send_data_impl;
+	} else {
+		send_data = new_send_data;
+	}
+
+	if (NULL == new_recv_data) {
+		recv_data = recv_data_impl;
+	} else {
+		recv_data = new_recv_data;
+	}
 }

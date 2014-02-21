@@ -135,4 +135,7 @@ int socks5_recv_resolve_reply(struct connection *conn, void *addr,
 int socks5_recv_resolve_ptr_reply(struct connection *conn, char **_hostname);
 int socks5_send_resolve_ptr_request(struct connection *conn, const void *ip, int af);
 
+void socks5_init(ssize_t (*new_send_data)(int, const void *, size_t),
+		ssize_t (*new_recv_data)(int, void *, size_t));
+
 #endif /* TORSOCKS_SOCKS_H */
