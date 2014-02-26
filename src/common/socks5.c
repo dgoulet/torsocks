@@ -135,6 +135,11 @@ int socks5_connect(struct connection *conn)
 	 * remote IPv6, we have to connect to the Tor daemon in v6.
 	 */
 	switch (conn->dest_addr.domain) {
+	case CONNECTION_DOMAIN_NAME:
+		/*
+		 * For a domain name such as an onion address, use the default IPv4 to
+		 * connect to the Tor SOCKS port.
+		 */
 	case CONNECTION_DOMAIN_INET:
 		socks5_addr = (struct sockaddr *) &tsocks_config.socks5_addr.u.sin;
 		len = sizeof(tsocks_config.socks5_addr.u.sin);
