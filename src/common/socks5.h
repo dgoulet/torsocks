@@ -32,7 +32,11 @@
  * METHOD" [00] is supported and should be used.
  */
 #define SOCKS5_NO_AUTH_METHOD	0x00
+#define SOCKS5_USER_PASS_METHOD 0x02
 #define SOCKS5_NO_ACCPT_METHOD	0xFF
+
+/* SOCKS5 rfc1929 username and password authentication. */
+#define SOCKS5_USER_PASS_VER    0x01
 
 /* Request command. */
 #define SOCKS5_CMD_CONNECT		0x01
@@ -54,6 +58,10 @@
 #define SOCKS5_REPLY_TTL_EXP	0x06
 #define SOCKS5_REPLY_CMD_NOTSUP	0x07
 #define SOCKS5_REPLY_ADR_NOTSUP	0x08
+
+/* As described in rfc1929. */
+#define SOCKS5_USERNAME_LEN     255
+#define SOCKS5_PASSWORD_LEN     255
 
 /* Request data structure for the method. */
 struct socks5_method_req {
@@ -118,11 +126,22 @@ struct socks5_reply {
 	uint8_t atyp;
 };
 
+/* Username/password reply message. */
+struct socks5_user_pass_reply {
+	uint8_t ver;
+	uint8_t status;
+};
+
 int socks5_connect(struct connection *conn);
 
 /* Method messaging. */
-int socks5_send_method(struct connection *conn);
+int socks5_send_method(struct connection *conn, uint8_t type);
 int socks5_recv_method(struct connection *conn);
+
+/* Username/Password request. */
+int socks5_send_user_pass_request(struct connection *conn,
+		const char *user, const char *pass);
+int socks5_recv_user_pass_reply(struct connection *conn);
 
 /* Connect request. */
 int socks5_send_connect_request(struct connection *conn);

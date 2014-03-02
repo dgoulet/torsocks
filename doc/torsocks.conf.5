@@ -59,6 +59,18 @@ course, you should pick a block of addresses which you aren't going to ever
 need to actually connect to. This is similar to the MapAddress feature of the
 main tor daemon. (default: 127.42.42.0/24)
 
+.TP
+.I SOCKS5Username
+Username to use for SOCKS5 authentication method that makes the connections to
+Tor to use a different circuit from other existing streams. If set, the
+SOCKS5Password must be specified also. (Default: none).
+
+.TP
+.I SOCKS5Password
+Password to use for SOCKS5 authentication method that makes the connections to
+Tor to use a different circuit from other existing streams. If set, the
+SOCKS5Username must be specified also. (Default: none).
+
 .SH EXAMPLE
   $ export TORSOCKS_CONF_FILE=$PWD/torsocks.conf
   $ torsocks ssh account@sshserver.com

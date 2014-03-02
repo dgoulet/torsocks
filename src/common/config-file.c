@@ -35,6 +35,76 @@
 static const char *conf_toraddr_str = "TorAddress";
 static const char *conf_torport_str = "TorPort";
 static const char *conf_onion_str = "OnionAddrRange";
+static const char *conf_socks5_user_str = "SOCKS5Username";
+static const char *conf_socks5_pass_str = "SOCKS5Password";
+
+/*
+ * Once this value reaches 2, it means both user and password for a SOCKS5
+ * connection has been set thus use them./
+ */
+static unsigned int both_socks5_pass_user_set;
+
+/*
+ * Set the SOCKS5 username to the given configuration.
+ *
+ * Return 0 on success else a negative value.
+ */
+int conf_file_set_socks5_user(const char *username,
+		struct configuration *config)
+{
+	int ret;
+
+	assert(username);
+	assert(config);
+
+	if (strlen(username) > sizeof(config->conf_file.socks5_username)) {
+		ERR("[config] Invalid %s value for %s", username,
+				conf_socks5_user_str);
+		ret = -EINVAL;
+		goto error;
+	}
+
+	strncpy(config->conf_file.socks5_username, username, strlen(username));
+	if (++both_socks5_pass_user_set == 2) {
+		config->socks5_use_auth = 1;
+	}
+	DBG("[config] %s set to %s", conf_socks5_user_str, username);
+	return 0;
+
+error:
+	return ret;
+}
+
+/*
+ * Set the SOCKS5 password to the given configuration.
+ *
+ * Return 0 on success else a negative value.
+ */
+int conf_file_set_socks5_pass(const char *password,
+		struct configuration *config)
+{
+	int ret;
+
+	assert(password);
+	assert(config);
+
+	if (strlen(password) > sizeof(config->conf_file.socks5_password)) {
+		ERR("[config] Invalid %s value for %s", password,
+				conf_socks5_pass_str);
+		ret = -EINVAL;
+		goto error;
+	}
+
+	strncpy(config->conf_file.socks5_password, password, strlen(password));
+	if (++both_socks5_pass_user_set == 2) {
+		config->socks5_use_auth = 1;
+	}
+	DBG("[config] %s set to %s", conf_socks5_pass_str, password);
+	return 0;
+
+error:
+	return ret;
+}
 
 /*
  * Set the onion pool address range in the configuration object using the value
@@ -200,6 +270,16 @@ static int parse_config_line(const char *line, struct configuration *config)
 		}
 	} else if (!strcmp(tokens[0], conf_onion_str)) {
 		ret = set_onion_info(tokens[1], config);
+		if (ret < 0) {
+			goto error;
+		}
+	} else if (!strcmp(tokens[0], conf_socks5_user_str)) {
+		ret = conf_file_set_socks5_user(tokens[1], config);
+		if (ret < 0) {
+			goto error;
+		}
+	} else if (!strcmp(tokens[0], conf_socks5_pass_str)) {
+		ret = conf_file_set_socks5_pass(tokens[1], config);
 		if (ret < 0) {
 			goto error;
 		}

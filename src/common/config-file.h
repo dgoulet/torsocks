@@ -23,6 +23,7 @@
 #include <netinet/in.h>
 
 #include "connection.h"
+#include "socks5.h"
 
 /*
  * Represent the values in a configuration file (torsocks.conf). Basically,
@@ -42,6 +43,13 @@ struct config_file {
 	 */
 	in_addr_t onion_base;
 	uint8_t onion_mask;
+
+	/*
+	 * Username and password for Tor stream isolation for the SOCKS5 connection
+	 * method.
+	 */
+	char socks5_username[SOCKS5_USERNAME_LEN];
+	char socks5_password[SOCKS5_PASSWORD_LEN];
 };
 
 /*
@@ -57,9 +65,20 @@ struct configuration {
 	 * Socks5 address so basically where to connect to Tor.
 	 */
 	struct connection_addr socks5_addr;
+
+	/*
+	 * Indicate if we should use SOCKS5 authentication. If this value is set,
+	 * both the username and password in the configuration file MUST be
+	 * initialized to something of len > 0.
+	 */
+	unsigned int socks5_use_auth:1;
 };
 
 int config_file_read(const char *filename, struct configuration *config);
 void config_file_destroy(struct config_file *conf);
+int conf_file_set_socks5_pass(const char *password,
+		struct configuration *config);
+int conf_file_set_socks5_user(const char *username,
+		struct configuration *config);
 
 #endif /* CONFIG_FILE_H */

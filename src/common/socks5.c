@@ -43,7 +43,7 @@ static ssize_t recv_data(int fd, void *buf, size_t len)
 	index = 0;
 	do {
 		read_len = recv(fd, buf + index, read_left, 0);
-		if (read_len < 0) {
+		if (read_len <= 0) {
 			ret = -errno;
 			if (errno == EINTR) {
 				/* Try again after interruption. */
@@ -54,6 +54,10 @@ static ssize_t recv_data(int fd, void *buf, size_t len)
 					ret = index;
 				}
 				continue;
+			} else if (read_len == 0) {
+				/* Orderly shutdown from Tor daemon. Stop. */
+				ret = -1;
+				goto error;
 			} else {
 				PERROR("recv socks5 data");
 				goto error;
@@ -181,7 +185,7 @@ error:
  * Return 0 on success or else a negative errno value.
  */
 ATTR_HIDDEN
-int socks5_send_method(struct connection *conn)
+int socks5_send_method(struct connection *conn, uint8_t type)
 {
 	int ret = 0;
 	ssize_t ret_send;
@@ -192,7 +196,7 @@ int socks5_send_method(struct connection *conn)
 
 	msg.ver = SOCKS5_VERSION;
 	msg.nmethods = 0x01;
-	msg.methods = SOCKS5_NO_AUTH_METHOD;
+	msg.methods = type;
 
 	DBG("Socks5 sending method ver: %d, nmethods 0x%02x, methods 0x%02x",
 			msg.ver, msg.nmethods, msg.methods);
@@ -240,6 +244,102 @@ int socks5_recv_method(struct connection *conn)
 	ret = 0;
 
 error:
+	return ret;
+}
+
+/*
+ * Send a username/password request to the given connection connected to the
+ * SOCKS5 Tor port.
+ *
+ * Return 0 on success else a negative errno value.
+ */
+ATTR_HIDDEN
+int socks5_send_user_pass_request(struct connection *conn,
+		const char *user, const char *pass)
+{
+	int ret;
+	size_t data_len, user_len, pass_len;
+	ssize_t ret_send;
+	/*
+	 * As stated in rfc1929, 3 bytes for ver, ulen, plen, the maximum len for
+	 * the username and the password.
+	 */
+	unsigned char buffer[(3 * sizeof(uint8_t)) +
+		(SOCKS5_USERNAME_LEN + SOCKS5_PASSWORD_LEN)];
+
+	assert(conn);
+	assert(conn->fd >= 0);
+	assert(user);
+	assert(pass);
+
+	user_len = strlen(user);
+	pass_len = strlen(pass);
+	/* Extra protection. */
+	if (user_len > SOCKS5_USERNAME_LEN ||
+			pass_len > SOCKS5_PASSWORD_LEN) {
+		ret = -EINVAL;
+		goto error;
+	}
+
+	/*
+	 * Ok so we have to setup the SOCKS5 payload since the strings are of
+	 * variable len.
+	 */
+	buffer[0] = SOCKS5_USER_PASS_VER;
+	buffer[1] = user_len;
+	data_len = 2;
+	memcpy(buffer + data_len, user, user_len);
+	data_len += user_len;
+	memcpy(buffer + data_len, &pass_len, 1);
+	data_len += 1;
+	memcpy(buffer + data_len, pass, pass_len);
+	data_len += pass_len;
+
+	ret_send = send_data(conn->fd, buffer, data_len);
+	if (ret_send < 0) {
+		ret = ret_send;
+		goto error;
+	}
+	/* Data was sent successfully. */
+	ret = 0;
+
+	DBG("Socks5 username %s and password %s sent successfully", user, pass);
+
+error:
+	return ret;
+}
+
+/*
+ * Receive username/password reply for the given connection connected to the
+ * SOCKS5 Tor port.
+ *
+ * Return 0 on success else a negative errno value.
+ */
+ATTR_HIDDEN
+int socks5_recv_user_pass_reply(struct connection *conn)
+{
+	int ret;
+	ssize_t ret_recv;
+	struct socks5_user_pass_reply msg;
+
+	assert(conn);
+	assert(conn->fd >= 0);
+
+	ret_recv = recv_data(conn->fd, &msg, sizeof(msg));
+	if (ret_recv < 0) {
+		ret = ret_recv;
+		goto error;
+	}
+
+	if (msg.status != SOCKS5_REPLY_SUCCESS) {
+		ret = -EINVAL;
+		goto error;
+	}
+	/* All good */
+	ret = 0;
+
+error:
+	DBG("Socks5 username/password auth status %d", msg.status);
 	return ret;
 }
 

@@ -66,6 +66,45 @@ static void clean_exit(int status)
 }
 
 /*
+ * Read SOCKS5 username and password environment variable and if found set them
+ * in the configuration. If we are setuid, return gracefully.
+ */
+static void read_user_pass_env(void)
+{
+	int ret;
+	const char *username, *password;
+
+	if (is_suid) {
+		goto end;
+	}
+
+	username = getenv(DEFAULT_SOCKS5_USER_ENV);
+	password = getenv(DEFAULT_SOCKS5_PASS_ENV);
+	if (!username && !password) {
+		goto end;
+	}
+
+	ret = conf_file_set_socks5_user(username, &tsocks_config);
+	if (ret < 0) {
+		goto error;
+	}
+
+	ret = conf_file_set_socks5_pass(password, &tsocks_config);
+	if (ret < 0) {
+		goto error;
+	}
+
+end:
+	return;
+error:
+	/*
+	 * Error while setting user/pass variable. Stop everything so the user can
+	 * be notified and fix the issue.
+	 */
+	clean_exit(EXIT_FAILURE);
+}
+
+/*
  * Initialize torsocks configuration from a given conf file or the default one.
  */
 static void init_config(void)
@@ -119,6 +158,9 @@ static void init_config(void)
 		 */
 		clean_exit(EXIT_FAILURE);
 	}
+
+	/* Handle SOCKS5 user/pass env. variables. */
+	read_user_pass_env();
 }
 
 /*
@@ -261,7 +303,8 @@ static void __attribute__((destructor)) tsocks_exit(void)
  *
  * Return 0 on success else a negative value.
  */
-static int setup_tor_connection(struct connection *conn)
+static int setup_tor_connection(struct connection *conn,
+		uint8_t socks5_method)
 {
 	int ret;
 
@@ -274,7 +317,7 @@ static int setup_tor_connection(struct connection *conn)
 		goto error;
 	}
 
-	ret = socks5_send_method(conn);
+	ret = socks5_send_method(conn, socks5_method);
 	if (ret < 0) {
 		goto error;
 	}
@@ -330,7 +373,8 @@ error:
 /*
  * Initiate a SOCK5 connection to the Tor network using the given connection.
  * The socks5 API will use the torsocks configuration object to find the tor
- * daemon.
+ * daemon. If a username/password has been set use that method for the SOCKS5
+ * connection.
  *
  * Return 0 on success or else a negative value being the errno value that
  * needs to be sent back.
@@ -338,14 +382,37 @@ error:
 int tsocks_connect_to_tor(struct connection *conn)
 {
 	int ret;
+	uint8_t socks5_method;
 
 	assert(conn);
 
 	DBG("Connecting to the Tor network on fd %d", conn->fd);
 
-	ret = setup_tor_connection(conn);
+	/* Is this configuration is set to use SOCKS5 authentication. */
+	if (tsocks_config.socks5_use_auth) {
+		socks5_method = SOCKS5_USER_PASS_METHOD;
+	} else {
+		socks5_method = SOCKS5_NO_AUTH_METHOD;
+	}
+
+	ret = setup_tor_connection(conn, socks5_method);
 	if (ret < 0) {
 		goto error;
+	}
+
+	/* For the user/pass method, send the request before connect. */
+	if (socks5_method == SOCKS5_USER_PASS_METHOD) {
+		ret = socks5_send_user_pass_request(conn,
+				tsocks_config.conf_file.socks5_username,
+				tsocks_config.conf_file.socks5_password);
+		if (ret < 0) {
+			goto error;
+		}
+
+		ret = socks5_recv_user_pass_reply(conn);
+		if (ret < 0) {
+			goto error;
+		}
 	}
 
 	ret = socks5_send_connect_request(conn);
@@ -422,7 +489,7 @@ int tsocks_tor_resolve(int af, const char *hostname, void *ip_addr)
 		goto error;
 	}
 
-	ret = setup_tor_connection(&conn);
+	ret = setup_tor_connection(&conn, SOCKS5_NO_AUTH_METHOD);
 	if (ret < 0) {
 		goto end_close;
 	}
@@ -470,7 +537,7 @@ int tsocks_tor_resolve_ptr(const char *addr, char **ip, int af)
 	}
 	conn.dest_addr.domain = CONNECTION_DOMAIN_INET;
 
-	ret = setup_tor_connection(&conn);
+	ret = setup_tor_connection(&conn, SOCKS5_NO_AUTH_METHOD);
 	if (ret < 0) {
 		goto end_close;
 	}
