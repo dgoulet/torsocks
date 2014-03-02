@@ -35,6 +35,7 @@
 static const char *conf_toraddr_str = "TorAddress";
 static const char *conf_torport_str = "TorPort";
 static const char *conf_onion_str = "OnionAddrRange";
+static const char *conf_allow_localhost_str = "AllowLocalhost";
 
 /*
  * Set the onion pool address range in the configuration object using the value
@@ -203,6 +204,8 @@ static int parse_config_line(const char *line, struct configuration *config)
 		if (ret < 0) {
 			goto error;
 		}
+	} else if (!strcmp(tokens[0], conf_allow_localhost_str)) {
+		config->allow_localhost = atoi(tokens[1]);
 	} else {
 		WARN("Config file contains unknown value: %s", line);
 	}

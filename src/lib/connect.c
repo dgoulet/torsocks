@@ -121,6 +121,9 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 		 * .onion cookie address that is by default in the loopback network.
 		 */
 		if (utils_sockaddr_is_localhost(addr)) {
+			if (tsocks_config.allow_localhost) {
+				goto libc_connect;
+			}
 			WARN("[connect] Connection to a local address are denied since it "
 					"might be a TCP DNS query to a local DNS server. "
 					"Rejecting it for safety reasons.");

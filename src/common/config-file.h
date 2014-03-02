@@ -57,6 +57,8 @@ struct configuration {
 	 * Socks5 address so basically where to connect to Tor.
 	 */
 	struct connection_addr socks5_addr;
+
+	unsigned int allow_localhost:1;
 };
 
 int config_file_read(const char *filename, struct configuration *config);
