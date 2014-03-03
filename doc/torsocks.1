@@ -1,4 +1,4 @@
-.TH "TORSOCKS" "1" "August 24th, 2013" "" ""
+.TH "TORSOCKS" "1" "March 3rd, 2014" "" ""
 
 .SH NAME
 torsocks \(em Shell wrapper to simplify the use of the torsocks(8) library to
@@ -28,16 +28,32 @@ For further information on configuration, see
 .SH OPTIONS
 
 .TP
-.BR "\-h, \-\-help, \-?"
+.BR "\-h, \-\-help"
 Show summary of possible options and commands.
 .TP
 .BR "\-\-shell"
 Create a new shell with LD_PRELOAD including \fBtorsocks(8)\fP.
 .TP
+.BR "\-\-version"
+Show version.
+.TP
+.BR "\-u, \-\-user"
+Set username for the SOCKS5 authentication. Use for circuit isolation in Tor.
+Note that you MUST have a password set either by the command line, environment
+variable or configuration file (torsocks.conf(5).
+.TP
+.BR "\-p, \-\-pass"
+Set password for the SOCKS5 authentication. Use for circuit isolation in Tor.
+Note that you MUST have a username set either by the command line, environment
+variable or configuration file (torsocks.conf(5)).
+.TP
+.BR "\-d, \-\-debug"
+Activate the debug mode. Output will be written on stderr.
+.TP
 .BR "on | off"
 This option adds or removes \fBtorsocks(8)\fP from the LD_PRELOAD environment
 variable for the current shell. If you want to use this option, you HAVE to
-source torsocks from yours.
+source torsocks from your shell.
 .br
 
 .nf
@@ -76,5 +92,5 @@ irc.oftc.net (OFTC) in #tor and #tor-dev.
 
 .SH AUTHOR
 torsocks was originally written by Robert Hogan and has been rewritten by David
-Goulet <dgoulet@ev0ke.net> in 2013.
+Goulet <dgoulet@torproject.org> in 2013.
 .PP
