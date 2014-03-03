@@ -84,14 +84,23 @@ static void read_user_pass_env(void)
 		goto end;
 	}
 
-	ret = conf_file_set_socks5_user(username, &tsocks_config);
-	if (ret < 0) {
-		goto error;
+	/*
+	 * Only set the values if they were provided. It's possible that a user
+	 * wants to only set one of the values through an env. variable and the
+	 * other through the configuration file.
+	 */
+	if (username) {
+		ret = conf_file_set_socks5_user(username, &tsocks_config);
+		if (ret < 0) {
+			goto error;
+		}
 	}
 
-	ret = conf_file_set_socks5_pass(password, &tsocks_config);
-	if (ret < 0) {
-		goto error;
+	if (password) {
+		ret = conf_file_set_socks5_pass(password, &tsocks_config);
+		if (ret < 0) {
+			goto error;
+		}
 	}
 
 end:
