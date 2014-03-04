@@ -42,17 +42,17 @@ ignored.
 The following directives are used in the torsocks configuration file:
 
 .TP
-.I TorAddress
+.I TorAddress ip_addr
 The IP address of the Tor SOCKS server (e.g "server = 10.1.4.253"). Only one
 server may be specified. Currently, torsocks does NOT support hostname.
 (default: 127.0.0.1)
 
 .TP
-.I TorPort
+.I TorPort port
 The port on which the Tor SOCKS server receives requests. (default: 9050)
 
 .TP
-.I OnionAddrRange
+.I OnionAddrRange subnet/mask
 Tor hidden sites do not have real IP addresses. This specifies what range of IP
 addresses will be handed to the application as "cookies" for .onion names.  Of
 course, you should pick a block of addresses which you aren't going to ever
@@ -60,13 +60,13 @@ need to actually connect to. This is similar to the MapAddress feature of the
 main tor daemon. (default: 127.42.42.0/24)
 
 .TP
-.I SOCKS5Username
+.I SOCKS5Username username
 Username to use for SOCKS5 authentication method that makes the connections to
 Tor to use a different circuit from other existing streams. If set, the
 SOCKS5Password must be specified also. (Default: none).
 
 .TP
-.I SOCKS5Password
+.I SOCKS5Password password
 Password to use for SOCKS5 authentication method that makes the connections to
 Tor to use a different circuit from other existing streams. If set, the
 SOCKS5Username must be specified also. (Default: none).
