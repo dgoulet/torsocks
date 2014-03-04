@@ -1,3 +1,69 @@
+2014-03-03 torsocks 2.0.0-rc4
+	* Extras: add bash and zsh completion file
+	* Fix: move functions in file and set hidden attribute
+	* Update torsocks.1 man page with new options and some fixes
+	* Add -u/-p/-d to torsocks script
+	* Fix: check SOCKS5 user/pass before setting them in config
+	* Test: add socks5 tests
+	* Fix: assert conn->fd typo
+	* Add SOCKS5 username/password authentication
+	* Fix: handle conn. type domain name for socks5 connect
+	* Fix: check strdup return value in config-file.c
+	* Fix: make tsock_tor_resolve support IPv6
+	* Fix: overload listen and not bind
+	* Fix: remove the use of IPv4 sockaddr in connect
+	* Tests: add one for utils_tokenize_ignore_comments
+	* Fix: use unsigned char for socks5 ABI
+	* Fix: use connection_get_ref on creation
+	* Fix: use strtok_r reentrant instead of strtok
+	* Fix: check is_suid flag before each getenv()
+	* Deny libc function bind()
+	* Deny libc function accept()/accept4()
+	* Fix: handle hints being NULL in getaddrinfo
+	* Fix: handle socket creation with multiple types
+	* Fix: better document connection registry mutex
+	* Fix: check strdup return value
+	* Fix: deny connection to ANY address
+	* Fix: remove all variables with double underscore
+	* Fix: change socks5_send_ptr_request to use address type
+	* Fix: IPv6 typo in socks5_send_resolve_ptr_request
+	* Fix: assert conn->fd typo
+	* Fix: build status markdown
+	* Fix: return right value with localhost resolve
+	* Fix: fd leak on tor resolve error
+	* Fix: use libc close() when resolving through Tor
+	* Fix: socks5 connect use connection domain and correct len
+	* Fix: bad reference in getaddrinfo() using inet_pton
+	* Test: add unit test for sockaddr_is_localhost
+	* Fix: remove gethostent() usage
+	* Add localhost resolve utils function
+	* Fix: README typos
+	* Fix: bad libc detection on system with libcap.so
+	* Add portable is localhost function
+	* Tests: add travis build status image to README
+	* Fix: quote torsocks script shell arguments
+	* Add --version to torsocks.in
+	* Add hardening compile and linker flags
+	* Fix: cleanup configure.ac and add missing headers/functions
+	* Fix: typo in exit.c comment
+	* Fix: add a library cleanup flag
+	* Fix: overload _exit and _Exit to cleanup library
+	* Fix: lookup libc name and pass it to dlopen()
+	* Fix: bad include and duplicate syscall values
+	* Fix: change non TCP socket warning to debug
+	* Fix: check if address is local after onion lookup
+	* Fix: put utils_is_ipv4_local static inline
+	* Fix: set loopback check in host byte order
+	* Fix: reject IPv6 socket creation
+	* Fix: fix localhost resolution address
+	* Fix: add missing errno to handle non-blocking connect()
+	* Revert "Fix: explicitly remove src.old from tarball"
+	* Add __syscall support for *BSD systems
+	* Add NetBSD support
+	* Fix: install documentation in doc directory
+	* Fix: explicitly remove src.old from tarball
+	* Fix: typo in README
+
 2013-11-03 torsocks 2.0.0-rc3
 	* Fix: add fixtures directory to EXTRA_DIST
 	* Fix: add fixtures.h to makefile.am as EXTRA_DIST
