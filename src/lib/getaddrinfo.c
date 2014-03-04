@@ -44,8 +44,13 @@ LIBC_GETADDRINFO_RET_TYPE tsocks_getaddrinfo(LIBC_GETADDRINFO_SIG)
 	DBG("[getaddrinfo] Requesting %s hostname", node);
 
 	if (!node) {
-		ret = EAI_NONAME;
-		goto error;
+		/*
+		 * As stated in the man page, if node is NULL, the libc call will
+		 * return a valid socket address but NO external DNS resolution is
+		 * possible since there is no host name to resolve.
+		 */
+		tmp_node = node;
+		goto libc_call;
 	}
 
 	/*
