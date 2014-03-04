@@ -17,6 +17,8 @@
 
 #include <assert.h>
 
+#include <common/utils.h>
+
 #include "torsocks.h"
 
 TSOCKS_LIBC_DECL(accept, LIBC_ACCEPT_RET_TYPE, LIBC_ACCEPT_SIG)
@@ -26,14 +28,44 @@ TSOCKS_LIBC_DECL(accept, LIBC_ACCEPT_RET_TYPE, LIBC_ACCEPT_SIG)
  */
 LIBC_ACCEPT_RET_TYPE tsocks_accept(LIBC_ACCEPT_SIG)
 {
-	DBG("[accept] Syscall denied since inbound connection are not allowed.");
+	int ret;
+
+	if (tsocks_config.allow_inbound) {
+		/* Allowed by the user so directly go to the libc. */
+		goto libc_call;
+	}
+
+	if (!addr) {
+		errno = EFAULT;
+		goto error;
+	}
 
 	/*
-	 * Accept is completely denied here since this means that the application
-	 * can accept inbound connections that are obviously NOT handled by the Tor
-	 * network thus reject this call.
+	 * accept() on a Unix socket is allowed else we are going to try to match
+	 * it on INET localhost socket.
 	 */
-	errno = EPERM;
+	if (addr->sa_family == AF_UNIX) {
+		goto libc_call;
+	}
+
+	/* Inbound localhost connections are allowed. */
+	ret = utils_sockaddr_is_localhost(addr);
+	if (!ret) {
+
+		/*
+		 * Accept is completely denied here since this means that the
+		 * application can accept inbound connections on non localhost that are
+		 * obviously NOT handled by the Tor network thus reject this call.
+		 */
+		DBG("[accept] Non localhost inbound connection are not allowed.");
+		errno = EPERM;
+		goto error;
+	}
+
+libc_call:
+	return tsocks_libc_accept(LIBC_ACCEPT_ARGS);
+
+error:
 	return -1;
 }
 
@@ -42,6 +74,11 @@ LIBC_ACCEPT_RET_TYPE tsocks_accept(LIBC_ACCEPT_SIG)
  */
 LIBC_ACCEPT_DECL
 {
+	if (!tsocks_libc_accept) {
+		tsocks_libc_accept = tsocks_find_libc_symbol(
+				LIBC_ACCEPT_NAME_STR, TSOCKS_SYM_EXIT_NOT_FOUND);
+	}
+
 	return tsocks_accept(LIBC_ACCEPT_ARGS);
 }
 
@@ -54,14 +91,44 @@ TSOCKS_LIBC_DECL(accept4, LIBC_ACCEPT4_RET_TYPE, LIBC_ACCEPT4_SIG)
  */
 LIBC_ACCEPT4_RET_TYPE tsocks_accept4(LIBC_ACCEPT4_SIG)
 {
-	DBG("[accept] Syscall denied since inbound connection are not allowed.");
+	int ret;
+
+	if (tsocks_config.allow_inbound) {
+		/* Allowed by the user so directly go to the libc. */
+		goto libc_call;
+	}
+
+	if (!addr) {
+		errno = EFAULT;
+		goto error;
+	}
 
 	/*
-	 * Accept is completely denied here since this means that the application
-	 * can accept inbound connections that are obviously NOT handled by the Tor
-	 * network thus reject this call.
+	 * accept4() on a Unix socket is allowed else we are going to try to match
+	 * it on INET localhost socket.
 	 */
-	errno = EPERM;
+	if (addr->sa_family == AF_UNIX) {
+		goto libc_call;
+	}
+
+	/* Inbound localhost connections are allowed. */
+	ret = utils_sockaddr_is_localhost(addr);
+	if (!ret) {
+
+		/*
+		 * Accept is completely denied here since this means that the
+		 * application can accept inbound connections on non localhost that are
+		 * obviously NOT handled by the Tor network thus reject this call.
+		 */
+		DBG("[accept4] Non localhost inbound connection are not allowed.");
+		errno = EPERM;
+		goto error;
+	}
+
+libc_call:
+	return tsocks_libc_accept4(LIBC_ACCEPT4_ARGS);
+
+error:
 	return -1;
 }
 
@@ -70,6 +137,11 @@ LIBC_ACCEPT4_RET_TYPE tsocks_accept4(LIBC_ACCEPT4_SIG)
  */
 LIBC_ACCEPT4_DECL
 {
+	if (!tsocks_libc_accept4) {
+		tsocks_libc_accept4 = tsocks_find_libc_symbol(
+				LIBC_ACCEPT4_NAME_STR, TSOCKS_SYM_EXIT_NOT_FOUND);
+	}
+
 	return tsocks_accept4(LIBC_ACCEPT4_ARGS);
 }
 #endif

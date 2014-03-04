@@ -69,13 +69,21 @@ static void clean_exit(int status)
  * Read SOCKS5 username and password environment variable and if found set them
  * in the configuration. If we are setuid, return gracefully.
  */
-static void read_user_pass_env(void)
+static void read_env(void)
 {
 	int ret;
-	const char *username, *password;
+	const char *username, *password, *allow_in;
 
 	if (is_suid) {
 		goto end;
+	}
+
+	allow_in = getenv(DEFAULT_ALLOW_INBOUND_ENV);
+	if (allow_in) {
+		ret = conf_file_set_allow_inbound(allow_in, &tsocks_config);
+		if (ret < 0) {
+			goto error;
+		}
 	}
 
 	username = getenv(DEFAULT_SOCKS5_USER_ENV);
@@ -168,8 +176,8 @@ static void init_config(void)
 		clean_exit(EXIT_FAILURE);
 	}
 
-	/* Handle SOCKS5 user/pass env. variables. */
-	read_user_pass_env();
+	/* Handle possible env. variables. */
+	read_env();
 }
 
 /*

@@ -37,6 +37,7 @@ static const char *conf_torport_str = "TorPort";
 static const char *conf_onion_str = "OnionAddrRange";
 static const char *conf_socks5_user_str = "SOCKS5Username";
 static const char *conf_socks5_pass_str = "SOCKS5Password";
+static const char *conf_allow_inbound_str = "AllowInbound";
 
 /*
  * Once this value reaches 2, it means both user and password for a SOCKS5
@@ -221,6 +222,11 @@ static int parse_config_line(const char *line, struct configuration *config)
 		if (ret < 0) {
 			goto error;
 		}
+	} else if (!strcmp(tokens[0], conf_allow_inbound_str)) {
+		ret = conf_file_set_allow_inbound(tokens[1], config);
+		if (ret < 0) {
+			goto error;
+		}
 	} else {
 		WARN("Config file contains unknown value: %s", line);
 	}
@@ -332,6 +338,34 @@ error:
 }
 
 /*
+ * Set the allow inbound option for the given config.
+ *
+ * Return 0 if option is off, 1 if on and negative value on error.
+ */
+ATTR_HIDDEN
+int conf_file_set_allow_inbound(const char *val, struct configuration *config)
+{
+	int ret;
+
+	assert(val);
+	assert(config);
+
+	ret = atoi(val);
+	if (ret == 0) {
+		config->allow_inbound = 0;
+		DBG("[config] Inbound connections disallowed.");
+	} else if (ret == 1) {
+		config->allow_inbound = 1;
+		DBG("[config] Inbound connections allowed.");
+	} else {
+		ERR("[config] Invalid %s value for %s", val, conf_allow_inbound_str);
+		ret = -EINVAL;
+	}
+
+	return ret;
+}
+
+/*
  * Read and populate the given config parsed data structure.
  *
  * Return 0 on success or else a negative value.
@@ -370,6 +404,8 @@ int config_file_read(const char *filename, struct configuration *config)
 			/* ENOMEM is probably the only case here. */
 			goto error;
 		}
+
+		config->allow_inbound = 0;
 		goto end;
 	}
 

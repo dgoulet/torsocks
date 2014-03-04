@@ -72,6 +72,12 @@ struct configuration {
 	 * initialized to something of len > 0.
 	 */
 	unsigned int socks5_use_auth:1;
+
+	/*
+	 * Allow inbound connections meaning listen() and accept() are permitted
+	 * for non localhost addresses.
+	 */
+	unsigned int allow_inbound:1;
 };
 
 int config_file_read(const char *filename, struct configuration *config);
@@ -80,5 +86,6 @@ int conf_file_set_socks5_pass(const char *password,
 		struct configuration *config);
 int conf_file_set_socks5_user(const char *username,
 		struct configuration *config);
+int conf_file_set_allow_inbound(const char *val, struct configuration *config);
 
 #endif /* CONFIG_FILE_H */

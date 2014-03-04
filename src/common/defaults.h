@@ -63,4 +63,7 @@
 #define DEFAULT_SOCKS5_USER_ENV     "TORSOCKS_USERNAME"
 #define DEFAULT_SOCKS5_PASS_ENV     "TORSOCKS_PASSWORD"
 
+/* Control if torsocks allows inbound connection or not. */
+#define DEFAULT_ALLOW_INBOUND_ENV   "TORSOCKS_ALLOW_INBOUND"
+
 #endif /* TORSOCKS_DEFAULTS_H */

@@ -17,6 +17,8 @@
 
 #include <assert.h>
 
+#include <common/utils.h>
+
 #include "torsocks.h"
 
 TSOCKS_LIBC_DECL(listen, LIBC_LISTEN_RET_TYPE, LIBC_LISTEN_SIG)
@@ -26,14 +28,49 @@ TSOCKS_LIBC_DECL(listen, LIBC_LISTEN_RET_TYPE, LIBC_LISTEN_SIG)
  */
 LIBC_LISTEN_RET_TYPE tsocks_listen(LIBC_LISTEN_SIG)
 {
-	DBG("[accept] Syscall denied since inbound connection are not allowed.");
+	int ret;
+	socklen_t addrlen;
+	struct sockaddr sa;
+
+	if (tsocks_config.allow_inbound) {
+		/* Allowed by the user so directly go to the libc. */
+		goto libc_call;
+	}
+
+	addrlen = sizeof(sa);
+
+	ret = getsockname(sockfd, &sa, &addrlen);
+	if (ret < 0) {
+		PERROR("[listen] getsockname");
+		goto error;
+	}
 
 	/*
-	 * Bind is completely denied here since this means that the application
-	 * can accept inbound connections that are obviously NOT handled by the Tor
-	 * network thus reject this call.
+	 * Listen () on a Unix socket is allowed else we are going to try to match
+	 * it on INET localhost socket.
 	 */
-	errno = EPERM;
+	if (sa.sa_family == AF_UNIX) {
+		goto libc_call;
+	}
+
+	/* Inbound localhost connections are allowed. */
+	ret = utils_sockaddr_is_localhost(&sa);
+	if (!ret) {
+		/*
+		 * Listen is completely denied here since this means that the
+		 * application can accept inbound connections on non localhost that are
+		 * obviously NOT handled by the Tor network thus reject this call.
+		 */
+		DBG("[listen] Non localhost inbound connection are not allowed.");
+		errno = EPERM;
+		goto error;
+	}
+
+libc_call:
+	DBG("[listen] Passing listen fd %d to libc", sockfd);
+	return tsocks_libc_listen(LIBC_LISTEN_ARGS);
+
+error:
 	return -1;
 }
 
@@ -42,5 +79,10 @@ LIBC_LISTEN_RET_TYPE tsocks_listen(LIBC_LISTEN_SIG)
  */
 LIBC_LISTEN_DECL
 {
+	if (!tsocks_libc_listen) {
+		tsocks_libc_listen = tsocks_find_libc_symbol(
+				LIBC_LISTEN_NAME_STR, TSOCKS_SYM_EXIT_NOT_FOUND);
+	}
+
 	return tsocks_listen(LIBC_LISTEN_ARGS);
 }
