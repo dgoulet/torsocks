@@ -74,6 +74,15 @@
 #define LIBC_CLOSE_SIG int fd
 #define LIBC_CLOSE_ARGS fd
 
+/* fclose(3) */
+#include <stdio.h>
+
+#define LIBC_FCLOSE_NAME fclose
+#define LIBC_FCLOSE_NAME_STR XSTR(LIBC_FCLOSE_NAME)
+#define LIBC_FCLOSE_RET_TYPE int
+#define LIBC_FCLOSE_SIG FILE *fp
+#define LIBC_FCLOSE_ARGS fp
+
 /* gethostbyname(3) - DEPRECATED in glibc. */
 #include <netdb.h>
 
@@ -296,6 +305,12 @@ extern TSOCKS_LIBC_DECL(close, LIBC_CLOSE_RET_TYPE, LIBC_CLOSE_SIG)
 TSOCKS_DECL(close, LIBC_CLOSE_RET_TYPE, LIBC_CLOSE_SIG)
 #define LIBC_CLOSE_DECL \
 		LIBC_CLOSE_RET_TYPE LIBC_CLOSE_NAME(LIBC_CLOSE_SIG)
+
+/* fclose(3) */
+extern TSOCKS_LIBC_DECL(fclose, LIBC_FCLOSE_RET_TYPE, LIBC_FCLOSE_SIG)
+TSOCKS_DECL(fclose, LIBC_FCLOSE_RET_TYPE, LIBC_FCLOSE_SIG)
+#define LIBC_FCLOSE_DECL \
+		LIBC_FCLOSE_RET_TYPE LIBC_FCLOSE_NAME(LIBC_FCLOSE_SIG)
 
 /* gethostbyname(3) */
 extern TSOCKS_LIBC_DECL(gethostbyname, LIBC_GETHOSTBYNAME_RET_TYPE,
