@@ -94,8 +94,8 @@ LIBC_GETHOSTBYNAME_RET_TYPE tsocks_gethostbyname(LIBC_GETHOSTBYNAME_SIG)
 	tsocks_he.h_addrtype = AF_INET;
 	tsocks_he.h_addr_list = tsocks_he_addr_list;
 
-	DBG("Hostname %s resolved to %s", name,
-			inet_ntoa(*((struct in_addr *) &ip)));
+	DBG("[gethostbyname] Hostname %s resolved to %u.%u.%u.%u", name,
+			ip & 0XFF, (ip >> 8) & 0XFF, (ip >> 16) & 0XFF, (ip >> 24) & 0xFF);
 
 	errno = 0;
 	return &tsocks_he;
@@ -368,8 +368,8 @@ LIBC_GETHOSTBYNAME_R_RET_TYPE tsocks_gethostbyname_r(LIBC_GETHOSTBYNAME_R_SIG)
 	he->h_length = sizeof(in_addr_t);
 	he->h_addrtype = AF_INET;
 
-	DBG("[gethostbyname_r] Hostname %s resolved to %s", name,
-			inet_ntoa(*((struct in_addr *) &ip)));
+	DBG("[gethostbyname_r] Hostname %s resolved to %u.%u.%u.%u", name,
+			ip & 0XFF, (ip >> 8) & 0XFF, (ip >> 16) & 0XFF, (ip >> 24) & 0xFF);
 
 error:
 	return ret;
