@@ -42,6 +42,8 @@ LIBC_ACCEPT_RET_TYPE tsocks_accept(LIBC_ACCEPT_SIG)
 		goto error;
 	}
 
+	sa_len = sizeof(sa);
+
 	ret = getsockname(sockfd, &sa, &sa_len);
 	if (ret < 0) {
 		PERROR("[accept] getsockname");
@@ -112,6 +114,8 @@ LIBC_ACCEPT4_RET_TYPE tsocks_accept4(LIBC_ACCEPT4_SIG)
 		errno = EFAULT;
 		goto error;
 	}
+
+	sa_len = sizeof(sa);
 
 	ret = getsockname(sockfd, &sa, &sa_len);
 	if (ret < 0) {
