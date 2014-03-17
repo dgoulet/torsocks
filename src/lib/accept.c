@@ -29,6 +29,8 @@ TSOCKS_LIBC_DECL(accept, LIBC_ACCEPT_RET_TYPE, LIBC_ACCEPT_SIG)
 LIBC_ACCEPT_RET_TYPE tsocks_accept(LIBC_ACCEPT_SIG)
 {
 	int ret;
+	socklen_t sa_len;
+	struct sockaddr sa;
 
 	if (tsocks_config.allow_inbound) {
 		/* Allowed by the user so directly go to the libc. */
@@ -40,16 +42,22 @@ LIBC_ACCEPT_RET_TYPE tsocks_accept(LIBC_ACCEPT_SIG)
 		goto error;
 	}
 
+	ret = getsockname(sockfd, &sa, &sa_len);
+	if (ret < 0) {
+		PERROR("[accept] getsockname");
+		goto error;
+	}
+
 	/*
 	 * accept() on a Unix socket is allowed else we are going to try to match
 	 * it on INET localhost socket.
 	 */
-	if (addr->sa_family == AF_UNIX) {
+	if (sa.sa_family == AF_UNIX) {
 		goto libc_call;
 	}
 
 	/* Inbound localhost connections are allowed. */
-	ret = utils_sockaddr_is_localhost(addr);
+	ret = utils_sockaddr_is_localhost(&sa);
 	if (!ret) {
 
 		/*
@@ -92,6 +100,8 @@ TSOCKS_LIBC_DECL(accept4, LIBC_ACCEPT4_RET_TYPE, LIBC_ACCEPT4_SIG)
 LIBC_ACCEPT4_RET_TYPE tsocks_accept4(LIBC_ACCEPT4_SIG)
 {
 	int ret;
+	socklen_t sa_len;
+	struct sockaddr sa;
 
 	if (tsocks_config.allow_inbound) {
 		/* Allowed by the user so directly go to the libc. */
@@ -103,16 +113,22 @@ LIBC_ACCEPT4_RET_TYPE tsocks_accept4(LIBC_ACCEPT4_SIG)
 		goto error;
 	}
 
+	ret = getsockname(sockfd, &sa, &sa_len);
+	if (ret < 0) {
+		PERROR("[accept4] getsockname");
+		goto error;
+	}
+
 	/*
 	 * accept4() on a Unix socket is allowed else we are going to try to match
 	 * it on INET localhost socket.
 	 */
-	if (addr->sa_family == AF_UNIX) {
+	if (sa.sa_family == AF_UNIX) {
 		goto libc_call;
 	}
 
 	/* Inbound localhost connections are allowed. */
-	ret = utils_sockaddr_is_localhost(addr);
+	ret = utils_sockaddr_is_localhost(&sa);
 	if (!ret) {
 
 		/*
