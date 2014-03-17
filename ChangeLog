@@ -1,3 +1,7 @@
+2014-03-17 torsocks 2.0.0-rc6
+	* Fix: set addr len for getsockname in accept
+	* Fix: use socket fd and NOT sockaddr in accept
+
 2014-03-17 torsocks 2.0.0-rc5
 	* Fix: strict aliasing in library
 	* Add fclose() support
