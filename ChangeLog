@@ -1,3 +1,10 @@
+2014-03-17 torsocks 2.0.0-rc5
+	* Fix: strict aliasing in library
+	* Add fclose() support
+	* Fix: add torsocks.conf option type
+	* Add option to allow inbound connections
+	* Fix: handle NULL node in getaddrinfo
+
 2014-03-03 torsocks 2.0.0-rc4
 	* Extras: add bash and zsh completion file
 	* Fix: move functions in file and set hidden attribute
