@@ -122,7 +122,7 @@ LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int number, va_list args)
 		ret = handle_close(args);
 		break;
 	case TSOCKS_NR_MMAP:
-#if (defined(__NetBSD__) || defined(__FreeBSD__)) && defined(__x86_64)
+#if (defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__)) && defined(__x86_64)
 		/*
 		 * On an 64 bit *BSD system, __syscall(2) should be used for mmap().
 		 * This is NOT suppose to happen but for protection we deny that call.
@@ -151,7 +151,7 @@ LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int number, va_list args)
 		 * own memory using mmap() called by syscall(). Same for munmap().
 		 */
 		ret = handle_mmap(args);
-#endif /* __NetBSD__, __FreeBSD__, __x86_64 */
+#endif /* __NetBSD__, __FreeBSD__, __FreeBSD_kernel__, __x86_64 */
 		break;
 	case TSOCKS_NR_MUNMAP:
 		ret = handle_munmap(args);
