@@ -101,8 +101,8 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 #define TSOCKS_CLASSA_NET   0xff000000
 #define TSOCKS_LOOPBACK_NET 0x7f000000
 
-/* Loopback address in network byte order. */
-#define TSOCKS_LOOPBACK     0x0100007f
+/* Loopback addresses. */
+#define TSOCKS_LOOPBACK     0x7f000001
 #define TSOCKS_LOOPBACK6    { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 }
 #define TSOCKS_ANY          ((unsigned long int) 0x00000000)
 #define TSOCKS_ANY6         { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }

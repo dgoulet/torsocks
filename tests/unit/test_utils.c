@@ -64,7 +64,7 @@ static void test_is_address_ipv6(void)
 static void test_localhost_resolve(void)
 {
 	int ret = 0;
-	in_addr_t ipv4, loopback = TSOCKS_LOOPBACK;
+	in_addr_t ipv4, loopback = htonl(TSOCKS_LOOPBACK);
 	struct in6_addr ipv6;
 	const uint8_t loopback6[] = TSOCKS_LOOPBACK6;
 
@@ -117,7 +117,7 @@ static void test_sockaddr_is_localhost(void)
 	diag("Utils sockaddr is localhost");
 
 	sin.sin_family = AF_INET;
-	sin.sin_addr.s_addr = TSOCKS_LOOPBACK;
+	sin.sin_addr.s_addr = htonl(TSOCKS_LOOPBACK);
 	ret = utils_sockaddr_is_localhost((const struct sockaddr *) &sin);
 	ok(ret == 1, "Loopback matches localhost");
 

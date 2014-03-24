@@ -277,7 +277,7 @@ int utils_localhost_resolve(const char *name, int af, void *buf, size_t len)
 	assert(buf);
 
 	if (af == AF_INET) {
-		const in_addr_t addr = TSOCKS_LOOPBACK;
+		const in_addr_t addr = htonl(TSOCKS_LOOPBACK);
 
 		entry = match_name(name, localhost_names_v4);
 		if (entry) {
