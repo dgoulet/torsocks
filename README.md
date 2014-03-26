@@ -20,6 +20,7 @@ will force the application to quit and stop everything.
 Installation
 -----------------
 
+    $ ./autogen.sh
     $ ./configure
     $ make
     $ sudo make install
