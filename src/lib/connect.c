@@ -30,51 +30,101 @@
 TSOCKS_LIBC_DECL(connect, LIBC_CONNECT_RET_TYPE, LIBC_CONNECT_SIG)
 
 /*
- * Torsocks call for connect(2).
+ * Validate the given sock fd and address that we receive in the connect()
+ * call. Criteria are:
+ *
+ * 	-) Non INET/INET6 socket should return to the libc, LIBC.
+ *	-) Non stream socket can't be handled, DENY.
+ *	-) Connection to the any address won't work with Tor, DENY.
+ *	-) ALLOW.
+ *
+ * Return 0 if validation passes and socket handling should continue. Return 1
+ * if the socket can't be handle by Tor but is still valid thus the caller
+ * should send it directly to the libc connect function.
+ *
+ * On error or if validation fails, errno is set and -1 is returned. The caller
+ * should *return* right away an error.
  */
-LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
+static int validate_socket(int sockfd, const struct sockaddr *addr)
 {
 	int ret, sock_type;
 	socklen_t optlen;
-	struct connection *new_conn;
-	struct onion_entry *on_entry;
 
-	DBG("Connect catched on fd %d", sockfd);
+	if (!addr) {
+		/* Go directly to libc, connect() will handle a NULL value. */
+		goto libc_call;
+	}
+
+	/*
+	 * We can't handle a non inet socket thus directly go to the libc. This is
+	 * to allow AF_UNIX/_LOCAL socket to work with torsocks.
+	 */
+	if (addr->sa_family != AF_INET && addr->sa_family != AF_INET6) {
+		DBG("[conect] Connection is not IPv4/v6. Ignoring.");
+		/* Ask the call to use the libc connect. */
+		goto libc_call;
+	}
 
 	optlen = sizeof(sock_type);
 	ret = getsockopt(sockfd, SOL_SOCKET, SO_TYPE, &sock_type, &optlen);
 	if (ret < 0) {
-		/* Use the getsockopt() errno value. */
-		goto error;
-	}
-
-	/* We can't handle a non inet socket. */
-	if (addr->sa_family != AF_INET && addr->sa_family != AF_INET6) {
-		DBG("[conect] Connection is not IPv4/v6. Ignoring.");
-		goto libc_connect;
-	}
-
-	/*
-	 * Refuse non stream socket. There is a chance that this might be a DNS
-	 * request that we can't pass through Tor using raw UDP packet.
-	 */
-	if (!IS_SOCK_STREAM(sock_type)) {
-		WARN("[connect] UDP or ICMP stream can't be handled. Rejecting.");
+		DBG("[connect] Fail getsockopt() on sock %d", sockfd);
 		errno = EBADF;
-		goto error;
-	}
-
-	/*
-	 * Trying to connect to ANY address will evidently not work for Tor thus we
-	 * deny the call.
-	 */
-	if (utils_is_addr_any(addr)) {
-		errno = EINVAL;
 		goto error;
 	}
 
 	DBG("[connect] Socket family %s and type %d",
 			addr->sa_family == AF_INET ? "AF_INET" : "AF_INET6", sock_type);
+
+	/* Refuse non stream socket since Tor can't handle that. */
+	if (!IS_SOCK_STREAM(sock_type)) {
+		DBG("[connect] UDP or ICMP stream can't be handled. Rejecting.");
+		errno = EPERM;
+		goto error;
+	}
+
+	/*
+	 * Trying to connect to ANY address will evidently not work for Tor thus we
+	 * deny the call with an invalid argument error.
+	 */
+	if (utils_is_addr_any(addr)) {
+		errno = EPERM;
+		goto error;
+	}
+
+	return 0;
+
+libc_call:
+	return 1;
+error:
+	return -1;
+}
+
+/*
+ * Torsocks call for connect(2).
+ */
+LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
+{
+	int ret;
+	struct connection *new_conn;
+	struct onion_entry *on_entry;
+
+	DBG("Connect catched on fd %d", sockfd);
+
+	/*
+	 * Validate socket values in order to see if we can handle this connect
+	 * through Tor.
+	 */
+	ret = validate_socket(sockfd, addr);
+	if (ret == 1) {
+		/* Tor can't handle it so send it to the libc. */
+		goto libc_connect;
+	} else if (ret == -1) {
+		/* Validation failed. Stop right now. */
+		goto error;
+	}
+	/* Implicit else statement meaning we continue processing the connect. */
+	assert(!ret);
 
 	/*
 	 * Lock registry to get the connection reference if one. In this code path,
@@ -118,7 +168,8 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 	} else {
 		/*
 		 * Check if address is localhost. At this point, we are sure it's not a
-		 * .onion cookie address that is by default in the loopback network.
+		 * .onion cookie address that is by default in the loopback network
+		 * thus this check is done after the onion entry lookup.
 		 */
 		if (utils_sockaddr_is_localhost(addr)) {
 			WARN("[connect] Connection to a local address are denied since it "
