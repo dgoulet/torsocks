@@ -4,3 +4,4 @@
 ./unit/test_utils
 ./unit/test_config-file
 ./unit/test_socks5
+./unit/test_compat

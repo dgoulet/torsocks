@@ -32,23 +32,34 @@ LIBC_SOCKET_RET_TYPE tsocks_socket(LIBC_SOCKET_SIG)
 	DBG("[socket] Creating socket with domain %d, type %d and protocol %d",
 			domain, type, protocol);
 
-	if (type & SOCK_STREAM) {
+	if (IS_SOCK_STREAM(type)) {
+		/*
+		 * The socket family is not checked here since we accept local socket
+		 * (AF_UNIX) that can NOT do outbound traffic.
+		 */
 		goto end;
 	} else {
-		if (domain == AF_INET || domain == AF_INET6) {
-			/*
-			 * Print this message only in debug mode. Very often, applications
-			 * uses the libc to do DNS resolution which first tries with UDP
-			 * and then with TCP. It's not critical for the user to know that a
-			 * non TCP socket has been denied and since the libc has a fallback
-			 * that works, this message most of the time, simply polutes the
-			 * application's output which can cause issues with external
-			 * applications parsing the output.
-			 */
-			DBG("Non TCP inet socket denied. Tor network can't handle it.");
-			errno = EINVAL;
-			return -1;
+		/*
+		 * Non INET[6] socket can't be handle by tor else create the socket.
+		 * The connect function will deny anything that Tor can NOT handle.
+		 */
+		if (domain != AF_INET && domain != AF_INET6) {
+			goto end;
 		}
+
+		/*
+		 * Print this message only in debug mode. Very often, applications uses
+		 * the libc to do DNS resolution which first tries with UDP and then
+		 * with TCP. It's not critical for the user to know that a non TCP
+		 * socket has been denied and since the libc has a fallback that works,
+		 * this message most of the time, simply polutes the application's
+		 * output which can cause issues with external applications parsing the
+		 * output.
+		 */
+		DBG("IPv4/v6 non TCP socket denied. Tor network can't handle it.");
+		errno = EPERM;
+		return -1;
+
 	}
 
 end:

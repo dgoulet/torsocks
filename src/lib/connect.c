@@ -58,7 +58,7 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 	 * Refuse non stream socket. There is a chance that this might be a DNS
 	 * request that we can't pass through Tor using raw UDP packet.
 	 */
-	if (sock_type != SOCK_STREAM) {
+	if (!IS_SOCK_STREAM(sock_type)) {
 		WARN("[connect] UDP or ICMP stream can't be handled. Rejecting.");
 		errno = EBADF;
 		goto error;

@@ -11,7 +11,7 @@ LIBCOMMON=$(top_builddir)/src/common/libcommon.la
 
 LIBTORSOCKS=$(top_builddir)/src/lib/libtorsocks.la
 
-noinst_PROGRAMS = test_onion test_connection test_utils test_config-file test_socks5
+noinst_PROGRAMS = test_onion test_connection test_utils test_config-file test_socks5 test_compat
 
 EXTRA_DIST = fixtures
 
@@ -29,3 +29,6 @@ test_config_file_LDADD = $(LIBTAP) $(LIBCOMMON)
 
 test_socks5_SOURCES = test_socks5.c
 test_socks5_LDADD = $(LIBTAP) $(LIBCOMMON) $(LIBTORSOCKS)
+
+test_compat_SOURCES = test_compat.c
+test_compat_LDADD = $(LIBTAP) $(LIBCOMMON) $(LIBTORSOCKS)

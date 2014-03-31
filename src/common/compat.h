@@ -107,4 +107,16 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 #define TSOCKS_ANY          ((unsigned long int) 0x00000000)
 #define TSOCKS_ANY6         { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }
 
+/*
+ * Macro to tell if a given socket type is a SOCK_STREAM or not. The macro
+ * resolve to 1 if yes else 0.
+ */
+#if defined(__NetBSD__)
+#define IS_SOCK_STREAM(type) \
+	((type & ~(SOCK_NONBLOCK | SOCK_CLOEXEC | SOCK_NOSIGPIPE)) == SOCK_STREAM)
+#else /* __NetBSD__ */
+#define IS_SOCK_STREAM(type) \
+	((type & ~(SOCK_NONBLOCK | SOCK_CLOEXEC)) == SOCK_STREAM)
+#endif /* __NetBSD__ */
+
 #endif /* TORSOCKS_COMPAT_H */
