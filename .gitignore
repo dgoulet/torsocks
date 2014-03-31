@@ -43,6 +43,7 @@ doc/usewithtor.1
 
 src/bin/torsocks
 
+tests/test_connect
 tests/test_dns
 tests/test_socket
 tests/unit/test_onion

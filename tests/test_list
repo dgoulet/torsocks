@@ -1,3 +1,4 @@
+./test_connect
 ./test_dns
 ./test_socket
 ./unit/test_onion
