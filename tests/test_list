@@ -1,4 +1,5 @@
 ./test_dns
+./test_socket
 ./unit/test_onion
 ./unit/test_connection
 ./unit/test_utils

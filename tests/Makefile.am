@@ -6,10 +6,13 @@ LIBTAP=$(top_builddir)/tests/utils/tap/libtap.la
 
 LIBTORSOCKS=$(top_builddir)/src/lib/libtorsocks.la
 
-noinst_PROGRAMS = test_dns
+noinst_PROGRAMS = test_dns test_socket
 
 test_dns_SOURCES = test_dns.c
 test_dns_LDADD = $(LIBTAP) $(LIBTORSOCKS)
+
+test_socket_SOURCES = test_socket.c
+test_socket_LDADD = $(LIBTAP) $(LIBTORSOCKS)
 
 check-am:
 	./run.sh test_list
