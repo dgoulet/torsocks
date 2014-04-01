@@ -108,6 +108,19 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 #define TSOCKS_ANY6         { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }
 
 /*
+ * Both socket flags here are defined on some BSD and Linux but not on OS X so
+ * simply nullify them. Include socket.h so the constants are defined before we
+ * test them.
+ */
+#include <sys/socket.h>
+#ifndef SOCK_CLOEXEC
+#define SOCK_CLOEXEC 0
+#endif
+#ifndef SOCK_NONBLOCK
+#define SOCK_NONBLOCK 0
+#endif
+
+/*
  * Macro to tell if a given socket type is a SOCK_STREAM or not. The macro
  * resolve to 1 if yes else 0.
  */
