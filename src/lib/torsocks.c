@@ -192,7 +192,7 @@ static void init_libc_symbols(void)
 	libc_ptr = dlopen(LIBC_NAME, RTLD_LAZY);
 	if (!libc_ptr) {
 		ERR("Unable to dlopen() library " LIBC_NAME "(%s)", dlerror());
-		goto error;
+		goto error_dlopen;
 	}
 
 	dlerror();
@@ -217,6 +217,7 @@ error:
 	if (ret != 0) {
 		ERR("dlclose: %s", dlerror());
 	}
+error_dlopen:
 	clean_exit(EXIT_FAILURE);
 }
 
