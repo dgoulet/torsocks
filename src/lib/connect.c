@@ -105,7 +105,7 @@ error:
  */
 LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 {
-	int ret;
+	int ret, ret_errno;
 	struct connection *new_conn;
 	struct onion_entry *on_entry;
 
@@ -162,8 +162,8 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 		new_conn->dest_addr.hostname.port = utils_get_port_from_addr(addr);
 		new_conn->dest_addr.hostname.addr = strdup(on_entry->hostname);
 		if (!new_conn->dest_addr.hostname.addr) {
-			errno = ENOMEM;
-			goto error;
+			ret_errno = ENOMEM;
+			goto error_free;
 		}
 	} else {
 		/*
@@ -189,8 +189,8 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 	/* Connect the socket to the Tor network. */
 	ret = tsocks_connect_to_tor(new_conn);
 	if (ret < 0) {
-		errno = -ret;
-		goto error;
+		ret_errno = -ret;
+		goto error_free;
 	}
 
 	connection_registry_lock();
@@ -204,6 +204,14 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 
 libc_connect:
 	return tsocks_libc_connect(LIBC_CONNECT_ARGS);
+
+error_free:
+	/*
+	 * Put back reference of newly created connection. Will be freed if
+	 * refcount goes down to 0.
+	 */
+	connection_put_ref(new_conn);
+	errno = ret_errno;
 error:
 	/* At this point, errno MUST be set to a valid connect() error value. */
 	return -1;
