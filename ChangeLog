@@ -1,3 +1,17 @@
+2014-04-04 torsocks 2.0.0-rc7
+	* Fix: fix NULL dereference on error
+	* Fix: memory leak in connect error path
+	* Delete old source directory
+	* Fix: nullify constant that might be undefined
+	* Refactor the connect() code flow for clarity
+	* Tests: add connect() test
+	* Tests: add socket() test
+	* Fix: socketpair() denied for INET[6] socket
+	* Fix: socket() type check SOCK_STREAM
+	* Fix: add autogen.sh to installation procedures
+	* Fix: change TSOCKS_LOOPBACK bitness
+	* Fix: support kfreebsd for mmap()
+
 2014-03-17 torsocks 2.0.0-rc6
 	* Fix: set addr len for getsockname in accept
 	* Fix: use socket fd and NOT sockaddr in accept
