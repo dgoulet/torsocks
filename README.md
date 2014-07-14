@@ -17,10 +17,17 @@ instance, the connection is denied. If, for any reason, there is no way for
 torsocks to provide the Tor anonymity guarantee to your application, torsocks
 will force the application to quit and stop everything.
 
+Requirements
+-----------------
+
+    - autoconf
+	- automake
+	- libtool
+	- gcc
+
 Installation
 -----------------
 
-    $ ./autogen.sh
     $ ./configure
     $ make
     $ sudo make install
