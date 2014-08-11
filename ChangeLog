@@ -1,3 +1,8 @@
+2014-08-11 torsocks 2.0.0
+	* Fix: compilation issue on Debian kfreebsd-i386
+	* Fix: add LICENSE file to repository
+	* Fix: add compilation requirements to README.md
+
 2014-04-04 torsocks 2.0.0-rc7
 	* Fix: fix NULL dereference on error
 	* Fix: memory leak in connect error path
