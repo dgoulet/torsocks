@@ -68,7 +68,7 @@ static LIBC_CONNECT_RET_TYPE handle_connect(va_list args)
 	return tsocks_connect(sockfd, addr, addrlen);
 }
 
-#if (defined(__linux__) || defined(__darwin__))
+#if (defined(__linux__) || defined(__darwin__) || (defined(__FreeBSD_kernel__) && defined(__i386__)))
 /*
  * Handle mmap(2) syscall.
  */
