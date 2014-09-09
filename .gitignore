@@ -31,6 +31,7 @@ ltmain.sh
 missing
 stamp-h1
 tags
+cscope.*
 
 config/
 !config/ax_check_compile_flag.m4
