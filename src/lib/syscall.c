@@ -68,6 +68,22 @@ static LIBC_CONNECT_RET_TYPE handle_connect(va_list args)
 	return tsocks_connect(sockfd, addr, addrlen);
 }
 
+/*
+ * Handle accept(2) syscall to go through Tor.
+ */
+static LIBC_ACCEPT_RET_TYPE handle_accept(va_list args)
+{
+	int sockfd;
+	struct sockaddr *addr;
+	socklen_t addrlen;
+
+	sockfd = va_arg(args, __typeof__(sockfd));
+	addr = va_arg(args, __typeof__(addr));
+	addrlen = va_arg(args, __typeof__(addrlen));
+
+	return tsocks_accept(sockfd, addr, &addrlen);
+}
+
 #if (defined(__linux__) || defined(__darwin__) || (defined(__FreeBSD_kernel__) && defined(__i386__)))
 /*
  * Handle mmap(2) syscall.
@@ -155,6 +171,9 @@ LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int number, va_list args)
 		break;
 	case TSOCKS_NR_MUNMAP:
 		ret = handle_munmap(args);
+		break;
+	case TSOCKS_NR_ACCEPT:
+		ret = handle_accept(args);
 		break;
 	default:
 		/*
