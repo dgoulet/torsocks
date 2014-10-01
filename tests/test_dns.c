@@ -18,6 +18,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/socket.h>
 
 #include <lib/torsocks.h>
@@ -100,7 +101,7 @@ static void test_getaddrinfo(const struct test_host *host)
 {
 	int ret;
     struct addrinfo hints;
-    struct addrinfo *result;
+    struct addrinfo *result = NULL;
 
 	diag("getaddrinfo test");
 
@@ -128,6 +129,7 @@ static void test_getaddrinfo(const struct test_host *host)
 		fail("Resolving address %s with getaddrinfo", host->name);
 	}
 
+	free(result);
     return;
 }
 
