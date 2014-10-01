@@ -668,6 +668,7 @@ static void test_socks5_send_connect_request(void)
 
 	ok(ret == -EINVAL, "socks5 send connect request returns error for "
 		"unkown connection domain");
+	connection_destroy(conn_stub);
 }
 
 static void test_socks5_send_connect_request_failure(void)
