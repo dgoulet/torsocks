@@ -114,6 +114,7 @@ static void test_onion_init(struct onion_pool *pool)
 		pool->count == 0 &&
 		pool->next_entry_pos == 0,
 		"Valid onion pool of %s/%d", DEFAULT_ONION_ADDR_RANGE, mask);
+	onion_pool_destroy(pool);
 
 	/* Valid test. */
 	base = inet_addr("127.42.42.64");
@@ -127,6 +128,7 @@ static void test_onion_init(struct onion_pool *pool)
 		pool->count == 0 &&
 		pool->next_entry_pos == 0,
 		"Valid onion pool of 127.42.42.64/27");
+	onion_pool_destroy(pool);
 
 	/* Valid test. */
 	base = inet_addr("127.42.42.64");
@@ -140,6 +142,7 @@ static void test_onion_init(struct onion_pool *pool)
 		pool->count == 0 &&
 		pool->next_entry_pos == 0,
 		"Valid onion pool of 127.42.42.64/17");
+	onion_pool_destroy(pool);
 
 	/* Valid test with size less than default. */
 	base = inet_addr("127.42.42.0");
@@ -153,6 +156,7 @@ static void test_onion_init(struct onion_pool *pool)
 		pool->count == 0 &&
 		pool->next_entry_pos == 0,
 		"Valid onion pool of 127.42.42.0/32");
+	onion_pool_destroy(pool);
 
 	/* Invalid test. */
 	base = inet_addr("127.42.42.64");
@@ -160,8 +164,6 @@ static void test_onion_init(struct onion_pool *pool)
 	ret = onion_pool_init(pool, base, mask);
 	ok(ret == -EINVAL,
 		"Invalid onion pool of mask 42");
-
-	onion_pool_destroy(pool);
 }
 
 int main(int argc, char **argv)
