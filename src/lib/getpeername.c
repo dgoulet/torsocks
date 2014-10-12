@@ -39,15 +39,63 @@ LIBC_GETPEERNAME_RET_TYPE tsocks_getpeername(LIBC_GETPEERNAME_SIG)
 	connection_registry_lock();
 	conn = connection_find(sockfd);
 	if (!conn) {
-		errno = ENOTCONN;
+		connection_registry_unlock();
+		goto libc;
+	}
+
+	if (!addrlen || !addr) {
+		/* Bad address. */
+		errno = EFAULT;
 		ret = -1;
 		goto end;
 	}
 
+	/*
+	 * Extra check for addrlen since we are about to copy the connection
+	 * content into the given address.
+	 */
+	if (*addrlen > sizeof(struct sockaddr)) {
+		/* Ref to the manpage for the returned value here. */
+		errno = EINVAL;
+		ret = -1;
+		goto end;
+	}
+
+	/*
+	 * Copy connected destination address into the given addr with only the
+	 * given len so we don't overflow on purpose.
+	 */
+	switch (conn->dest_addr.domain) {
+	case CONNECTION_DOMAIN_NAME:
+		/*
+		 * This domain is only used with onion address which contains a
+		 * cookie address of domain INET. Use that since that's the address
+		 * that has been returned to the application.
+		 */
+	case CONNECTION_DOMAIN_INET:
+		memcpy(addr, (const struct sockaddr *) &conn->dest_addr.u.sin,
+				*addrlen);
+		break;
+	case CONNECTION_DOMAIN_INET6:
+		memcpy(addr, (const struct sockaddr *) &conn->dest_addr.u.sin6,
+				*addrlen);
+		break;
+	}
+
+	/* Success. */
 	errno = 0;
+	ret = 0;
+
 end:
 	connection_registry_unlock();
 	return ret;
+
+libc:
+	/*
+	 * This is clearly not a socket we are handling so it's safe to pass it to
+	 * the original libc call.
+	 */
+	return tsocks_libc_getpeername(LIBC_GETPEERNAME_ARGS);
 }
 
 /*
@@ -55,17 +103,9 @@ end:
  */
 LIBC_GETPEERNAME_DECL
 {
-	int ret;
-
 	if (!tsocks_libc_getpeername) {
 		tsocks_libc_getpeername = tsocks_find_libc_symbol(
 				LIBC_GETPEERNAME_NAME_STR, TSOCKS_SYM_EXIT_NOT_FOUND);
-	}
-
-	ret = tsocks_libc_getpeername(LIBC_GETPEERNAME_ARGS);
-	if (ret < 0) {
-		/* errno is populated by the previous call at this point. */
-		return ret;
 	}
 
 	return tsocks_getpeername(LIBC_GETPEERNAME_ARGS);

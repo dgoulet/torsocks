@@ -2,6 +2,7 @@
 ./test_dns
 ./test_fd_passing
 ./test_socket
+./test_getpeername
 ./unit/test_onion
 ./unit/test_connection
 ./unit/test_utils
