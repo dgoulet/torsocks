@@ -1,5 +1,6 @@
 ./test_connect
 ./test_dns
+./test_fd_passing
 ./test_socket
 ./unit/test_onion
 ./unit/test_connection

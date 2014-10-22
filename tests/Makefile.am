@@ -6,7 +6,7 @@ LIBTAP=$(top_builddir)/tests/utils/tap/libtap.la
 
 LIBTORSOCKS=$(top_builddir)/src/lib/libtorsocks.la
 
-noinst_PROGRAMS = test_dns test_socket test_connect
+noinst_PROGRAMS = test_dns test_socket test_connect test_fd_passing
 
 test_dns_SOURCES = test_dns.c
 test_dns_LDADD = $(LIBTAP) $(LIBTORSOCKS)
@@ -16,6 +16,9 @@ test_socket_LDADD = $(LIBTAP) $(LIBTORSOCKS)
 
 test_connect_SOURCES = test_connect.c
 test_connect_LDADD = $(LIBTAP) $(LIBTORSOCKS)
+
+test_fd_passing_SOURCES = test_fd_passing.c
+test_fd_passing_LDADD = $(LIBTAP) $(LIBTORSOCKS) -lpthread
 
 check-am:
 	./run.sh test_list

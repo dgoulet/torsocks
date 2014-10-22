@@ -47,6 +47,7 @@ src/bin/torsocks
 tests/test_connect
 tests/test_dns
 tests/test_socket
+tests/test_fd_passing
 tests/unit/test_onion
 tests/unit/test_connection
 tests/unit/test_utils
