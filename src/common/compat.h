@@ -75,6 +75,15 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 #ifndef __NR_accept
 #define __NR_accept -6
 #endif
+#ifndef __NR_getpeername
+#define __NR_getpeername -7
+#endif
+#ifndef __NR_listen
+#define __NR_listen -8
+#endif
+#ifndef __NR_recvmsg
+#define __NR_recvmsg -9
+#endif
 
 #define TSOCKS_NR_SOCKET    __NR_socket
 #define TSOCKS_NR_CONNECT   __NR_connect
@@ -82,6 +91,9 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 #define TSOCKS_NR_MMAP      __NR_mmap
 #define TSOCKS_NR_MUNMAP    __NR_munmap
 #define TSOCKS_NR_ACCEPT    __NR_accept
+#define TSOCKS_NR_GETPEERNAME __NR_getpeername
+#define TSOCKS_NR_LISTEN    __NR_listen
+#define TSOCKS_NR_RECVMSG   __NR_recvmsg
 
 #endif /* __linux__ */
 
@@ -100,6 +112,9 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 #define TSOCKS_NR_MMAP      SYS_mmap
 #define TSOCKS_NR_MUNMAP    SYS_munmap
 #define TSOCKS_NR_ACCEPT    SYS_accept
+#define TSOCKS_NR_GETPEERNAME SYS_getpeername
+#define TSOCKS_NR_LISTEN    SYS_listen
+#define TSOCKS_NR_RECVMSG   SYS_recvmsg
 
 #endif /* __FreeBSD__, __FreeBSD_kernel__, __darwin__, __NetBSD__ */
 

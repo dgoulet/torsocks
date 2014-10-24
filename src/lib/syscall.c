@@ -121,6 +121,50 @@ static LIBC_SYSCALL_RET_TYPE handle_munmap(va_list args)
 }
 
 /*
+ * Handle getpeername(2) syscall.
+ */
+static LIBC_GETPEERNAME_RET_TYPE handle_getpeername(va_list args)
+{
+	int sockfd;
+	struct sockaddr *addr;
+	socklen_t *addrlen;
+
+	sockfd = va_arg(args, __typeof__(sockfd));
+	addr = va_arg(args, __typeof__(addr));
+	addrlen = va_arg(args, __typeof__(addrlen));
+
+	return tsocks_getpeername(sockfd, addr, addrlen);
+}
+
+/*
+ * Handle listen(2) syscall.
+ */
+static LIBC_LISTEN_RET_TYPE handle_listen(va_list args)
+{
+	int sockfd, backlog;
+
+	sockfd = va_arg(args, __typeof__(sockfd));
+	backlog = va_arg(args, __typeof__(backlog));
+
+	return tsocks_listen(sockfd, backlog);
+}
+
+/*
+ * Handle recvmsg(2) syscall.
+ */
+static LIBC_RECVMSG_RET_TYPE handle_recvmsg(va_list args)
+{
+	int sockfd, flags;
+	struct msghdr *msg;
+
+	sockfd = va_arg(args, __typeof__(sockfd));
+	msg = va_arg(args, __typeof__(msg));
+	flags = va_arg(args, __typeof__(flags));
+
+	return tsocks_recvmsg(sockfd, msg, flags);
+}
+
+/*
  * Torsocks call for syscall(2)
  */
 LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int number, va_list args)
@@ -175,15 +219,18 @@ LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int number, va_list args)
 	case TSOCKS_NR_ACCEPT:
 		ret = handle_accept(args);
 		break;
+	case TSOCKS_NR_GETPEERNAME:
+		ret = handle_getpeername(args);
+		break;
+	case TSOCKS_NR_LISTEN:
+		ret = handle_listen(args);
+		break;
+	case TSOCKS_NR_RECVMSG:
+		ret = handle_recvmsg(args);
+		break;
 	default:
-		/*
-		 * Deny call since we have no idea if this call can leak or not data
-		 * off the Tor network.
-		 */
-		WARN("[syscall] Unsupported syscall number %ld. Denying the call",
-				number);
-		ret = -1;
-		errno = ENOSYS;
+		/* Safe to call the libc syscall function. */
+		ret = tsocks_libc_syscall(number, args);
 		break;
 	}
 
@@ -197,6 +244,11 @@ LIBC_SYSCALL_DECL
 {
 	LIBC_SYSCALL_RET_TYPE ret;
 	va_list args;
+
+	if (!tsocks_libc_syscall) {
+		tsocks_libc_syscall= tsocks_find_libc_symbol(
+				LIBC_SYSCALL_NAME_STR, TSOCKS_SYM_EXIT_NOT_FOUND);
+	}
 
 	va_start(args, number);
 	ret = tsocks_syscall(number, args);
