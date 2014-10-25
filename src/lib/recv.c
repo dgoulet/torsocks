@@ -60,23 +60,23 @@ static void close_fds(int *fds, size_t count)
  */
 LIBC_RECVMSG_RET_TYPE tsocks_recvmsg(LIBC_RECVMSG_SIG)
 {
-	int sock_domain;
-	socklen_t optlen;
+	socklen_t addrlen;
 	ssize_t ret = 0;
 	char dummy, recv_fd[CMSG_SPACE(SCM_MAX_FD)];
 	struct iovec iov[1];
 	struct cmsghdr *cmsg;
 	struct msghdr msg_hdr;
+	struct sockaddr addr;
 
 	/* Don't bother if the socket family is NOT Unix. */
-	optlen = sizeof(sock_domain);
-	ret = getsockopt(sockfd, SOL_SOCKET, SO_DOMAIN, &sock_domain, &optlen);
+	addrlen = sizeof(addr);
+	ret = getsockname(sockfd, &addr, &addrlen);
 	if (ret < 0) {
-		DBG("[recvmsg] Fail getsockopt() on sock %d", sockfd);
+		DBG("[recvmsg] Fail getsockname() on sock %d", sockfd);
 		errno = EBADF;
 		goto error;
 	}
-	if (sock_domain != AF_UNIX) {
+	if (addr.sa_family != AF_UNIX) {
 		goto libc;
 	}
 
