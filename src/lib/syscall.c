@@ -84,7 +84,7 @@ static LIBC_ACCEPT_RET_TYPE handle_accept(va_list args)
 	return tsocks_accept(sockfd, addr, &addrlen);
 }
 
-#if (defined(__linux__) || defined(__darwin__) || (defined(__FreeBSD_kernel__) && defined(__i386__)))
+#if (defined(__linux__) || defined(__darwin__) || (defined(__FreeBSD_kernel__) && defined(__i386__)) || defined(__NetBSD__))
 /*
  * Handle mmap(2) syscall.
  */
@@ -104,7 +104,7 @@ static LIBC_SYSCALL_RET_TYPE handle_mmap(va_list args)
 
 	return (LIBC_SYSCALL_RET_TYPE) mmap(addr, len, prot, flags, fd, offset);
 }
-#endif /* __linux__, __darwin__ */
+#endif /* __linux__, __darwin__, __FreeBSD_kernel__, __i386__, __NetBSD__ */
 
 /*
  * Handle munmap(2) syscall.
