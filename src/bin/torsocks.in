@@ -105,8 +105,11 @@ torify_app ()
 	elif [ -z $app_path ]; then
 		echo "ERROR: $1 cannot be found." >&2
 		exit 1
-	elif [ -u $app_path -o -g $app_path ]; then
-		echo "ERROR: $1 is set${2}id. torsocks will not work on a set${2}id executable." >&2
+	elif [ -u $app_path ]; then
+		echo "ERROR: $1 is setuid. torsocks will not work on a setuid executable." >&2
+		exit 1
+	elif [ -g $app_path ]; then
+		echo "ERROR: $1 is setgid. torsocks will not work on a setgid executable." >&2
 		exit 1
 	fi
 
