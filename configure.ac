@@ -144,24 +144,6 @@ AC_SUBST(TESTLDFLAGS)
 # Version information for libtorsocks
 TORSOCKSLDFLAGS="$LDFLAGS -version-info 1:0:0"
 
-# Check for the gcc hardening flags.
-AX_CHECK_COMPILE_FLAG([-fPIE],[CFLAGS="$CFLAGS -fPIE"],[],[])
-AX_CHECK_COMPILE_FLAG([-fwrapv],[CFLAGS="$CFLAGS -fwrapv"],[],[])
-AX_CHECK_COMPILE_FLAG([--param ssp-buffer-size=1],
-	[CFLAGS="$CFLAGS --param ssp-buffer-size=1"],[],[])
-AX_CHECK_COMPILE_FLAG([-fstack-protector-all],
-	[CFLAGS="$CFLAGS -fstack-protector-all"],[],[]
-)
-AX_CHECK_COMPILE_FLAG([-fno-strict-overflow],
-	[CFLAGS="$CFLAGS -fno-strict-overflow"],[],[]
-)
-
-dnl Add hardening linker flags
-AX_CHECK_LINK_FLAG([-pie],[LDFLAGS="$LDFLAGS -pie"],[],[])
-AX_CHECK_LINK_FLAG([-z relro],[LDFLAGS="$LDFLAGS -z relro"],[],[])
-AX_CHECK_LINK_FLAG([-z now],[LDFLAGS="$LDFLAGS -z now"],[],[])
-LDFLAGS="$LDFLAGS -D_FORTIFY_SOURCE=2"
-
 dnl Linker checks for Mac OSX, which uses DYLD_INSERT_LIBRARIES
 dnl instead of LD_PRELOAD
 case "$host_os" in
@@ -254,6 +236,34 @@ AC_ENABLE_STATIC
 
 DEFAULT_INCLUDES="-I\$(top_srcdir) -I\$(top_builddir) -I\$(top_builddir)/src -I\$(top_builddir)/include -include config.h"
 AC_SUBST(DEFAULT_INCLUDES)
+
+##############################################################################
+# 9. Test and add hardening flags
+##############################################################################
+
+# Check for the gcc hardening flags.
+AX_CHECK_COMPILE_FLAG([-fPIE],[CFLAGS="$CFLAGS -fPIE"],[],[])
+AX_CHECK_COMPILE_FLAG([-fwrapv],[CFLAGS="$CFLAGS -fwrapv"],[],[])
+AX_CHECK_COMPILE_FLAG([--param ssp-buffer-size=1],
+	[CFLAGS="$CFLAGS --param ssp-buffer-size=1"],[],[])
+AX_CHECK_COMPILE_FLAG([-fstack-protector-all],
+	[CFLAGS="$CFLAGS -fstack-protector-all"],[],[]
+)
+AX_CHECK_COMPILE_FLAG([-fno-strict-overflow],
+	[CFLAGS="$CFLAGS -fno-strict-overflow"],[],[]
+)
+
+dnl Add hardening linker flags
+AX_CHECK_LINK_FLAG([-pie],[LDFLAGS="$LDFLAGS -pie"],[],[])
+AX_CHECK_LINK_FLAG([-z relro],[LDFLAGS="$LDFLAGS -z relro"],[],[])
+AX_CHECK_LINK_FLAG([-z now],[LDFLAGS="$LDFLAGS -z now"],[],[])
+
+dnl Add glibc hardening
+CPPFLAGS="$CPPFLAGS -D_FORTIFY_SOURCE=2"
+
+##############################################################################
+# 10. Finish up
+##############################################################################
 
 AC_CONFIG_FILES([
 	Makefile
