@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2008 - Shaun Clowes <delius@progsoc.org> 
+ * Copyright (C) 2000-2008 - Shaun Clowes <delius@progsoc.org>
  * 				 2008-2011 - Robert Hogan <robert@roberthogan.net>
  * 				 	  2013 - David Goulet <dgoulet@ev0ke.net>
  *
@@ -170,6 +170,7 @@ struct hostent **result, int *h_errnop
 	int sockfd, struct sockaddr *addr, socklen_t *addrlen
 #define LIBC_GETPEERNAME_ARGS  sockfd, addr, addrlen
 
+/* recvmsg(2) */
 #define LIBC_RECVMSG_NAME recvmsg
 #define LIBC_RECVMSG_NAME_STR XSTR(LIBC_RECVMSG_NAME)
 #define LIBC_RECVMSG_RET_TYPE ssize_t
@@ -177,6 +178,16 @@ struct hostent **result, int *h_errnop
 	int sockfd, struct msghdr *msg, int flags
 #define LIBC_RECVMSG_ARGS \
 	sockfd, msg, flags
+
+/* sendto(2) */
+#define LIBC_SENDTO_NAME sendto
+#define LIBC_SENDTO_NAME_STR XSTR(LIBC_SENDTO_NAME)
+#define LIBC_SENDTO_RET_TYPE ssize_t
+#define LIBC_SENDTO_SIG \
+	int sockfd, const void *buf, size_t len, int flags,\
+	const struct sockaddr *dest_addr, socklen_t addrlen
+#define LIBC_SENDTO_ARGS \
+	sockfd, buf, len, flags, dest_addr, addrlen
 
 /* accept(2) */
 #define LIBC_ACCEPT_NAME accept
@@ -276,6 +287,12 @@ extern TSOCKS_LIBC_DECL(recvmsg, LIBC_RECVMSG_RET_TYPE, LIBC_RECVMSG_SIG)
 TSOCKS_DECL(recvmsg, LIBC_RECVMSG_RET_TYPE, LIBC_RECVMSG_SIG)
 #define LIBC_RECVMSG_DECL \
 		LIBC_RECVMSG_RET_TYPE LIBC_RECVMSG_NAME(LIBC_RECVMSG_SIG)
+
+/* sendto(2) */
+extern TSOCKS_LIBC_DECL(sendto, LIBC_SENDTO_RET_TYPE, LIBC_SENDTO_SIG)
+TSOCKS_DECL(sendto, LIBC_SENDTO_RET_TYPE, LIBC_SENDTO_SIG)
+#define LIBC_SENDTO_DECL \
+		LIBC_SENDTO_RET_TYPE LIBC_SENDTO_NAME(LIBC_SENDTO_SIG)
 
 /* socket(2) */
 extern TSOCKS_LIBC_DECL(socket, LIBC_SOCKET_RET_TYPE, LIBC_SOCKET_SIG)
