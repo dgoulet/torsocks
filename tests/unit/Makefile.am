@@ -32,3 +32,19 @@ test_socks5_LDADD = $(LIBTAP) $(LIBCOMMON) $(LIBTORSOCKS)
 
 test_compat_SOURCES = test_compat.c
 test_compat_LDADD = $(LIBTAP) $(LIBCOMMON) $(LIBTORSOCKS)
+
+all-local:
+	@if [ x"$(srcdir)" != x"$(builddir)" ]; then \
+		for script in $(EXTRA_DIST); do \
+			cp -rf $(srcdir)/$$script $(builddir); \
+		done; \
+	fi
+
+# Force remove here so make sure EXTRA_DIST does not contain something like
+# /usr. ;)
+clean-local:
+	@if [ x"$(srcdir)" != x"$(builddir)" ]; then \
+		for script in $(EXTRA_DIST); do \
+			rm -rf $(builddir)/$$script; \
+		done; \
+	fi
