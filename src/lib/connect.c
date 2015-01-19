@@ -172,6 +172,15 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 		 * thus this check is done after the onion entry lookup.
 		 */
 		if (utils_sockaddr_is_localhost(addr)) {
+			/*
+			 * Certain setups need to be able to reach localhost, despite
+			 * running torsocks. If they enabled the config option, allow such
+			 * connections.
+			 */
+			if (tsocks_config.allow_outbound_localhost) {
+				goto libc_connect;
+			}
+
 			WARN("[connect] Connection to a local address are denied since it "
 					"might be a TCP DNS query to a local DNS server. "
 					"Rejecting it for safety reasons.");

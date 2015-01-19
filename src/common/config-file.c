@@ -38,6 +38,7 @@ static const char *conf_onion_str = "OnionAddrRange";
 static const char *conf_socks5_user_str = "SOCKS5Username";
 static const char *conf_socks5_pass_str = "SOCKS5Password";
 static const char *conf_allow_inbound_str = "AllowInbound";
+static const char *conf_allow_outbound_localhost_str = "AllowOutboundLocalhost";
 
 /*
  * Once this value reaches 2, it means both user and password for a SOCKS5
@@ -227,6 +228,11 @@ static int parse_config_line(const char *line, struct configuration *config)
 		if (ret < 0) {
 			goto error;
 		}
+	} else if (!strcmp(tokens[0], conf_allow_outbound_localhost_str)) {
+		ret = conf_file_set_allow_outbound_localhost(tokens[1], config);
+		if (ret < 0) {
+			goto error;
+		}
 	} else {
 		WARN("Config file contains unknown value: %s", line);
 	}
@@ -359,6 +365,36 @@ int conf_file_set_allow_inbound(const char *val, struct configuration *config)
 		DBG("[config] Inbound connections allowed.");
 	} else {
 		ERR("[config] Invalid %s value for %s", val, conf_allow_inbound_str);
+		ret = -EINVAL;
+	}
+
+	return ret;
+}
+
+/*
+ * Set the allow outbound localhost option for the given config.
+ *
+ * Return 0 if option is off, 1 if on and negative value on error.
+ */
+ATTR_HIDDEN
+int conf_file_set_allow_outbound_localhost(const char *val,
+		struct configuration *config)
+{
+	int ret;
+
+	assert(val);
+	assert(config);
+
+	ret = atoi(val);
+	if (ret == 0) {
+		config->allow_outbound_localhost = 0;
+		DBG("[config] Outbound localhost connections disallowed.");
+	} else if (ret == 1) {
+		config->allow_outbound_localhost = 1;
+		DBG("[config] Outbound localhost connections allowed.");
+	} else {
+		ERR("[config] Invalid %s value for %s", val,
+				conf_allow_outbound_localhost_str);
 		ret = -EINVAL;
 	}
 

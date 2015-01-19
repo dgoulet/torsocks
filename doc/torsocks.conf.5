@@ -77,6 +77,12 @@ Allow inbound connections meaning that listen() and accept()/accept4() will be
 allowed for non localhost address so the applicaton can handle incoming
 connection. Note that Unix socket are allowed. (Default: 0)
 
+.TP
+.I AllowOutboundLocalhost 0|1
+Allow outbound connections to the loopback interface meaning that connect()
+will be allowed to connect to localhost addresses bypassing Tor.  This option
+should not be used by most users. (Default: 0)
+
 .SH EXAMPLE
   $ export TORSOCKS_CONF_FILE=$PWD/torsocks.conf
   $ torsocks ssh account@sshserver.com
