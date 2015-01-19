@@ -229,8 +229,14 @@ LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int number, va_list args)
 		ret = handle_recvmsg(args);
 		break;
 	default:
-		/* Safe to call the libc syscall function. */
-		ret = tsocks_libc_syscall(number, args);
+		/*
+		 * Because of the design of syscall(), we can't pass a va_list to it so
+		 * we are constraint to use a whitelist scheme and denying the rest.
+		 */
+		WARN("[syscall] Unsupported syscall number %ld. Denying the call",
+				number);
+		ret = -1;
+		errno = ENOSYS;
 		break;
 	}
 
@@ -297,8 +303,8 @@ LIBC___SYSCALL_RET_TYPE tsocks___syscall(quad_t number, va_list args)
 		break;
 	default:
 		/*
-		 * Deny call since we have no idea if this call can leak or not data
-		 * off the Tor network.
+		 * Because of the design of syscall(), we can't pass a va_list to it so
+		 * we are constraint to use a whitelist scheme and denying the rest.
 		 */
 		WARN("[syscall] Unsupported __syscall number %ld. Denying the call",
 				number);
