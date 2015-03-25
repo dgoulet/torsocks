@@ -397,7 +397,7 @@ error:
  * Return 0 on success or else a negative value being the errno value that
  * needs to be sent back.
  */
-int tsocks_connect_to_tor(struct connection *conn)
+int tsocks_connect_to_tor(struct connection *conn, const struct sockaddr *addr)
 {
 	int ret;
 	uint8_t socks5_method;
@@ -438,7 +438,7 @@ int tsocks_connect_to_tor(struct connection *conn)
 		goto error;
 	}
 
-	ret = socks5_recv_connect_reply(conn);
+	ret = socks5_recv_connect_reply(conn, addr);
 	if (ret < 0) {
 		goto error;
 	}
@@ -518,7 +518,7 @@ int tsocks_tor_resolve(int af, const char *hostname, void *ip_addr)
 	}
 
 	/* Force IPv4 resolution for now. */
-	ret = socks5_recv_resolve_reply(&conn, ip_addr, addr_len);
+	ret = socks5_recv_resolve_reply(&conn, hostname, ip_addr, addr_len);
 	if (ret < 0) {
 		goto end_close;
 	}
@@ -566,7 +566,7 @@ int tsocks_tor_resolve_ptr(const char *addr, char **ip, int af)
 	}
 
 	/* Force IPv4 resolution for now. */
-	ret = socks5_recv_resolve_ptr_reply(&conn, ip);
+	ret = socks5_recv_resolve_ptr_reply(&conn, addr, ip);
 	if (ret < 0) {
 		goto end_close;
 	}

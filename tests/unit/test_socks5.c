@@ -36,10 +36,11 @@ static struct socks5_request_domain req_name;
 static struct socks5_request_resolve req_resolve;
 static struct socks5_request_resolve_ptr req_resolve_ptr;
 
+static struct connection_addr c_addr;
+
 static struct connection *get_connection_stub(void)
 {
 	struct connection *conn = NULL;
-	struct connection_addr c_addr;
 
 	connection_addr_set(CONNECTION_DOMAIN_INET,
 			DEFAULT_TOR_ADDRESS,
@@ -695,7 +696,7 @@ static void test_socks5_recv_connect_reply_success(void)
 	conn_stub = get_connection_stub();
 	socks5_init(NULL, socks5_recv_connect_reply_ipv4_success_stub);
 
-	ret = socks5_recv_connect_reply(conn_stub);
+	ret = socks5_recv_connect_reply(conn_stub, (struct sockaddr *) &c_addr.u.sin);
 
 	ok(ret == 0, "socks5 reply success");
 
@@ -711,7 +712,7 @@ static void test_socks5_recv_connect_reply_fail(void)
 	conn_stub = get_connection_stub();
 	socks5_init(NULL, socks5_recv_connect_reply_ipv4_fail_stub);
 
-	ret = socks5_recv_connect_reply(conn_stub);
+	ret = socks5_recv_connect_reply(conn_stub, (struct sockaddr *) &c_addr.u.sin);
 
 	ok(ret == -ECONNREFUSED, "socks5 reply fail");
 
@@ -727,7 +728,7 @@ static void test_socks5_recv_connect_reply_deny_rule(void)
 	conn_stub = get_connection_stub();
 	socks5_init(NULL, socks5_recv_connect_reply_ipv4_deny_rule_stub);
 
-	ret = socks5_recv_connect_reply(conn_stub);
+	ret = socks5_recv_connect_reply(conn_stub, (struct sockaddr *) &c_addr.u.sin);
 
 	ok(ret == -ECONNABORTED, "socks5 reply deny rule");
 
@@ -743,7 +744,7 @@ static void test_socks5_recv_connect_reply_no_net(void)
 	conn_stub = get_connection_stub();
 	socks5_init(NULL, socks5_recv_connect_reply_ipv4_no_net_stub);
 
-	ret = socks5_recv_connect_reply(conn_stub);
+	ret = socks5_recv_connect_reply(conn_stub, (struct sockaddr *) &c_addr.u.sin);
 
 	ok(ret == -ENETUNREACH, "socks5 reply no net");
 
@@ -759,7 +760,7 @@ static void test_socks5_recv_connect_reply_no_host(void)
 	conn_stub = get_connection_stub();
 	socks5_init(NULL, socks5_recv_connect_reply_ipv4_no_host_stub);
 
-	ret = socks5_recv_connect_reply(conn_stub);
+	ret = socks5_recv_connect_reply(conn_stub, (struct sockaddr *) &c_addr.u.sin);
 
 	ok(ret == -EHOSTUNREACH, "socks5 reply no host");
 
@@ -775,7 +776,7 @@ static void test_socks5_recv_connect_reply_refused(void)
 	conn_stub = get_connection_stub();
 	socks5_init(NULL, socks5_recv_connect_reply_ipv4_refused_stub);
 
-	ret = socks5_recv_connect_reply(conn_stub);
+	ret = socks5_recv_connect_reply(conn_stub, (struct sockaddr *) &c_addr.u.sin);
 
 	ok(ret == -ECONNREFUSED, "socks5 reply refused");
 
@@ -791,7 +792,7 @@ static void test_socks5_recv_connect_reply_ttl_expired(void)
 	conn_stub = get_connection_stub();
 	socks5_init(NULL, socks5_recv_connect_reply_ipv4_ttl_expired_stub);
 
-	ret = socks5_recv_connect_reply(conn_stub);
+	ret = socks5_recv_connect_reply(conn_stub, (struct sockaddr *) &c_addr.u.sin);
 
 	ok(ret == -ETIMEDOUT, "socks5 reply TTL expired");
 
@@ -808,7 +809,7 @@ static void test_socks5_recv_connect_reply_cmd_not_supported(void)
 	socks5_init(NULL,
 			socks5_recv_connect_reply_ipv4_cmd_not_supported_stub);
 
-	ret = socks5_recv_connect_reply(conn_stub);
+	ret = socks5_recv_connect_reply(conn_stub, (struct sockaddr *) &c_addr.u.sin);
 
 	ok(ret == -ECONNREFUSED, "socks5 reply command not supported");
 
@@ -825,7 +826,7 @@ static void test_socks5_recv_connect_reply_addr_not_supported(void)
 	socks5_init(NULL,
 			socks5_recv_connect_reply_ipv4_addr_not_supported_stub);
 
-	ret = socks5_recv_connect_reply(conn_stub);
+	ret = socks5_recv_connect_reply(conn_stub, (struct sockaddr *) &c_addr.u.sin);
 
 	ok(ret == -ECONNREFUSED, "socks5 reply address type not supported");
 
@@ -841,7 +842,7 @@ static void test_socks5_recv_connect_reply_unkown(void)
 	conn_stub = get_connection_stub();
 	socks5_init(NULL, socks5_recv_connect_reply_ipv4_unkown_stub);
 
-	ret = socks5_recv_connect_reply(conn_stub);
+	ret = socks5_recv_connect_reply(conn_stub, (struct sockaddr *) &c_addr.u.sin);
 
 	ok(ret == -ECONNABORTED, "socks5 reply unkown code");
 
@@ -857,7 +858,7 @@ static void test_socks5_recv_connect_reply_ipv6_success(void)
 	conn_stub = get_connection_stub();
 	socks5_init(NULL, socks5_recv_connect_reply_ipv6_success_stub);
 
-	ret = socks5_recv_connect_reply(conn_stub);
+	ret = socks5_recv_connect_reply(conn_stub, (struct sockaddr *) &c_addr.u.sin);
 
 	ok(ret == 0, "socks5 reply IPv6 success");
 
@@ -931,7 +932,7 @@ static void test_socks5_recv_resolve_reply_valid(void)
 	conn_stub = get_connection_stub();
 	socks5_init(NULL, socks5_recv_resolve_reply_ipv4_stub);
 
-	ret = socks5_recv_resolve_reply(conn_stub, &ipv4_addr, sizeof(uint32_t));
+	ret = socks5_recv_resolve_reply(conn_stub, "test", &ipv4_addr, sizeof(uint32_t));
 
 	inet_ntop(AF_INET, &ipv4_addr, ip_str, INET_ADDRSTRLEN);
 
@@ -947,7 +948,7 @@ static void test_socks5_recv_resolve_reply_valid(void)
 	conn_stub = get_connection_ipv6_stub();
 	socks5_init(NULL, socks5_recv_resolve_reply_ipv6_stub);
 
-	ret = socks5_recv_resolve_reply(conn_stub, &ipv6_addr, sizeof(ipv6_addr));
+	ret = socks5_recv_resolve_reply(conn_stub, "test", &ipv6_addr, sizeof(ipv6_addr));
 
 	inet_ntop(AF_INET6, &ipv6_addr, ip_str, INET6_ADDRSTRLEN);
 
@@ -968,7 +969,7 @@ static void test_socks5_recv_resolve_reply_failure(void)
 	conn_stub = get_connection_stub();
 	socks5_init(NULL, socks5_recv_data_error_stub);
 
-	ret = socks5_recv_resolve_reply(conn_stub, &dummy_ip_addr,
+	ret = socks5_recv_resolve_reply(conn_stub, "test", &dummy_ip_addr,
 			sizeof(dummy_ip_addr));
 
 	ok(ret == -1, "socks5 resolve reply returns recv error code");
@@ -986,7 +987,7 @@ static void test_socks5_recv_resolve_reply_incorrect_version(void)
 	conn_stub = get_connection_stub();
 	socks5_init(NULL, socks5_recv_resolve_reply_incorrect_version_stub);
 
-	ret = socks5_recv_resolve_reply(conn_stub, &dummy_ip_addr,
+	ret = socks5_recv_resolve_reply(conn_stub, "test", &dummy_ip_addr,
 			sizeof(dummy_ip_addr));
 
 	ok(ret == -ECONNABORTED, "socks5 resolve reply incorrect version");
@@ -1004,7 +1005,7 @@ static void test_socks5_recv_resolve_reply_response_error(void)
 	conn_stub = get_connection_stub();
 	socks5_init(NULL, socks5_recv_resolve_reply_response_error_stub);
 
-	ret = socks5_recv_resolve_reply(conn_stub, &dummy_ip_addr,
+	ret = socks5_recv_resolve_reply(conn_stub, "test", &dummy_ip_addr,
 			sizeof(dummy_ip_addr));
 
 	ok(ret == -ECONNABORTED, "socks5 resolve reply response error");
@@ -1022,7 +1023,7 @@ static void test_socks5_recv_resolve_reply_address_type_error(void)
 	conn_stub = get_connection_stub();
 	socks5_init(NULL, socks5_recv_resolve_reply_address_type_error_stub);
 
-	ret = socks5_recv_resolve_reply(conn_stub, &dummy_ip_addr,
+	ret = socks5_recv_resolve_reply(conn_stub, "test", &dummy_ip_addr,
 			sizeof(dummy_ip_addr));
 
 	ok(ret == -EINVAL, "socks5 resolve reply address type error");
@@ -1040,7 +1041,7 @@ static void test_socks5_recv_resolve_reply_addrlen_error(void)
 	conn_stub = get_connection_stub();
 	socks5_init(NULL, socks5_recv_resolve_reply_addrlen_error_stub);
 
-	ret = socks5_recv_resolve_reply(conn_stub, &dummy_ip_addr, 1);
+	ret = socks5_recv_resolve_reply(conn_stub, "test", &dummy_ip_addr, 1);
 
 	ok(ret == -EINVAL, "socks5 resolve reply address length error");
 
@@ -1134,7 +1135,8 @@ static void test_socks5_recv_resolve_ptr_reply_valid(void)
 	conn_stub = get_connection_stub();
 	socks5_init(NULL, socks5_recv_resolve_ptr_reply_stub);
 
-	ret = socks5_recv_resolve_ptr_reply(conn_stub, &hostname);
+	ret = socks5_recv_resolve_ptr_reply(conn_stub, CONNECTION_DOMAIN_INET,
+		&hostname);
 
 	ok(ret == 0 &&
 		strncmp(hostname, "example.org", strlen(hostname)) == 0,
@@ -1154,7 +1156,8 @@ static void test_socks5_recv_resolve_ptr_reply_failure(void)
 	conn_stub = get_connection_stub();
 	socks5_init(NULL, socks5_recv_data_error_stub);
 
-	ret = socks5_recv_resolve_ptr_reply(conn_stub, &hostname);
+	ret = socks5_recv_resolve_ptr_reply(conn_stub, CONNECTION_DOMAIN_INET,
+		&hostname);
 
 	ok(ret == -1, "socks5 recv resolve ptr reply returns recv error code");
 
@@ -1172,7 +1175,8 @@ static void test_socks5_recv_resolve_ptr_reply_incorrect_version(void)
 	conn_stub = get_connection_stub();
 	socks5_init(NULL, socks5_recv_resolve_reply_incorrect_version_stub);
 
-	ret = socks5_recv_resolve_ptr_reply(conn_stub, &hostname);
+	ret = socks5_recv_resolve_ptr_reply(conn_stub, CONNECTION_DOMAIN_INET,
+		&hostname);
 
 	ok(ret == -ECONNABORTED, "socks5 recv resolve ptr reply incorrect version");
 
@@ -1190,7 +1194,8 @@ static void test_socks5_recv_resolve_ptr_reply_response_error(void)
 	conn_stub = get_connection_stub();
 	socks5_init(NULL, socks5_recv_resolve_reply_response_error_stub);
 
-	ret = socks5_recv_resolve_ptr_reply(conn_stub, &hostname);
+	ret = socks5_recv_resolve_ptr_reply(conn_stub, CONNECTION_DOMAIN_INET,
+		&hostname);
 
 	ok(ret == -ECONNABORTED, "socks5 recv resolve ptr reply response error");
 
@@ -1208,7 +1213,8 @@ static void test_socks5_recv_resolve_ptr_reply_atyp_error(void)
 	conn_stub = get_connection_stub();
 	socks5_init(NULL, socks5_recv_resolve_ptr_reply_atyp_error_stub);
 
-	ret = socks5_recv_resolve_ptr_reply(conn_stub, &hostname);
+	ret = socks5_recv_resolve_ptr_reply(conn_stub, CONNECTION_DOMAIN_INET,
+		&hostname);
 
 	ok(ret == -EINVAL, "socks5 recv resolve ptr reply atyp error");
 

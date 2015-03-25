@@ -466,13 +466,15 @@ error:
  * Return 0 on success or else a negative value.
  */
 ATTR_HIDDEN
-int socks5_recv_connect_reply(struct connection *conn)
+int socks5_recv_connect_reply(struct connection *conn,
+		const struct sockaddr *addr)
 {
 	int ret;
 	ssize_t ret_recv;
 	unsigned char buffer[22];	/* Maximum size possible (with IPv6). */
 	struct socks5_reply msg;
 	size_t recv_len;
+	char addr_buf[256];
 
 	assert(conn);
 	assert(conn->fd >= 0);
@@ -507,47 +509,41 @@ int socks5_recv_connect_reply(struct connection *conn)
 	DBG("Socks5 received connect reply - ver: %d, rep: 0x%02x, atype: 0x%02x",
 			msg.ver, msg.rep, msg.atyp);
 
-	switch (msg.rep) {
-	case SOCKS5_REPLY_SUCCESS:
+	if (msg.rep == SOCKS5_REPLY_SUCCESS) {
 		DBG("Socks5 connection is successful.");
 		ret = 0;
-		break;
-	case SOCKS5_REPLY_FAIL:
-		ERR("General SOCKS server failure");
-		ret = -ECONNREFUSED;
-		break;
-	case SOCKS5_REPLY_DENY_RULE:
-		ERR("Connection not allowed by ruleset");
-		ret = -ECONNABORTED;
-		break;
-	case SOCKS5_REPLY_NO_NET:
-		ERR("Network unreachable");
-		ret = -ENETUNREACH;
-		break;
-	case SOCKS5_REPLY_NO_HOST:
-		ERR("Host unreachable");
-		ret = -EHOSTUNREACH;
-		break;
-	case SOCKS5_REPLY_REFUSED:
-		ERR("Connection refused to Tor SOCKS");
-		ret = -ECONNREFUSED;
-		break;
-	case SOCKS5_REPLY_TTL_EXP:
-		ERR("Connection timed out");
-		ret = -ETIMEDOUT;
-		break;
-	case SOCKS5_REPLY_CMD_NOTSUP:
-		ERR("Command not supported");
-		ret = -ECONNREFUSED;
-		break;
-	case SOCKS5_REPLY_ADR_NOTSUP:
-		ERR("Address type not supported");
-		ret = -ECONNREFUSED;
-		break;
-	default:
-		ERR("Socks5 server replied an unknown code %d", msg.rep);
-		ret = -ECONNABORTED;
-		break;
+	} else {
+		ERR("%s while connecting to %s",
+			socks5_error_message(msg.rep),
+			inet_ntoa_r(*(struct in_addr *)addr,
+				addr_buf, sizeof(addr_buf)));
+		switch (msg.rep) {
+		case SOCKS5_REPLY_FAIL:
+			ret = -ECONNREFUSED;
+			break;
+		case SOCKS5_REPLY_DENY_RULE:
+			ret = -ECONNABORTED;
+			break;
+		case SOCKS5_REPLY_NO_NET:
+			ret = -ENETUNREACH;
+			break;
+		case SOCKS5_REPLY_NO_HOST:
+			ret = -EHOSTUNREACH;
+			break;
+		case SOCKS5_REPLY_REFUSED:
+			ret = -ECONNREFUSED;
+			break;
+		case SOCKS5_REPLY_TTL_EXP:
+			ret = -ETIMEDOUT;
+			break;
+		case SOCKS5_REPLY_CMD_NOTSUP:
+		case SOCKS5_REPLY_ADR_NOTSUP:
+			ret = -ECONNREFUSED;
+			break;
+		default:
+			ret = -ECONNABORTED;
+			break;
+		}
 	}
 
 error:
@@ -623,8 +619,8 @@ error:
  * Return 0 on success else a negative value.
  */
 ATTR_HIDDEN
-int socks5_recv_resolve_reply(struct connection *conn, void *addr,
-		size_t addrlen)
+int socks5_recv_resolve_reply(struct connection *conn, const char *hostname,
+		void *addr, size_t addrlen)
 {
 	int ret;
 	size_t recv_len;
@@ -648,13 +644,15 @@ int socks5_recv_resolve_reply(struct connection *conn, void *addr,
 	}
 
 	if (buffer.msg.ver != SOCKS5_VERSION) {
-		ERR("Bad SOCKS5 version reply");
+		ERR("Bad SOCKS5 version reply: expected %d, receved %d",
+			SOCKS5_VERSION, buffer.msg.ver);
 		ret = -ECONNABORTED;
 		goto error;
 	}
 
 	if (buffer.msg.rep != SOCKS5_REPLY_SUCCESS) {
-		ERR("Unable to resolve. Status reply: %d", buffer.msg.rep);
+		ERR("Unable to resolve host %s: %s (%d)", hostname,
+			socks5_error_message(buffer.msg.rep), buffer.msg.rep);
 		ret = -ECONNABORTED;
 		goto error;
 	}
@@ -763,7 +761,8 @@ error:
  * Return 0 on success else a negative value.
  */
 ATTR_HIDDEN
-int socks5_recv_resolve_ptr_reply(struct connection *conn, char **_hostname)
+int socks5_recv_resolve_ptr_reply(struct connection *conn, const char *addr,
+		char **_hostname)
 {
 	int ret;
 	ssize_t ret_recv;
@@ -790,7 +789,8 @@ int socks5_recv_resolve_ptr_reply(struct connection *conn, char **_hostname)
 	}
 
 	if (buffer.msg.rep != SOCKS5_REPLY_SUCCESS) {
-		ERR("Unable to resolve. Status reply: %d", buffer.msg.rep);
+		ERR("Unable to resolve host %s: %s (%d)", addr,
+			socks5_error_message(buffer.msg.rep), buffer.msg.rep);
 		ret = -ECONNABORTED;
 		goto error;
 	}
@@ -815,11 +815,12 @@ int socks5_recv_resolve_ptr_reply(struct connection *conn, char **_hostname)
 	}
 
 	*_hostname = hostname;
-	DBG("[socks5] Resolve reply received: %s", *_hostname);
+	DBG("[socks5] Resolve reply received: %s (host %s)", *_hostname, addr);
 	return 0;
 
 error:
-	free(hostname);
+	if (hostname)
+		free(hostname);
 	return ret;
 }
 
@@ -847,5 +848,31 @@ void socks5_init(ssize_t (*new_send_data)(int, const void *, size_t),
 		recv_data = recv_data_impl;
 	} else {
 		recv_data = new_recv_data;
+	}
+}
+
+const char* socks5_error_message(uint8_t code)
+{
+	switch (code) {
+	case SOCKS5_REPLY_SUCCESS:
+		return "Success";
+	case SOCKS5_REPLY_FAIL:
+		return "General server failure";
+	case SOCKS5_REPLY_DENY_RULE:
+		return "Connection not allowed by ruleset";
+	case SOCKS5_REPLY_NO_NET:
+		return "Network unreachable";
+	case SOCKS5_REPLY_NO_HOST:
+		return "Host unreachable";
+	case SOCKS5_REPLY_REFUSED:
+		return "Connection to SOCKS server refused";
+	case SOCKS5_REPLY_TTL_EXP:
+		return "Connection timed out";
+	case SOCKS5_REPLY_CMD_NOTSUP:
+		return "Command not supported";
+	case SOCKS5_REPLY_ADR_NOTSUP:
+		return "Address type not supported";
+	default:
+		return "Unknown error";
 	}
 }
