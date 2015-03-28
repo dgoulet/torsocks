@@ -228,14 +228,6 @@ LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int number, va_list args)
 	case TSOCKS_NR_RECVMSG:
 		ret = handle_recvmsg(args);
 		break;
-#if defined(__FreeBSD__)
-	case TSOCKS_NR_FORK:
-		ret = tsocks_libc_syscall(TSOCKS_NR_FORK);
-		break;
-	case TSOCKS_NR_GETPID:
-		ret = tsocks_libc_syscall(TSOCKS_NR_GETPID);
-		break;
-#endif
 	default:
 		/*
 		 * Because of the design of syscall(), we can't pass a va_list to it so
