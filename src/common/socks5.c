@@ -515,7 +515,7 @@ int socks5_recv_connect_reply(struct connection *conn,
 	} else {
 		ERR("%s while connecting to %s",
 			socks5_error_message(msg.rep),
-			inet_ntoa_r(*(struct in_addr *)addr,
+			inet_ntoa_r(((struct sockaddr_in*)addr)->sin_addr,
 				addr_buf, sizeof(addr_buf)));
 		switch (msg.rep) {
 		case SOCKS5_REPLY_FAIL:
