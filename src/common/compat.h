@@ -115,10 +115,6 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 #define TSOCKS_NR_GETPEERNAME SYS_getpeername
 #define TSOCKS_NR_LISTEN    SYS_listen
 #define TSOCKS_NR_RECVMSG   SYS_recvmsg
-#if defined(__FreeBSD__)
-#define TSOCKS_NR_GETPID    SYS_getpid
-#define TSOCKS_NR_FORK      SYS_fork
-#endif
 
 #endif /* __FreeBSD__, __FreeBSD_kernel__, __darwin__, __NetBSD__ */
 
