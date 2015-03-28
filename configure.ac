@@ -126,10 +126,6 @@ AS_CASE([$host_os],
 			libc_name="libc.so.6"
 		fi
 	],
-	[freebsd*],
-	[
-		libc_name=`ldd /usr/bin/yes | grep 'libc\.' | cut -d ' ' -f 3 | tr -d '\t'`
-	],
 	[libc_name="libc.so"]
 )
 AC_DEFINE_UNQUOTED([LIBC_NAME],["${libc_name}"], [Description])
