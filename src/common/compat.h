@@ -84,6 +84,15 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 #ifndef __NR_recvmsg
 #define __NR_recvmsg -9
 #endif
+#ifndef __NR_gettid
+#define __NR_gettid -10
+#endif
+#ifndef __NR_getrandom
+#define __NR_getrandom -11
+#endif
+#ifndef __NR_futex
+#define __NR_futex -12
+#endif
 
 #define TSOCKS_NR_SOCKET    __NR_socket
 #define TSOCKS_NR_CONNECT   __NR_connect
@@ -94,6 +103,9 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 #define TSOCKS_NR_GETPEERNAME __NR_getpeername
 #define TSOCKS_NR_LISTEN    __NR_listen
 #define TSOCKS_NR_RECVMSG   __NR_recvmsg
+#define TSOCKS_NR_GETTID    __NR_gettid
+#define TSOCKS_NR_GETRANDOM __NR_getrandom
+#define TSOCKS_NR_FUTEX     __NR_futex
 
 #endif /* __linux__ */
 

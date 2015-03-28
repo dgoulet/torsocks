@@ -164,6 +164,56 @@ static LIBC_RECVMSG_RET_TYPE handle_recvmsg(va_list args)
 	return tsocks_recvmsg(sockfd, msg, flags);
 }
 
+#if defined(__linux__)
+/*
+ * Handle gettid(2) syscall.
+ */
+static LIBC_SYSCALL_RET_TYPE handle_gettid(void)
+{
+	return tsocks_libc_syscall(TSOCKS_NR_GETTID);
+}
+
+/*
+ * Handle getrandom(2) syscall.
+ */
+static LIBC_SYSCALL_RET_TYPE handle_getrandom(va_list args)
+{
+	void *buf;
+	size_t buflen;
+	unsigned int flags;
+
+	buf = va_arg(args, __typeof__(buf));
+	buflen = va_arg(args, __typeof__(buflen));
+	flags = va_arg(args, __typeof__(flags));
+
+	return tsocks_libc_syscall(TSOCKS_NR_GETRANDOM, buf, buflen, flags);
+}
+
+/*
+ * Handle futex(2) syscall.
+ */
+static LIBC_SYSCALL_RET_TYPE handle_futex(va_list args)
+{
+	/* This assumes Linux 2.6.7 or later, as that is when 'val3' was
+	 * added to futex(2).  Kernel versions prior to that are what I
+	 * would consider historic.
+	 */
+	const struct timespec *timeout;
+	int *uaddr, *uaddr2;
+	int op, val, val3;
+
+	uaddr = va_arg(args, __typeof__(uaddr));
+	op = va_arg(args, __typeof__(op));
+	val = va_arg(args, __typeof__(val));
+	timeout = va_arg(args, __typeof__(timeout));
+	uaddr2 = va_arg(args, __typeof__(uaddr2));
+	val3 = va_arg(args, __typeof__(val3));
+
+	return tsocks_libc_syscall(TSOCKS_NR_FUTEX, uaddr, op, val, timeout,
+			uaddr2, val3);
+}
+#endif /* __linux__ */
+
 /*
  * Torsocks call for syscall(2)
  */
@@ -228,6 +278,17 @@ LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int number, va_list args)
 	case TSOCKS_NR_RECVMSG:
 		ret = handle_recvmsg(args);
 		break;
+#if defined(__linux__)
+	case TSOCKS_NR_GETTID:
+		ret = handle_gettid();
+		break;
+	case TSOCKS_NR_GETRANDOM:
+		ret = handle_getrandom(args);
+		break;
+	case TSOCKS_NR_FUTEX:
+		ret = handle_futex(args);
+		break;
+#endif /* __linux__ */
 	default:
 		/*
 		 * Because of the design of syscall(), we can't pass a va_list to it so
