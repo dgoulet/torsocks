@@ -97,7 +97,7 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 
 #endif /* __linux__ */
 
-#if (defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__darwin__) || defined(__NetBSD__))
+#if (defined(__FreeBSD__) || defined(__darwin__) || defined(__NetBSD__))
 
 #include <sys/syscall.h>
 #include <unistd.h>
@@ -120,7 +120,7 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 #define TSOCKS_NR_FORK      SYS_fork
 #endif
 
-#endif /* __FreeBSD__, __FreeBSD_kernel__, __darwin__, __NetBSD__ */
+#endif /* __FreeBSD__, __darwin__, __NetBSD__ */
 
 #define TSOCKS_CLASSA_NET   0xff000000
 #define TSOCKS_LOOPBACK_NET 0x7f000000

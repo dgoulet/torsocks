@@ -241,17 +241,6 @@ struct hostent **result, int *h_errnop
 
 #endif /* __FreeBSD__, __darwin__, __NetBSD__ */
 
-#if defined(__GLIBC__) && defined(__FreeBSD_kernel__)
-
-/* syscall(2) */
-#define LIBC_SYSCALL_NAME syscall
-#define LIBC_SYSCALL_NAME_STR XSTR(LIBC_SYSCALL_NAME)
-#define LIBC_SYSCALL_RET_TYPE long int
-#define LIBC_SYSCALL_SIG long int number, ...
-#define LIBC_SYSCALL_ARGS number
-
-#endif /* __GLIBC__ && __FreeBSD_kernel__ */
-
 /* __syscall(2) */
 #if defined(__FreeBSD__)
 
