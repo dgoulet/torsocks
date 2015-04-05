@@ -231,5 +231,7 @@ error:
  */
 LIBC_CONNECT_DECL
 {
+	if (!tsocks_libc_connect)
+		tsocks_initialize();
 	return tsocks_connect(LIBC_CONNECT_ARGS);
 }

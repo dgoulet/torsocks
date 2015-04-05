@@ -72,5 +72,7 @@ end:
  */
 LIBC_SOCKET_DECL
 {
+	if (!tsocks_libc_socket)
+		tsocks_initialize();
 	return tsocks_socket(LIBC_SOCKET_ARGS);
 }

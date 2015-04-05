@@ -73,6 +73,7 @@ libc_sendto:
 LIBC_SENDTO_DECL
 {
 	if (!tsocks_libc_sendto) {
+		tsocks_initialize();
 		tsocks_libc_sendto = tsocks_find_libc_symbol(
 				LIBC_SENDTO_NAME_STR, TSOCKS_SYM_EXIT_NOT_FOUND);
 	}

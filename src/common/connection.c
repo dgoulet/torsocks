@@ -82,7 +82,7 @@ static inline unsigned int conn_hash_fct(struct connection *c)
 /*
  * Declare the connection registry.
  */
-static HT_HEAD(connection_registry, connection) connection_registry_root;
+static HT_HEAD(connection_registry, connection) connection_registry_root = HT_INITIALIZER();
 HT_PROTOTYPE(connection_registry, connection, node, conn_hash_fct,
 		conn_equal_fct);
 HT_GENERATE(connection_registry, connection, node, conn_hash_fct,
@@ -104,15 +104,6 @@ ATTR_HIDDEN
 void connection_registry_unlock(void)
 {
 	tsocks_mutex_unlock(&connection_registry_mutex);
-}
-
-/*
- * Initialize connection registry.
- */
-ATTR_HIDDEN
-void connection_registry_init(void)
-{
-	HT_INIT(connection_registry, &connection_registry_root);
 }
 
 /*

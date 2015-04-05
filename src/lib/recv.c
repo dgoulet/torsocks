@@ -179,7 +179,7 @@ error:
 LIBC_RECVMSG_DECL
 {
 	if (!tsocks_libc_recvmsg) {
-		/* Find symbol if not already set. Exit if not found. */
+		tsocks_initialize();
 		tsocks_libc_recvmsg = tsocks_find_libc_symbol(LIBC_RECVMSG_NAME_STR,
 				TSOCKS_SYM_EXIT_NOT_FOUND);
 	}

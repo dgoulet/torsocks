@@ -76,10 +76,13 @@ error:
  */
 LIBC_FCLOSE_DECL
 {
+	/* fclose(3) is unique in that it does not call torsocks_initialize(), as
+	 * it is used from within the initialization routine to close the config
+	 * file/log file. This would be a problem, except that all of the global
+	 * state it depends on is statically initialized. */
 	if (!tsocks_libc_fclose) {
 		tsocks_libc_fclose = tsocks_find_libc_symbol(
 				LIBC_FCLOSE_NAME_STR, TSOCKS_SYM_EXIT_NOT_FOUND);
 	}
-
 	return tsocks_fclose(LIBC_FCLOSE_ARGS);
 }

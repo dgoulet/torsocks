@@ -98,6 +98,7 @@ libc:
 LIBC_GETPEERNAME_DECL
 {
 	if (!tsocks_libc_getpeername) {
+		tsocks_initialize();
 		tsocks_libc_getpeername = tsocks_find_libc_symbol(
 				LIBC_GETPEERNAME_NAME_STR, TSOCKS_SYM_EXIT_NOT_FOUND);
 	}

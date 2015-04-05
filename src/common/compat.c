@@ -71,4 +71,29 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m)
 	assert(!ret);
 }
 
+/*
+ * Call the given routine once, and only once. tsocks_once returning
+ * guarantees that the routine has succeded.
+ */
+void tsocks_once(tsocks_once_t *o, void (*init_routine)(void))
+{
+
+	/* Why, yes, pthread_once(3P) exists. Said routine requires linking in a
+	 * real pthread library on Linux, while this does not and will do the right
+	 * thing even with the stub implementation. */
+	assert(o);
+
+	/* This looks scary and incorrect, till you realize that the
+	 * pthread_mutex routines include memory barriers. */
+	if (!o->once) {
+		return;
+	}
+	tsocks_mutex_lock(&o->mutex);
+	if (o->once) {
+		init_routine();
+		o->once = 0;
+	}
+	tsocks_mutex_unlock(&o->mutex);
+}
+
 #endif /* __GLIBC__, __darwin__, __FreeBSD__, __NetBSD__ */

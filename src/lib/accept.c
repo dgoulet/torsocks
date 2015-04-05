@@ -85,6 +85,7 @@ error:
 LIBC_ACCEPT_DECL
 {
 	if (!tsocks_libc_accept) {
+		tsocks_initialize();
 		tsocks_libc_accept = tsocks_find_libc_symbol(
 				LIBC_ACCEPT_NAME_STR, TSOCKS_SYM_EXIT_NOT_FOUND);
 	}
@@ -158,6 +159,7 @@ error:
 LIBC_ACCEPT4_DECL
 {
 	if (!tsocks_libc_accept4) {
+		tsocks_initialize();
 		tsocks_libc_accept4 = tsocks_find_libc_symbol(
 				LIBC_ACCEPT4_NAME_STR, TSOCKS_SYM_EXIT_NOT_FOUND);
 	}

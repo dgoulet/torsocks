@@ -80,6 +80,7 @@ error:
 LIBC_LISTEN_DECL
 {
 	if (!tsocks_libc_listen) {
+		tsocks_initialize();
 		tsocks_libc_listen = tsocks_find_libc_symbol(
 				LIBC_LISTEN_NAME_STR, TSOCKS_SYM_EXIT_NOT_FOUND);
 	}

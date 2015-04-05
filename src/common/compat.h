@@ -33,13 +33,25 @@ typedef struct tsocks_mutex_t {
 } tsocks_mutex_t;
 
 /* Define a tsock mutex variable with the mutex statically initialized. */
+#define TSOCKS_MUTEX_INIT { .mutex = PTHREAD_MUTEX_INITIALIZER }
 #define TSOCKS_INIT_MUTEX(name) \
-	tsocks_mutex_t name = { .mutex = PTHREAD_MUTEX_INITIALIZER }
+	tsocks_mutex_t name = TSOCKS_MUTEX_INIT
 
 void tsocks_mutex_init(tsocks_mutex_t *m);
 void tsocks_mutex_destroy(tsocks_mutex_t *m);
 void tsocks_mutex_lock(tsocks_mutex_t *m);
 void tsocks_mutex_unlock(tsocks_mutex_t *m);
+
+typedef struct tsocks_once_t {
+	int once:1;
+	tsocks_mutex_t mutex;
+} tsocks_once_t;
+
+/* Define a tsock once variable, statically initialized. */
+#define TSOCKS_INIT_ONCE(name) \
+	tsocks_once_t name = { .once = 1, .mutex = TSOCKS_MUTEX_INIT }
+
+void tsocks_once(tsocks_once_t *o, void (*init_routine)(void));
 
 #else
 #error "OS not supported."

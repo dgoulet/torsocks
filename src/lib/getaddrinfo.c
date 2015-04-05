@@ -128,6 +128,7 @@ error:
 LIBC_GETADDRINFO_DECL
 {
 	if (!tsocks_libc_getaddrinfo) {
+		tsocks_initialize();
 		tsocks_libc_getaddrinfo = tsocks_find_libc_symbol(
 				LIBC_GETADDRINFO_NAME_STR, TSOCKS_SYM_EXIT_NOT_FOUND);
 	}

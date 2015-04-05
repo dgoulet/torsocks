@@ -81,7 +81,6 @@ void connection_destroy(struct connection *conn);
 void connection_remove(struct connection *conn);
 void connection_insert(struct connection *conn);
 
-void connection_registry_init(void);
 void connection_registry_lock(void);
 void connection_registry_unlock(void);
 

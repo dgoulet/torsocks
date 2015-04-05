@@ -109,6 +109,7 @@ error:
  */
 LIBC_GETHOSTBYNAME_DECL
 {
+	tsocks_initialize();
 	return tsocks_gethostbyname(LIBC_GETHOSTBYNAME_ARGS);
 }
 
@@ -137,6 +138,7 @@ LIBC_GETHOSTBYNAME2_RET_TYPE tsocks_gethostbyname2(LIBC_GETHOSTBYNAME2_SIG)
  */
 LIBC_GETHOSTBYNAME2_DECL
 {
+	tsocks_initialize();
 	return tsocks_gethostbyname2(LIBC_GETHOSTBYNAME2_ARGS);
 }
 
@@ -202,6 +204,7 @@ error:
  */
 LIBC_GETHOSTBYADDR_DECL
 {
+	tsocks_initialize();
 	return tsocks_gethostbyaddr(LIBC_GETHOSTBYADDR_ARGS);
 }
 
@@ -305,6 +308,7 @@ error:
  */
 LIBC_GETHOSTBYADDR_R_DECL
 {
+	tsocks_initialize();
 	return tsocks_gethostbyaddr_r(LIBC_GETHOSTBYADDR_R_ARGS);
 }
 
@@ -380,6 +384,7 @@ error:
  */
 LIBC_GETHOSTBYNAME_R_DECL
 {
+	tsocks_initialize();
 	return tsocks_gethostbyname_r(LIBC_GETHOSTBYNAME_R_ARGS);
 }
 
@@ -410,5 +415,6 @@ LIBC_GETHOSTBYNAME2_R_RET_TYPE tsocks_gethostbyname2_r(LIBC_GETHOSTBYNAME2_R_SIG
  */
 LIBC_GETHOSTBYNAME2_R_DECL
 {
+	tsocks_initialize();
 	return tsocks_gethostbyname2_r(LIBC_GETHOSTBYNAME2_R_ARGS);
 }

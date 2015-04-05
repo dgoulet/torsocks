@@ -47,8 +47,11 @@ struct configuration tsocks_config;
  */
 struct onion_pool tsocks_onion_pool;
 
+/* Indicate if the library was initialized previously. */
+static TSOCKS_INIT_ONCE(init_once);
+
 /* Indicate if the library was cleaned up previously. */
-unsigned int tsocks_cleaned_up = 0;
+static TSOCKS_INIT_ONCE(term_once);
 
 /*
  * Set to 1 if the binary is set with suid or 0 if not. This is set once during
@@ -273,7 +276,7 @@ static void init_logging(void)
  * Lib constructor. Initialize torsocks here before the main execution of the
  * binary we are preloading.
  */
-static void __attribute__((constructor)) tsocks_init(void)
+static void tsocks_init(void)
 {
 	int ret;
 
@@ -293,9 +296,6 @@ static void __attribute__((constructor)) tsocks_init(void)
 	 */
 	init_config();
 
-	/* Initialize connection reigstry. */
-	connection_registry_init();
-
 	/*
 	 * Initalized the onion pool which maps cookie address to hidden service
 	 * onion address.
@@ -311,9 +311,14 @@ static void __attribute__((constructor)) tsocks_init(void)
 /*
  * Lib destructor.
  */
-static void __attribute__((destructor)) tsocks_exit(void)
+static void tsocks_exit(void)
 {
-	tsocks_cleanup();
+	/* Cleanup every entries in the onion pool. */
+	onion_pool_destroy(&tsocks_onion_pool);
+	/* Cleanup allocated memory in the config file. */
+	config_file_destroy(&tsocks_config.conf_file);
+	/* Clean up logging. */
+	log_destroy();
 }
 
 /*
@@ -605,20 +610,17 @@ void *tsocks_find_libc_symbol(const char *symbol,
 }
 
 /*
+ * Initialize torsocks library.
+ */
+void __attribute__((constructor)) tsocks_initialize(void)
+{
+	tsocks_once(&init_once, &tsocks_init);
+}
+
+/*
  * Cleanup torsocks library memory and open fd.
  */
-void tsocks_cleanup(void)
+void __attribute__((destructor)) tsocks_cleanup(void)
 {
-	if (tsocks_cleaned_up) {
-		return;
-	}
-
-	/* Cleanup every entries in the onion pool. */
-	onion_pool_destroy(&tsocks_onion_pool);
-	/* Cleanup allocated memory in the config file. */
-	config_file_destroy(&tsocks_config.conf_file);
-	/* Clean up logging. */
-	log_destroy();
-
-	tsocks_cleaned_up = 1;
+	tsocks_once(&term_once, &tsocks_exit);
 }

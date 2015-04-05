@@ -480,6 +480,7 @@ LIBC_SYSCALL_DECL
 	va_list args;
 
 	if (!tsocks_libc_syscall) {
+		tsocks_initialize();
 		tsocks_libc_syscall= tsocks_find_libc_symbol(
 				LIBC_SYSCALL_NAME_STR, TSOCKS_SYM_EXIT_NOT_FOUND);
 	}
