@@ -212,6 +212,24 @@ static LIBC_SYSCALL_RET_TYPE handle_futex(va_list args)
 	return tsocks_libc_syscall(TSOCKS_NR_FUTEX, uaddr, op, val, timeout,
 			uaddr2, val3);
 }
+
+/*
+ * Handle accept4(2) syscall.
+ */
+static LIBC_SYSCALL_RET_TYPE handle_accept4(va_list args)
+{
+	int sockfd;
+	struct sockaddr *addr;
+	socklen_t addrlen;
+	int flags;
+
+	sockfd = va_arg(args, __typeof__(sockfd));
+	addr = va_arg(args, __typeof__(addr));
+	addrlen = va_arg(args, __typeof__(addrlen));
+	flags = va_arg(args, __typeof__(flags));
+
+	return tsocks_accept4(sockfd, addr, &addrlen, flags);
+}
 #endif /* __linux__ */
 
 /*
@@ -287,6 +305,9 @@ LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int number, va_list args)
 		break;
 	case TSOCKS_NR_FUTEX:
 		ret = handle_futex(args);
+		break;
+	case TSOCKS_NR_ACCEPT4:
+		ret = handle_accept4(args);
 		break;
 #endif /* __linux__ */
 	default:

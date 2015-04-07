@@ -93,6 +93,9 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 #ifndef __NR_futex
 #define __NR_futex -12
 #endif
+#ifndef __NR_accept4
+#define __NR_accept4 -13
+#endif
 
 #define TSOCKS_NR_SOCKET    __NR_socket
 #define TSOCKS_NR_CONNECT   __NR_connect
@@ -106,6 +109,7 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 #define TSOCKS_NR_GETTID    __NR_gettid
 #define TSOCKS_NR_GETRANDOM __NR_getrandom
 #define TSOCKS_NR_FUTEX     __NR_futex
+#define TSOCKS_NR_ACCEPT4   __NR_accept4
 
 #endif /* __linux__ */
 
