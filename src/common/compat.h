@@ -118,6 +118,7 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
  */
 
 #include <sys/epoll.h>
+#include <sys/eventfd.h>
 
 #ifndef __NR_epoll_create1
 #define __NR_epoll_create1 -128
@@ -131,11 +132,15 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 #ifndef __NR_epoll_ctl
 #define __NR_epoll_ctl -131
 #endif
+#ifndef __NR_eventfd2
+#define __NR_eventfd2 -132
+#endif
 
 #define TSOCKS_NR_EPOLL_CREATE1 __NR_epoll_create1
 #define TSOCKS_NR_EPOLL_WAIT    __NR_epoll_wait
 #define TSOCKS_NR_EPOLL_PWAIT   __NR_epoll_pwait
 #define TSOCKS_NR_EPOLL_CTL     __NR_epoll_ctl
+#define TSOCKS_NR_EVENTFD2      __NR_eventfd2
 
 #endif /* __linux__ */
 

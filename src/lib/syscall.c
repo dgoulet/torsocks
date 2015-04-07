@@ -298,6 +298,20 @@ static LIBC_SYSCALL_RET_TYPE handle_epoll_ctl(va_list args)
 
 	return epoll_ctl(epfd, op, fd, event);
 }
+
+/*
+ * Handle eventfd2(2) syscall.
+ */
+static LIBC_SYSCALL_RET_TYPE handle_eventfd2(va_list args)
+{
+	unsigned int initval;
+	int flags;
+
+	initval = va_arg(args, __typeof__(initval));
+	flags = va_arg(args, __typeof__(flags));
+
+	return eventfd(initval, flags);
+}
 #endif /* __linux__ */
 
 /*
@@ -388,6 +402,9 @@ LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int number, va_list args)
 		break;
 	case TSOCKS_NR_EPOLL_CTL:
 		ret = handle_epoll_ctl(args);
+		break;
+	case TSOCKS_NR_EVENTFD2:
+		ret = handle_eventfd2(args);
 		break;
 #endif /* __linux__ */
 	default:
