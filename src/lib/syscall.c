@@ -312,6 +312,46 @@ static LIBC_SYSCALL_RET_TYPE handle_eventfd2(va_list args)
 
 	return eventfd(initval, flags);
 }
+
+/*
+ * Handle inotify_init1(2) syscall.
+ */
+static LIBC_SYSCALL_RET_TYPE handle_inotify_init1(va_list args)
+{
+	int flags;
+	flags = va_arg(args, __typeof__(flags));
+
+	return inotify_init1(flags);
+}
+
+/*
+ * Handle inotify_add_watch(2) syscall.
+ */
+static LIBC_SYSCALL_RET_TYPE handle_inotify_add_watch(va_list args)
+{
+	int fd;
+	const char *pathname;
+	uint32_t mask;
+
+	fd = va_arg(args, __typeof__(fd));
+	pathname = va_arg(args, __typeof__(pathname));
+	mask = va_arg(args, __typeof__(mask));
+
+	return inotify_add_watch(fd, pathname, mask);
+}
+
+/*
+ * Handle inotify_rm_watch(2) syscall.
+ */
+static LIBC_SYSCALL_RET_TYPE handle_inotify_rm_watch(va_list args)
+{
+	int fd, wd;
+
+	fd = va_arg(args, __typeof__(fd));
+	wd = va_arg(args, __typeof__(wd));
+
+	return inotify_rm_watch(fd, wd);
+}
 #endif /* __linux__ */
 
 /*
@@ -405,6 +445,15 @@ LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int number, va_list args)
 		break;
 	case TSOCKS_NR_EVENTFD2:
 		ret = handle_eventfd2(args);
+		break;
+	case TSOCKS_NR_INOTIFY_INIT1:
+		ret = handle_inotify_init1(args);
+		break;
+	case TSOCKS_NR_INOTIFY_ADD_WATCH:
+		ret = handle_inotify_add_watch(args);
+		break;
+	case TSOCKS_NR_INOTIFY_RM_WATCH:
+		ret = handle_inotify_rm_watch(args);
 		break;
 #endif /* __linux__ */
 	default:
