@@ -230,6 +230,74 @@ static LIBC_SYSCALL_RET_TYPE handle_accept4(va_list args)
 
 	return tsocks_accept4(sockfd, addr, &addrlen, flags);
 }
+
+/*
+ * Handle epoll_create1(2) syscall.
+ */
+static LIBC_SYSCALL_RET_TYPE handle_epoll_create1(va_list args)
+{
+	int flags;
+
+	flags = va_arg(args, __typeof__(flags));
+
+	return epoll_create1(flags);
+}
+
+/*
+ * Handle epoll_wait(2) syscall.
+ */
+static LIBC_SYSCALL_RET_TYPE handle_epoll_wait(va_list args)
+{
+	int epfd;
+	struct epoll_event *events;
+	int maxevents;
+	int timeout;
+
+	epfd = va_arg(args, __typeof__(epfd));
+	events = va_arg(args, __typeof__(events));
+	maxevents = va_arg(args, __typeof__(maxevents));
+	timeout = va_arg(args, __typeof__(maxevents));
+
+	return epoll_wait(epfd, events, maxevents, timeout);
+}
+
+/*
+ * Handle epoll_pwait(2) syscall.
+ */
+static LIBC_SYSCALL_RET_TYPE handle_epoll_pwait(va_list args)
+{
+	int epfd;
+	struct epoll_event *events;
+	int maxevents;
+	int timeout;
+	const sigset_t *sigmask;
+
+	epfd = va_arg(args, __typeof__(epfd));
+	events = va_arg(args, __typeof__(events));
+	maxevents = va_arg(args, __typeof__(maxevents));
+	timeout = va_arg(args, __typeof__(maxevents));
+	sigmask = va_arg(args, __typeof__(sigmask));
+
+	return epoll_pwait(epfd, events, maxevents, timeout, sigmask);
+}
+
+/*
+ * Handle epoll_ctl(2) syscall.
+ */
+static LIBC_SYSCALL_RET_TYPE handle_epoll_ctl(va_list args)
+{
+	int epfd;
+	int op;
+	int fd;
+	struct epoll_event *event;
+
+	epfd = va_arg(args, __typeof__(epfd));
+	op = va_arg(args, __typeof__(op));
+	fd = va_arg(args, __typeof__(fd));
+	event = va_arg(args, __typeof__(event));
+
+	return epoll_ctl(epfd, op, fd, event);
+}
 #endif /* __linux__ */
 
 /*
@@ -308,6 +376,18 @@ LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int number, va_list args)
 		break;
 	case TSOCKS_NR_ACCEPT4:
 		ret = handle_accept4(args);
+		break;
+	case TSOCKS_NR_EPOLL_CREATE1:
+		ret = handle_epoll_create1(args);
+		break;
+	case TSOCKS_NR_EPOLL_WAIT:
+		ret = handle_epoll_wait(args);
+		break;
+	case TSOCKS_NR_EPOLL_PWAIT:
+		ret = handle_epoll_pwait(args);
+		break;
+	case TSOCKS_NR_EPOLL_CTL:
+		ret = handle_epoll_ctl(args);
 		break;
 #endif /* __linux__ */
 	default:

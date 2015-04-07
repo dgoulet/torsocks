@@ -111,6 +111,32 @@ void tsocks_mutex_unlock(tsocks_mutex_t *m);
 #define TSOCKS_NR_FUTEX     __NR_futex
 #define TSOCKS_NR_ACCEPT4   __NR_accept4
 
+/*
+ * Despite glibc providing wrappers for these calls for a long time
+ * (as in "even Debian squeeze has all the wrappers"), libuv decided to
+ * use syscall() to invoke them instead.
+ */
+
+#include <sys/epoll.h>
+
+#ifndef __NR_epoll_create1
+#define __NR_epoll_create1 -128
+#endif
+#ifndef __NR_epoll_wait
+#define __NR_epoll_wait -129
+#endif
+#ifndef __NR_epoll_pwait
+#define __NR_epoll_pwait -130
+#endif
+#ifndef __NR_epoll_ctl
+#define __NR_epoll_ctl -131
+#endif
+
+#define TSOCKS_NR_EPOLL_CREATE1 __NR_epoll_create1
+#define TSOCKS_NR_EPOLL_WAIT    __NR_epoll_wait
+#define TSOCKS_NR_EPOLL_PWAIT   __NR_epoll_pwait
+#define TSOCKS_NR_EPOLL_CTL     __NR_epoll_ctl
+
 #endif /* __linux__ */
 
 #if (defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__darwin__) || defined(__NetBSD__))
