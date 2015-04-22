@@ -33,6 +33,7 @@ LIBC_GETPEERNAME_RET_TYPE tsocks_getpeername(LIBC_GETPEERNAME_SIG)
 {
 	int ret = 0;
 	struct connection *conn;
+	socklen_t sz = 0;
 
 	DBG("[getpeername] Requesting address on socket %d", sockfd);
 
@@ -51,19 +52,9 @@ LIBC_GETPEERNAME_RET_TYPE tsocks_getpeername(LIBC_GETPEERNAME_SIG)
 	}
 
 	/*
-	 * Extra check for addrlen since we are about to copy the connection
-	 * content into the given address.
-	 */
-	if (*addrlen > sizeof(struct sockaddr)) {
-		/* Ref to the manpage for the returned value here. */
-		errno = EINVAL;
-		ret = -1;
-		goto end;
-	}
-
-	/*
-	 * Copy connected destination address into the given addr with only the
-	 * given len so we don't overflow on purpose.
+	 * Copy the minimum of *addrlen and the size of the actual address
+	 * into the given addr. There are applications that pass in buffers
+	 * that are rather large, which is acceptable behavior.
 	 */
 	switch (conn->dest_addr.domain) {
 	case CONNECTION_DOMAIN_NAME:
@@ -73,16 +64,19 @@ LIBC_GETPEERNAME_RET_TYPE tsocks_getpeername(LIBC_GETPEERNAME_SIG)
 		 * that has been returned to the application.
 		 */
 	case CONNECTION_DOMAIN_INET:
+		sz = min(sizeof(conn->dest_addr.u.sin), *addrlen);
 		memcpy(addr, (const struct sockaddr *) &conn->dest_addr.u.sin,
-				*addrlen);
+				sz);
 		break;
 	case CONNECTION_DOMAIN_INET6:
+		sz = min(sizeof(conn->dest_addr.u.sin6), *addrlen);
 		memcpy(addr, (const struct sockaddr *) &conn->dest_addr.u.sin6,
-				*addrlen);
+				sz);
 		break;
 	}
 
 	/* Success. */
+	*addrlen = sz;
 	errno = 0;
 	ret = 0;
 

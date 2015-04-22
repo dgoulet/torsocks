@@ -32,6 +32,7 @@ static void test_getpeername(void)
 	char buf[INET_ADDRSTRLEN];
 	struct sockaddr addr;
 	struct sockaddr_in addrv4;
+	struct sockaddr_storage ss;
 	socklen_t addrlen;
 	const char *ip = "93.95.227.222";
 
@@ -68,11 +69,7 @@ static void test_getpeername(void)
 		goto error;
 	}
 
-	/* Very large addrlen. */
-	addrlen = -1;
-	ret = getpeername(inet_sock, &addr, &addrlen);
-	ok(ret == -1 && errno == EINVAL, "Invalid addrlen");
-
+	/* Invalid arguments */
 	addrlen = sizeof(addr);
 	ret = getpeername(inet_sock, NULL, &addrlen);
 	ok(ret == -1 && errno == EFAULT, "Invalid addr ptr");
@@ -89,6 +86,11 @@ static void test_getpeername(void)
 	inet_ntop(addrv4.sin_family, &addrv4.sin_addr, buf, sizeof(buf));
 	ok(ret == 0 && strncmp(buf, ip, strlen(ip)) == 0,
 			"Valid returned IP address from getpeername()");
+
+	/* Large but valid addrlen. */
+	addrlen = sizeof(ss);
+	ret = getpeername(inet_sock, (struct sockaddr *)&ss, &addrlen);
+	ok(ret == 0 && addrlen == sizeof(addrv4), "Valid returned IP address from getpeername(), large addrlen");
 
 error:
 	if (inet_sock >= 0) {
