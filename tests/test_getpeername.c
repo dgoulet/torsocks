@@ -90,7 +90,8 @@ static void test_getpeername(void)
 	/* Large but valid addrlen. */
 	addrlen = sizeof(ss);
 	ret = getpeername(inet_sock, (struct sockaddr *)&ss, &addrlen);
-	ok(ret == 0 && addrlen == sizeof(addrv4), "Valid returned IP address from getpeername(), large addrlen");
+	ok(ret == 0 && addrlen == sizeof(addrv4),
+			"Valid returned IP address from getpeername(), large addrlen");
 
 error:
 	if (inet_sock >= 0) {
