@@ -89,6 +89,12 @@ LIBC_GETADDRINFO_RET_TYPE tsocks_getaddrinfo(LIBC_GETADDRINFO_SIG)
 
 	ret = inet_pton(af, node, addr);
 	if (ret == 0) {
+		/* If AI_NUMERICHOST is set, return a error. */
+		if (hints->ai_flags & AI_NUMERICHOST) {
+			ret = EAI_NONAME;
+			goto error;
+		}
+
 		/* The node most probably is a DNS name. */
 		ret = tsocks_tor_resolve(af, node, addr);
 		if (ret < 0) {
