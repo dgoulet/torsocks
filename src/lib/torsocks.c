@@ -408,6 +408,35 @@ error:
 }
 
 /*
+ * Using the given connection, do a SOCKS5 authentication with the
+ * username/password in the global configuration.
+ *
+ * Return 0 on success else a negative value on error.
+ */
+static int
+auth_socks5(struct connection *conn)
+{
+	int ret;
+
+	assert(conn);
+
+	ret = socks5_send_user_pass_request(conn,
+			tsocks_config.conf_file.socks5_username,
+			tsocks_config.conf_file.socks5_password);
+	if (ret < 0) {
+		goto error;
+	}
+
+	ret = socks5_recv_user_pass_reply(conn);
+	if (ret < 0) {
+		goto error;
+	}
+
+error:
+	return ret;
+}
+
+/*
  * Initiate a SOCK5 connection to the Tor network using the given connection.
  * The socks5 API will use the torsocks configuration object to find the tor
  * daemon. If a username/password has been set use that method for the SOCKS5
@@ -439,14 +468,7 @@ int tsocks_connect_to_tor(struct connection *conn)
 
 	/* For the user/pass method, send the request before connect. */
 	if (socks5_method == SOCKS5_USER_PASS_METHOD) {
-		ret = socks5_send_user_pass_request(conn,
-				tsocks_config.conf_file.socks5_username,
-				tsocks_config.conf_file.socks5_password);
-		if (ret < 0) {
-			goto error;
-		}
-
-		ret = socks5_recv_user_pass_reply(conn);
+		ret = auth_socks5(conn);
 		if (ret < 0) {
 			goto error;
 		}
@@ -541,16 +563,9 @@ int tsocks_tor_resolve(int af, const char *hostname, void *ip_addr)
 
 	/* For the user/pass method, send the request before resolve. */
 	if (socks5_method == SOCKS5_USER_PASS_METHOD) {
-		ret = socks5_send_user_pass_request(&conn,
-				tsocks_config.conf_file.socks5_username,
-				tsocks_config.conf_file.socks5_password);
+		ret = auth_socks5(&conn);
 		if (ret < 0) {
-			goto end_close;
-		}
-
-		ret = socks5_recv_user_pass_reply(&conn);
-		if (ret < 0) {
-			goto end_close;
+			goto error;
 		}
 	}
 
@@ -612,16 +627,9 @@ int tsocks_tor_resolve_ptr(const char *addr, char **ip, int af)
 
 	/* For the user/pass method, send the request before resolve ptr. */
 	if (socks5_method == SOCKS5_USER_PASS_METHOD) {
-		ret = socks5_send_user_pass_request(&conn,
-				tsocks_config.conf_file.socks5_username,
-				tsocks_config.conf_file.socks5_password);
+		ret = auth_socks5(&conn);
 		if (ret < 0) {
-			goto end_close;
-		}
-
-		ret = socks5_recv_user_pass_reply(&conn);
-		if (ret < 0) {
-			goto end_close;
+			goto error;
 		}
 	}
 
