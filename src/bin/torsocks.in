@@ -131,6 +131,7 @@ usage ()
 	echo "  -d, --debug     Set debug mode."
 	echo "  -u, --user NAME Username for the SOCKS5 authentication"
 	echo "  -p, --pass NAME Password for the SOCKS5 authentication"
+	echo "  -i, --isolate   Automatic tor isolation. Can't be used with -u/-p"
 	echo "  on, off         Set/Unset your shell to use Torsocks by default"
 	echo "                  Make sure to source the call when using this option. (See Examples)"
 	echo "  show, sh        Show the current value of the LD_PRELOAD"
@@ -213,6 +214,9 @@ do
 			fi
 			export TORSOCKS_PASSWORD=$2
 			shift
+			;;
+		-i|--isolate)
+			export TORSOCKS_ISOLATE_PID=1
 			;;
 		-d|--debug)
 			# Set full DEBUG with 5 being the highest possible level.

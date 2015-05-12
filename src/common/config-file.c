@@ -39,12 +39,21 @@ static const char *conf_socks5_user_str = "SOCKS5Username";
 static const char *conf_socks5_pass_str = "SOCKS5Password";
 static const char *conf_allow_inbound_str = "AllowInbound";
 static const char *conf_allow_outbound_localhost_str = "AllowOutboundLocalhost";
+static const char *conf_isolate_pid_str = "IsolatePID";
 
 /*
  * Once this value reaches 2, it means both user and password for a SOCKS5
  * connection has been set thus use them./
  */
 static unsigned int both_socks5_pass_user_set;
+
+/*
+ * Username format for the IsolatePID option. Format is:
+ *   'torsocks-' PID ':' TIME
+ */
+static const char *isolate_username_fmt = "torsocks-%ld:%lld";
+/* Default password for the IsolatePID option. */
+static const char *isolate_password = "42";
 
 /*
  * Set the onion pool address range in the configuration object using the value
@@ -233,6 +242,11 @@ static int parse_config_line(const char *line, struct configuration *config)
 		if (ret < 0) {
 			goto error;
 		}
+	} else if (!strcmp(tokens[0], conf_isolate_pid_str)) {
+		ret = conf_file_set_isolate_pid(tokens[1], config);
+		if (ret < 0) {
+			goto error;
+		}
 	} else {
 		WARN("Config file contains unknown value: %s", line);
 	}
@@ -398,6 +412,99 @@ int conf_file_set_allow_outbound_localhost(const char *val,
 		ret = -EINVAL;
 	}
 
+	return ret;
+}
+
+/*
+ * Set the isolate PID option for the given config.
+ *
+ * Return 0 if optiuon is off, 1 if on and negative value on error.
+ */
+ATTR_HIDDEN
+int conf_file_set_isolate_pid(const char *val, struct configuration *config)
+{
+	int ret;
+
+	assert(val);
+	assert(config);
+
+	ret = atoi(val);
+	if (ret == 0) {
+		config->isolate_pid = 0;
+		DBG("[config] PID isolation disabled.");
+	} else if (ret == 1) {
+		config->isolate_pid = 1;
+		DBG("[config] PID isolation enabled.");
+	} else {
+		ERR("[config] Invalid %s value for %s", val,
+				conf_isolate_pid_str);
+		ret = -EINVAL;
+	}
+
+	return ret;
+}
+
+/*
+ * Applies the SOCKS authentication configuration and sets the final SOCKS
+ * username and password.
+ *
+ * Return 0 if successful, and negative value on error.
+ */
+ATTR_HIDDEN
+int conf_apply_socks_auth(struct configuration *config)
+{
+	int ret;
+	pid_t pid;
+	time_t now;
+
+	assert(config);
+
+	if (!config->socks5_use_auth && !config->isolate_pid) {
+		/* No auth specified at all. */
+		ret = 0;
+		goto end;
+	} else if (config->socks5_use_auth && !config->isolate_pid) {
+		/* SOCKS5 auth specified by user, already setup. */
+		ret = 0;
+		goto end;
+	} else if (config->socks5_use_auth && config->isolate_pid) {
+		ERR("[config] %s and SOCKS5 auth both set.", conf_isolate_pid_str);
+		ret = -EINVAL;
+		goto end;
+	}
+
+
+	/* PID based isolation requested.
+	 *   Username: 'torsocks-' PID ':' TIME
+	 *   Password: '42'
+	 */
+
+	pid = getpid();
+	now = time(NULL);
+
+	ret = snprintf(config->conf_file.socks5_username,
+			sizeof(config->conf_file.socks5_username), isolate_username_fmt,
+			(long) pid, (long long int) now);
+	if (ret < 0 || ret >= (int) sizeof(config->conf_file.socks5_username)) {
+		ret = -ENOBUFS;
+		goto end;
+	}
+
+	ret = snprintf(config->conf_file.socks5_password,
+			sizeof(config->conf_file.socks5_password), "%s", isolate_password);
+	if (ret < 0 || ret >= (int) sizeof(config->conf_file.socks5_password)) {
+		ret = -ENOBUFS;
+		goto end;
+	}
+
+	DBG("[config]: %s: '%s'/'%s'", conf_isolate_pid_str,
+			config->conf_file.socks5_username,
+			config->conf_file.socks5_password);
+
+	config->socks5_use_auth = 1;
+	ret = 0;
+
+end:
 	return ret;
 }
 

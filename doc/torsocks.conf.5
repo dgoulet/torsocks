@@ -83,6 +83,14 @@ Allow outbound connections to the loopback interface meaning that connect()
 will be allowed to connect to localhost addresses bypassing Tor.  This option
 should not be used by most users. (Default: 0)
 
+.TP
+.I IsolatePID 0|1
+Set Torsocks to use an automatically generated SOCKS5 username/password
+based on the process ID and current time, that makes the connections to Tor
+use a different circuit from other existing streams in Tor on a per-process
+basis.  If set, the SOCKS5Username and SOCKS5Password options must not be
+set. (Default: 0)
+
 .SH EXAMPLE
   $ export TORSOCKS_CONF_FILE=$PWD/torsocks.conf
   $ torsocks ssh account@sshserver.com

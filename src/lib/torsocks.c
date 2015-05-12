@@ -75,7 +75,7 @@ static void clean_exit(int status)
 static void read_env(void)
 {
 	int ret;
-	const char *username, *password, *allow_in;
+	const char *username, *password, *allow_in, *isolate_pid;
 
 	if (is_suid) {
 		goto end;
@@ -84,6 +84,14 @@ static void read_env(void)
 	allow_in = getenv(DEFAULT_ALLOW_INBOUND_ENV);
 	if (allow_in) {
 		ret = conf_file_set_allow_inbound(allow_in, &tsocks_config);
+		if (ret < 0) {
+			goto error;
+		}
+	}
+
+	isolate_pid = getenv(DEFAULT_ISOLATE_PID_ENV);
+	if (isolate_pid) {
+		ret = conf_file_set_isolate_pid(isolate_pid, &tsocks_config);
 		if (ret < 0) {
 			goto error;
 		}
@@ -181,6 +189,12 @@ static void init_config(void)
 
 	/* Handle possible env. variables. */
 	read_env();
+
+	/* Finalize the SOCKS auth (Isolation) settings. */
+	ret = conf_apply_socks_auth(&tsocks_config);
+	if (ret < 0) {
+		clean_exit(EXIT_FAILURE);
+	}
 }
 
 /*

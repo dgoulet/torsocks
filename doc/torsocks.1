@@ -47,6 +47,11 @@ Set password for the SOCKS5 authentication. Use for circuit isolation in Tor.
 Note that you MUST have a username set either by the command line, environment
 variable or configuration file (torsocks.conf(5)).
 .TP
+.BR "\-i, \-\-isolate"
+Automatic tor isolation. Set the username and password for the SOCKS5
+authentication method to a PID/current time based value automatically. Username
+and Password MUST NOT be set.
+.TP
 .BR "\-d, \-\-debug"
 Activate the debug mode. Output will be written on stderr.
 .TP

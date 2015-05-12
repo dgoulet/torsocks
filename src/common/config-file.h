@@ -83,6 +83,13 @@ struct configuration {
 	 * Allow outbound connections to localhost that bypass Tor.
 	 */
 	unsigned int allow_outbound_localhost:1;
+
+	/*
+	 * Automatically set the SOCKS5 authentication to a unique per-process
+	 * value. If this value is set, the user MUST NOT have provided a
+	 * username or password.
+	 */
+	unsigned int isolate_pid:1;
 };
 
 int config_file_read(const char *filename, struct configuration *config);
@@ -94,5 +101,8 @@ int conf_file_set_socks5_user(const char *username,
 int conf_file_set_allow_inbound(const char *val, struct configuration *config);
 int conf_file_set_allow_outbound_localhost(const char *val, struct
 		configuration *config);
+int conf_file_set_isolate_pid(const char *val, struct configuration *config);
+
+int conf_apply_socks_auth(struct configuration *config);
 
 #endif /* CONFIG_FILE_H */

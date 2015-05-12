@@ -66,4 +66,7 @@
 /* Control if torsocks allows inbound connection or not. */
 #define DEFAULT_ALLOW_INBOUND_ENV   "TORSOCKS_ALLOW_INBOUND"
 
+/* Control if torsocks isolates based on PID or not. */
+#define DEFAULT_ISOLATE_PID_ENV     "TORSOCKS_ISOLATE_PID"
+
 #endif /* TORSOCKS_DEFAULTS_H */
