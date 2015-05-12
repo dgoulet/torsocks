@@ -476,6 +476,7 @@ int tsocks_tor_resolve(int af, const char *hostname, void *ip_addr)
 	int ret;
 	size_t addr_len;
 	struct connection conn;
+	uint8_t socks5_method;
 
 	assert(hostname);
 	assert(ip_addr);
@@ -526,9 +527,31 @@ int tsocks_tor_resolve(int af, const char *hostname, void *ip_addr)
 		goto error;
 	}
 
-	ret = setup_tor_connection(&conn, SOCKS5_NO_AUTH_METHOD);
+	/* Is this configuration is set to use SOCKS5 authentication. */
+	if (tsocks_config.socks5_use_auth) {
+		socks5_method = SOCKS5_USER_PASS_METHOD;
+	} else {
+		socks5_method = SOCKS5_NO_AUTH_METHOD;
+	}
+
+	ret = setup_tor_connection(&conn, socks5_method);
 	if (ret < 0) {
 		goto end_close;
+	}
+
+	/* For the user/pass method, send the request before resolve. */
+	if (socks5_method == SOCKS5_USER_PASS_METHOD) {
+		ret = socks5_send_user_pass_request(&conn,
+				tsocks_config.conf_file.socks5_username,
+				tsocks_config.conf_file.socks5_password);
+		if (ret < 0) {
+			goto end_close;
+		}
+
+		ret = socks5_recv_user_pass_reply(&conn);
+		if (ret < 0) {
+			goto end_close;
+		}
 	}
 
 	ret = socks5_send_resolve_request(hostname, &conn);
@@ -560,6 +583,7 @@ int tsocks_tor_resolve_ptr(const char *addr, char **ip, int af)
 {
 	int ret;
 	struct connection conn;
+	uint8_t socks5_method;
 
 	assert(addr);
 	assert(ip);
@@ -574,9 +598,31 @@ int tsocks_tor_resolve_ptr(const char *addr, char **ip, int af)
 	}
 	conn.dest_addr.domain = CONNECTION_DOMAIN_INET;
 
-	ret = setup_tor_connection(&conn, SOCKS5_NO_AUTH_METHOD);
+	/* Is this configuration is set to use SOCKS5 authentication. */
+	if (tsocks_config.socks5_use_auth) {
+		socks5_method = SOCKS5_USER_PASS_METHOD;
+	} else {
+		socks5_method = SOCKS5_NO_AUTH_METHOD;
+	}
+
+	ret = setup_tor_connection(&conn, socks5_method);
 	if (ret < 0) {
 		goto end_close;
+	}
+
+	/* For the user/pass method, send the request before resolve ptr. */
+	if (socks5_method == SOCKS5_USER_PASS_METHOD) {
+		ret = socks5_send_user_pass_request(&conn,
+				tsocks_config.conf_file.socks5_username,
+				tsocks_config.conf_file.socks5_password);
+		if (ret < 0) {
+			goto end_close;
+		}
+
+		ret = socks5_recv_user_pass_reply(&conn);
+		if (ret < 0) {
+			goto end_close;
+		}
 	}
 
 	ret = socks5_send_resolve_ptr_request(&conn, addr, af);
