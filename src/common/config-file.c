@@ -53,7 +53,7 @@ static unsigned int both_socks5_pass_user_set;
  */
 static const char *isolate_username_fmt = "torsocks-%ld:%lld";
 /* Default password for the IsolatePID option. */
-static const char *isolate_password = "42";
+static const char *isolate_password = "0";
 
 /*
  * Set the onion pool address range in the configuration object using the value
@@ -476,7 +476,7 @@ int conf_apply_socks_auth(struct configuration *config)
 
 	/* PID based isolation requested.
 	 *   Username: 'torsocks-' PID ':' TIME
-	 *   Password: '42'
+	 *   Password: '0'
 	 */
 
 	pid = getpid();
