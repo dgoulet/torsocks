@@ -565,7 +565,7 @@ int tsocks_tor_resolve(int af, const char *hostname, void *ip_addr)
 	if (socks5_method == SOCKS5_USER_PASS_METHOD) {
 		ret = auth_socks5(&conn);
 		if (ret < 0) {
-			goto error;
+			goto end_close;
 		}
 	}
 
@@ -629,7 +629,7 @@ int tsocks_tor_resolve_ptr(const char *addr, char **ip, int af)
 	if (socks5_method == SOCKS5_USER_PASS_METHOD) {
 		ret = auth_socks5(&conn);
 		if (ret < 0) {
-			goto error;
+			goto end_close;
 		}
 	}
 
