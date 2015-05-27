@@ -108,6 +108,7 @@ struct socks5_request_domain {
 struct socks5_request_resolve {
 	uint8_t len;
 	unsigned char name[UINT8_MAX];
+	uint16_t port;
 };
 
 /* Use for the Tor resolve ptr command. */
@@ -116,6 +117,7 @@ struct socks5_request_resolve_ptr {
 		uint8_t ipv4[4];
 		uint8_t ipv6[16];
 	} addr;
+	uint16_t port;
 };
 
 /* Non variable part of a reply. */

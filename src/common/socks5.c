@@ -564,20 +564,19 @@ ATTR_HIDDEN
 int socks5_send_resolve_request(const char *hostname, struct connection *conn)
 {
 	int ret, ret_send;
-	/*
-	 * Can't go bigger than that. 4 bytes for the header, 1 for the name len
-	 * and 255 for the name.
-	 */
-	unsigned char buffer[260];
 	size_t name_len, msg_len, data_len;
 	struct socks5_request msg;
 	struct socks5_request_resolve req;
+	/* Can't go bigger than that. 4 bytes for the header, 1 for the name len,
+	 * 255 for the name and 2 bytes for the port. */
+	unsigned char buffer[sizeof(msg) + sizeof(req)];
 
 	assert(hostname);
 	assert(conn);
 	assert(conn->fd >= 0);
 
 	memset(buffer, 0, sizeof(buffer));
+	memset(&req, 0, sizeof(req));
 	msg_len = sizeof(msg);
 
 	msg.ver = SOCKS5_VERSION;
@@ -596,11 +595,21 @@ int socks5_send_resolve_request(const char *hostname, struct connection *conn)
 	/* Setup resolve request. */
 	req.len = name_len;
 	memcpy(req.name, hostname, name_len);
+	/* Dummy port, tor doesn't need it. */
+	req.port = htons(42);
 
 	/* Copy final buffer. */
 	memcpy(buffer, &msg, msg_len);
-	memcpy(buffer + msg_len, &req, sizeof(req));
-	data_len = msg_len + sizeof(req);
+	data_len = msg_len;
+	/* Add the length of hostname. */
+	memcpy(buffer + data_len, &req.len, sizeof(req.len));
+	data_len += sizeof(req.len);
+	/* Add hostname without NULL terminated byte. */
+	memcpy(buffer + data_len, req.name, req.len);
+	data_len += req.len;
+	/* Add the dummy port at the end. */
+	memcpy(buffer + data_len, &req.port, sizeof(req.port));
+	data_len += sizeof(req.port);
 
 	ret_send = send_data(conn->fd, &buffer, data_len);
 	if (ret_send < 0) {
@@ -703,10 +712,11 @@ ATTR_HIDDEN
 int socks5_send_resolve_ptr_request(struct connection *conn, const void *ip, int af)
 {
 	int ret, ret_send;
-	unsigned char buffer[20];	/* Can't go higher than that (with IPv6). */
 	size_t msg_len, data_len;
 	struct socks5_request msg;
 	struct socks5_request_resolve_ptr req;
+	/* Can't go higher than that (with IPv6). */
+	unsigned char buffer[sizeof(msg) + sizeof(req)];
 
 	assert(conn);
 	assert(conn->fd >= 0);
@@ -724,11 +734,17 @@ int socks5_send_resolve_ptr_request(struct connection *conn, const void *ip, int
 	switch (af) {
 	case AF_INET:
 		msg.atyp = SOCKS5_ATYP_IPV4;
-		memcpy(req.addr.ipv4, ip, 4);
+		memcpy(req.addr.ipv4, ip, sizeof(req.addr.ipv4));
+		/* Copy right away the IP since we know the family type. */
+		memcpy(buffer + msg_len, &req.addr, sizeof(req.addr.ipv4));
+		data_len = msg_len + sizeof(req.addr.ipv4);
 		break;
 	case AF_INET6:
 		msg.atyp = SOCKS5_ATYP_IPV6;
-		memcpy(req.addr.ipv6, ip, 16);
+		memcpy(req.addr.ipv6, ip, sizeof(req.addr.ipv6));
+		/* Copy right away the IP since we know the family type. */
+		memcpy(buffer + msg_len, &req.addr, sizeof(req.addr.ipv6));
+		data_len = msg_len + sizeof(req.addr.ipv6);
 		break;
 	default:
 		ERR("Unknown address domain of %d", ip);
@@ -736,10 +752,13 @@ int socks5_send_resolve_ptr_request(struct connection *conn, const void *ip, int
 		goto error;
 	}
 
+	/* Dummy port, tor doesn't need it. */
+	req.port = htons(42);
+
 	/* Copy final buffer. */
 	memcpy(buffer, &msg, msg_len);
-	memcpy(buffer + msg_len, &req, sizeof(req));
-	data_len = msg_len + sizeof(req);
+	memcpy(buffer + data_len, &req.port, sizeof(req.port));
+	data_len += sizeof(req.port);
 
 	ret_send = send_data(conn->fd, &buffer, data_len);
 	if (ret_send < 0) {
