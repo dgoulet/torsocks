@@ -1,3 +1,39 @@
+2015-05-27 torsocks 2.1.0
+	* Fix: socks5 resolve wasn't sending data correctly
+	* Fix: wrong label when auth_socks5 fail
+	* Move SOCKS5 auth in a seperate function
+	* Send the SOCKS5 authentication for RESOLVE/RESOLVE_PTR requests.
+	* Change IsolatePID password from 42 to 0
+	* Add automatic per process isolation (IsolatePID)
+	* Ensure that torsocks initializes itself in the presence of C++.
+	* Merge remote-tracking branch 'yawning/getaddrinfo' into getaddrinfo
+	* Fix: indentation in getpeername test
+	* Merge remote-tracking branch 'yawning/getpeername'
+	* Add support for the various inotify routines when invoked via syscall().
+	* Support the eventfd2(2) syscall.
+	* Support the various epoll routines when invoked via syscall().
+	* Handle accept4(2) when invoked via syscall().
+	* Fix getaddrinfo() to respect AI_NUMERICHOST.
+	* Fix the broken getpeername() implementation.
+	* Support certain Linux specific syscalls.
+	* Allow TCP Fast Open clients go through tor
+	* Test: support out of tree make check
+	* configure.ac: avoid tests which have both -pie and -static
+	* Fix error messages about setuid/setgid executables
+	* Fix: switch back to a syscall whitelist scheme
+	* Add AllowOutboundLocalhost.
+	* Fix: syscall mmap for NetBSD
+	* Fix: use getsockname instead of getsockopt to get socket family
+	* Stop denying syscall() and add dangerous ones
+	* Fix: typo in the listen macro declaration
+	* Fix: improve getpeername to actually works
+	* Fix: improve Unix socket passing detection
+	* Test: add missing connection destroy
+	* Test: possible double free in onion test
+	* Test: fix memory leak in DNS test
+	* Add accept as an accepted value through syscall()
+	* Add cscope files to gitignore
+
 2014-08-11 torsocks 2.0.0
 	* Fix: compilation issue on Debian kfreebsd-i386
 	* Fix: add LICENSE file to repository
