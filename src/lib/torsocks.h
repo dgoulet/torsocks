@@ -417,7 +417,7 @@ extern struct onion_pool tsocks_onion_pool;
 
 extern unsigned int tsocks_cleaned_up;
 
-int tsocks_connect_to_tor(struct connection *conn);
+int tsocks_connect_to_tor(struct connection *conn, const struct sockaddr *addr);
 void *tsocks_find_libc_symbol(const char *symbol,
 		enum tsocks_sym_action action);
 int tsocks_tor_resolve(int af, const char *hostname, void *ip_addr);

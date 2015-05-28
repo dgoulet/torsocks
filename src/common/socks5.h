@@ -147,16 +147,21 @@ int socks5_recv_user_pass_reply(struct connection *conn);
 
 /* Connect request. */
 int socks5_send_connect_request(struct connection *conn);
-int socks5_recv_connect_reply(struct connection *conn);
+int socks5_recv_connect_reply(struct connection *conn,
+		const struct sockaddr *addr);
 
 /* Tor DNS resolve. */
 int socks5_send_resolve_request(const char *hostname, struct connection *conn);
-int socks5_recv_resolve_reply(struct connection *conn, void *addr,
-		size_t addrlent);
-int socks5_recv_resolve_ptr_reply(struct connection *conn, char **_hostname);
+int socks5_recv_resolve_reply(struct connection *conn, const char *hostname,
+		void *addr, size_t addrlent);
+int socks5_recv_resolve_ptr_reply(struct connection *conn,
+		const char *addr, char **_hostname);
 int socks5_send_resolve_ptr_request(struct connection *conn, const void *ip, int af);
 
 void socks5_init(ssize_t (*new_send_data)(int, const void *, size_t),
 		ssize_t (*new_recv_data)(int, void *, size_t));
+
+/* Print error messages in human readable form. */
+const char* socks5_error_message(uint8_t code);
 
 #endif /* TORSOCKS_SOCKS_H */

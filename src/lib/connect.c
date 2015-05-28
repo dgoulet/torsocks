@@ -196,7 +196,7 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 	}
 
 	/* Connect the socket to the Tor network. */
-	ret = tsocks_connect_to_tor(new_conn);
+	ret = tsocks_connect_to_tor(new_conn, addr);
 	if (ret < 0) {
 		ret_errno = -ret;
 		goto error_free;
