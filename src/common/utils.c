@@ -22,6 +22,7 @@
 #include <sys/socket.h>
 #include <assert.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -123,6 +124,7 @@ int utils_tokenize_ignore_comments(const char *_line, size_t size, char **tokens
 
 	assert(_line);
 	assert(tokens);
+	assert(size <= INT_MAX);
 
 	line = strdup(_line);
 	if (!line) {
@@ -145,7 +147,7 @@ int utils_tokenize_ignore_comments(const char *_line, size_t size, char **tokens
 		argc++;
 	}
 
-	if (argc > size) {
+	if (argc > (int)size) {
 		ret = -ENOMEM;
 		goto error;
 	}
