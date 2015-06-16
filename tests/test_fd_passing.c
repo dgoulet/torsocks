@@ -137,6 +137,8 @@ static ssize_t recv_unix_sock(int sock, void *buf, size_t len)
 	ssize_t ret = -1;
 	size_t len_last;
 
+	assert(len <= SSIZE_MAX);
+
 	memset(&msg, 0, sizeof(msg));
 
 	iov[0].iov_base = buf;
@@ -150,9 +152,10 @@ static ssize_t recv_unix_sock(int sock, void *buf, size_t len)
 		if (ret > 0) {
 			iov[0].iov_base += ret;
 			iov[0].iov_len -= ret;
-			assert(ret <= len_last);
+			assert((size_t)ret <= len_last);
 		}
-	} while ((ret > 0 && ret < len_last) || (ret < 0 && errno == EINTR));
+	} while ((ret > 0 && (size_t)ret < len_last) ||
+	    (ret < 0 && errno == EINTR));
 	if (ret < 0) {
 		perror("recvmsg");
 	} else if (ret > 0) {
