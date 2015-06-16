@@ -39,7 +39,7 @@ TSOCKS_LIBC_DECL(recvmsg, LIBC_RECVMSG_RET_TYPE, LIBC_RECVMSG_SIG)
  */
 static void close_fds(int *fds, size_t count)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < count; i++) {
 		tsocks_libc_close(fds[i]);
@@ -124,8 +124,8 @@ LIBC_RECVMSG_RET_TYPE tsocks_recvmsg(LIBC_RECVMSG_SIG)
 		 * chance here of having a crazy high value that could exhaust the
 		 * stack memory.
 		 */
-		size_t sizeof_fds = (cmsg->cmsg_len - sizeof(*cmsg)) / sizeof(int);
-		int i, fds[sizeof_fds];
+		size_t i, sizeof_fds = (cmsg->cmsg_len - sizeof(*cmsg)) / sizeof(int);
+		int fds[sizeof_fds];
 
 		memcpy(&fds, CMSG_DATA(cmsg), sizeof(fds));
 
