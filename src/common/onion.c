@@ -141,7 +141,7 @@ error:
 ATTR_HIDDEN
 void onion_pool_destroy(struct onion_pool *pool)
 {
-	int i;
+	uint32_t i;
 
 	assert(pool);
 
@@ -220,7 +220,7 @@ ATTR_HIDDEN
 struct onion_entry *onion_entry_find_by_name(const char *onion_name,
 		struct onion_pool *pool)
 {
-	int i;
+	uint32_t i;
 	struct onion_entry *entry = NULL;
 
 	assert(onion_name);
@@ -251,7 +251,7 @@ ATTR_HIDDEN
 struct onion_entry *onion_entry_find_by_addr(const struct sockaddr *sa,
 		struct onion_pool *pool)
 {
-	int i;
+	uint32_t i;
 	struct onion_entry *entry = NULL;
 	const struct sockaddr_in *sin;
 
