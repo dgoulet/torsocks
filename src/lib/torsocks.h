@@ -154,7 +154,11 @@ struct hostent **result, int *h_errnop
 #define LIBC_GETHOSTBYADDR_NAME gethostbyaddr
 #define LIBC_GETHOSTBYADDR_NAME_STR XSTR(LIBC_GETHOSTBYADDR_NAME)
 #define LIBC_GETHOSTBYADDR_RET_TYPE struct hostent *
+#if defined(__NetBSD__) && __NetBSD_Version__ < 699002400
+#define LIBC_GETHOSTBYADDR_SIG const char *addr, socklen_t len, int type
+#else
 #define LIBC_GETHOSTBYADDR_SIG const void *addr, socklen_t len, int type
+#endif
 #define LIBC_GETHOSTBYADDR_ARGS addr, len, type
 
 /* GNU extension. Reentrant version. */

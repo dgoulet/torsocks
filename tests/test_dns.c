@@ -86,7 +86,7 @@ static void test_gethostbyaddr(const struct test_host *host)
 
     addr = inet_addr(host->ip);
 
-    he = gethostbyaddr(&addr, INET_ADDRSTRLEN, AF_INET);
+    he = gethostbyaddr((const void *)&addr, INET_ADDRSTRLEN, AF_INET);
     if (he) {
 		ok(strcmp(host->name, he->h_name) == 0,
 				"Resolving address %s", host->ip);
