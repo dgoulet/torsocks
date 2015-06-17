@@ -1,3 +1,15 @@
+TESTS = \
+	test_compat \
+	test_config-file \
+	test_connection \
+	test_onion \
+	test_socks5 \
+	test_utils \
+	# end of TESTS
+
+TAP_DRIVER = $(top_srcdir)/tests/tap-driver.sh
+TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) $(TAP_DRIVER)
+
 AM_CFLAGS = -I$(top_srcdir)/include \
 			-I$(top_srcdir)/src \
 			-I$(top_srcdir)/tests/utils/ \

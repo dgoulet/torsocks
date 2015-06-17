@@ -1,5 +1,16 @@
 SUBDIRS = utils unit
 
+TESTS = \
+	test_connect \
+	test_dns \
+	test_fd_passing \
+	test_getpeername \
+	test_socket \
+	# end of TESTS
+
+TAP_DRIVER = $(top_srcdir)/tests/tap-driver.sh
+TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) $(TAP_DRIVER)
+
 AM_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src -I$(top_srcdir)/tests/utils/ -I$(srcdir)
 
 LIBTAP=$(top_builddir)/tests/utils/tap/libtap.la
@@ -22,23 +33,3 @@ test_fd_passing_LDADD = $(LIBTAP) $(LIBTORSOCKS) -lpthread
 
 test_getpeername_SOURCES = test_getpeername.c
 test_getpeername_LDADD = $(LIBTAP) $(LIBTORSOCKS)
-
-check-am:
-	./run.sh test_list
-
-dist_noinst_SCRIPTS = test_list run.sh
-EXTRA_DIST = run.sh test_list
-
-all-local:
-	@if [ x"$(srcdir)" != x"$(builddir)" ]; then \
-		for script in $(EXTRA_DIST); do \
-			cp -f $(srcdir)/$$script $(builddir); \
-		done; \
-	fi
-
-clean-local:
-	@if [ x"$(srcdir)" != x"$(builddir)" ]; then \
-		for script in $(EXTRA_DIST); do \
-			rm -f $(builddir)/$$script; \
-		done; \
-	fi
