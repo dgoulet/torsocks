@@ -390,7 +390,7 @@ error:
 
 void *thread_send(void *data)
 {
-	int sock, fds[3], pipe_fds[2];
+	int sock, fds[3], pipe_fds[2] = {-1, -1};
 	ssize_t len;
 
 	sock = connect_unix_sock(sockpath);
