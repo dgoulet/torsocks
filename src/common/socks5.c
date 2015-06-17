@@ -49,9 +49,13 @@ static ssize_t recv_data_impl(int fd, void *buf, size_t len)
 				/* Try again after interruption. */
 				continue;
 			} else if (errno == EAGAIN || errno == EWOULDBLOCK) {
-				if (index) {
-					/* Return the number of bytes received up to this point. */
-					ret = index;
+				/* Wait for data to become available */
+				fd_set readfds;
+				FD_ZERO(&readfds);
+				FD_SET(fd, &readfds);
+				if (select(fd + 1, &readfds, NULL, NULL, NULL) < 0) {
+					ret = -errno;
+					goto error;
 				}
 				continue;
 			} else if (read_len == 0) {
@@ -102,9 +106,13 @@ static ssize_t send_data_impl(int fd, const void *buf, size_t len)
 				/* Send again after interruption. */
 				continue;
 			} else if (errno == EAGAIN || errno == EWOULDBLOCK) {
-				if (index) {
-					/* Return the number of bytes sent up to this point. */
-					ret = index;
+				/* Wait for buffer space to become available */
+				fd_set writefds;
+				FD_ZERO(&writefds);
+				FD_SET(fd, &writefds);
+				if (select(fd + 1, NULL, &writefds, NULL, NULL) < 0) {
+					ret = -errno;
+					goto error;
 				}
 				continue;
 			} else {
