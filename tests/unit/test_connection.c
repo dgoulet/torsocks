@@ -49,6 +49,9 @@ static void test_connection_usage(void)
 		conn->dest_addr.domain == CONNECTION_DOMAIN_INET &&
 		conn->refcount.count == 1,
 		"Valid connection creation");
+	if (!conn) {
+		return;
+	}
 
 	conn2 = connection_create(43, (struct sockaddr *) &c_addr.u.sin);
 	ok(conn2 &&
@@ -56,6 +59,9 @@ static void test_connection_usage(void)
 		conn2->dest_addr.domain == CONNECTION_DOMAIN_INET &&
 		conn2->refcount.count == 1,
 		"Valid second connection creation");
+	if (!conn2) {
+		return;
+	}
 
 	connection_registry_lock();
 	connection_insert(conn);
