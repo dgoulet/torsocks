@@ -54,7 +54,11 @@
 
 /* socket(2) */
 #define LIBC_SOCKET_NAME socket
+#if defined(__NetBSD__) && __NetBSD_Version__ >= 399002200
+#define LIBC_SOCKET_NAME_STR "__socket30"
+#else
 #define LIBC_SOCKET_NAME_STR XSTR(LIBC_SOCKET_NAME)
+#endif
 #define LIBC_SOCKET_RET_TYPE int
 #define LIBC_SOCKET_SIG \
 	int domain, int type, int protocol
