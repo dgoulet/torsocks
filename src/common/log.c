@@ -47,14 +47,12 @@ int tsocks_loglevel = DEFAULT_LOG_LEVEL;
 static size_t add_time_to_log(char *buf, size_t len)
 {
 	time_t now;
-	const struct tm *tm;
 
 	assert(buf);
 
 	/* Get time stamp. */
 	time(&now);
-	tm = localtime(&now);
-	return strftime(buf, len, "[%b %d %H:%M:%S] ", tm);
+	return snprintf(buf, len, "%llu ", (unsigned long long)now);
 }
 
 /*
