@@ -60,7 +60,7 @@ static ssize_t recv_data_impl(int fd, void *buf, size_t len)
 				continue;
 			} else if (read_len == 0) {
 				/* Orderly shutdown from Tor daemon. Stop. */
-				ret = -1;
+				ret = -EIO;
 				goto error;
 			} else {
 				PERROR("recv socks5 data");
