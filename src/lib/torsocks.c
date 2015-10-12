@@ -175,6 +175,9 @@ static void init_config(void)
 		tsocks_config.conf_file.onion_mask = atoi(DEFAULT_ONION_ADDR_MASK);
 	}
 
+	/* Handle possible env. variables. */
+	read_env();
+
 	/* Create the Tor SOCKS5 connection address. */
 	ret = connection_addr_set(tsocks_config.conf_file.tor_domain,
 			tsocks_config.conf_file.tor_address,
@@ -186,9 +189,6 @@ static void init_config(void)
 		 */
 		clean_exit(EXIT_FAILURE);
 	}
-
-	/* Handle possible env. variables. */
-	read_env();
 
 	/* Finalize the SOCKS auth (Isolation) settings. */
 	ret = conf_apply_socks_auth(&tsocks_config);
