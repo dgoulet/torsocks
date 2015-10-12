@@ -141,7 +141,7 @@ static void init_config(void)
 	const char *filename = NULL;
 
 	if (!is_suid) {
-		filename = getenv("TORSOCKS_CONF_FILE");
+		filename = getenv(DEFAULT_CONF_FILE_ENV);
 	}
 
 	ret  = config_file_read(filename, &tsocks_config);
