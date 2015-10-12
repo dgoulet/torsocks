@@ -63,6 +63,10 @@
 #define DEFAULT_SOCKS5_USER_ENV     "TORSOCKS_USERNAME"
 #define DEFAULT_SOCKS5_PASS_ENV     "TORSOCKS_PASSWORD"
 
+/* Env. variable for Tor hostname and port. */
+#define DEFAULT_TOR_ADDRESS_ENV     "TORSOCKS_TOR_ADDRESS"
+#define DEFAULT_TOR_PORT_ENV        "TORSOCKS_TOR_PORT"
+
 /* Control if torsocks allows inbound connection or not. */
 #define DEFAULT_ALLOW_INBOUND_ENV   "TORSOCKS_ALLOW_INBOUND"
 

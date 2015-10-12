@@ -75,7 +75,7 @@ static void clean_exit(int status)
 static void read_env(void)
 {
 	int ret;
-	const char *username, *password, *allow_in, *isolate_pid;
+	const char *username, *password, *allow_in, *isolate_pid, *tor_address, *tor_port;
 
 	if (is_suid) {
 		goto end;
@@ -92,6 +92,22 @@ static void read_env(void)
 	isolate_pid = getenv(DEFAULT_ISOLATE_PID_ENV);
 	if (isolate_pid) {
 		ret = conf_file_set_isolate_pid(isolate_pid, &tsocks_config);
+		if (ret < 0) {
+			goto error;
+		}
+	}
+
+	tor_address = getenv(DEFAULT_TOR_ADDRESS_ENV);
+	if (tor_address) {
+		ret = conf_file_set_tor_address(tor_address, &tsocks_config);
+		if (ret < 0) {
+			goto error;
+		}
+	}
+
+	tor_port = getenv(DEFAULT_TOR_PORT_ENV);
+	if (tor_port) {
+		ret = conf_file_set_tor_port(tor_port, &tsocks_config);
 		if (ret < 0) {
 			goto error;
 		}

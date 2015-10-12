@@ -140,16 +140,18 @@ usage ()
 	echo "usage: $0 command args"
 	echo ""
 	echo "Options:"
-	echo "  -h, --help      Show this help"
-	echo "      --shell     Spawn a torified shell"
-	echo "      --version   Show version"
-	echo "  -d, --debug     Set debug mode."
-	echo "  -u, --user NAME Username for the SOCKS5 authentication"
-	echo "  -p, --pass NAME Password for the SOCKS5 authentication"
-	echo "  -i, --isolate   Automatic tor isolation. Can't be used with -u/-p"
-	echo "  on, off         Set/Unset your shell to use Torsocks by default"
-	echo "                  Make sure to source the call when using this option. (See Examples)"
-	echo "  show, sh        Show the current value of the LD_PRELOAD"
+	echo "  -h, --help         Show this help"
+	echo "      --shell        Spawn a torified shell"
+	echo "      --version      Show version"
+	echo "  -d, --debug        Set debug mode."
+	echo "  -u, --user NAME    Username for the SOCKS5 authentication"
+	echo "  -p, --pass NAME    Password for the SOCKS5 authentication"
+	echo "  -i, --isolate      Automatic tor isolation. Can't be used with -u/-p"
+	echo "  -a, --address HOST Specify Tor address"
+	echo "  -P, --port PORT    Specify Tor port"
+	echo "  on, off            Set/Unset your shell to use Torsocks by default"
+	echo "                     Make sure to source the call when using this option. (See Examples)"
+	echo "  show, sh           Show the current value of the LD_PRELOAD"
 	echo ""
 	echo "Examples:"
 	echo ""
@@ -228,6 +230,22 @@ do
 				exit 1
 			fi
 			export TORSOCKS_PASSWORD=$2
+			shift
+			;;
+		-a|--address)
+			if [ -z $2 ]; then
+				echo "Missing address to -a" >&2
+				exit 1
+			fi
+			export TORSOCKS_TOR_ADDRESS=$2
+			shift
+			;;
+		-P|--port)
+			if [ -z $2 ]; then
+				echo "Missing port to -P" >&2
+				exit 1
+			fi
+			export TORSOCKS_TOR_PORT=$2
 			shift
 			;;
 		-i|--isolate)
