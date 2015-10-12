@@ -158,8 +158,8 @@ static void init_config(void)
 	 * are missing.
 	 */
 	if (!tsocks_config.conf_file.tor_address) {
-		tsocks_config.conf_file.tor_address = strdup(DEFAULT_TOR_ADDRESS);
-		if (!tsocks_config.conf_file.tor_address) {
+		ret = conf_file_set_tor_address(DEFAULT_TOR_ADDRESS, &tsocks_config);
+		if (ret < 0) {
 			/* Most likely ENOMEM thus we can't continue. */
 			clean_exit(EXIT_FAILURE);
 		}

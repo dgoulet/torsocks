@@ -115,75 +115,6 @@ error:
 }
 
 /*
- * Set the given string port in a configuration object.
- *
- * Return 0 on success or else a negative EINVAL if the port is equal to 0 or
- * over 65535.
- */
-static int set_tor_port(const char *port, struct configuration *config)
-{
-	int ret = 0;
-	char *endptr;
-	unsigned long _port;
-
-	assert(port);
-	assert(config);
-
-	/* Let's avoid a integer overflow here ;). */
-	_port = strtoul(port, &endptr, 10);
-	if (_port == 0 || _port > 65535) {
-		ret = -EINVAL;
-		ERR("Config file invalid port: %s", port);
-		goto error;
-	}
-
-	config->conf_file.tor_port = (in_port_t) _port;
-
-	DBG("Config file setting tor port to %lu", _port);
-
-error:
-	return ret;
-}
-
-/*
- * Set the given string address in a configuration object.
- *
- * Return 0 on success or else a negative value. On error, the address was not
- * recognized.
- */
-static int set_tor_address(const char *addr, struct configuration *config)
-{
-	int ret;
-
-	assert(addr);
-	assert(config);
-
-	ret = utils_is_address_ipv4(addr);
-	if (ret == 1 ) {
-		config->conf_file.tor_domain = CONNECTION_DOMAIN_INET;
-	} else {
-		ret = utils_is_address_ipv6(addr);
-		if (ret != 1) {
-			/* At this point, the addr is either v4 nor v6 so error. */
-			ERR("Config file unknown tor address: %s", addr);
-			goto error;
-		}
-		config->conf_file.tor_domain = CONNECTION_DOMAIN_INET6;
-	}
-	config->conf_file.tor_address = strdup(addr);
-	if (!config->conf_file.tor_address) {
-		ret = -ENOMEM;
-		goto error;
-	}
-
-	DBG("Config file setting tor address to %s", addr);
-	ret = 0;
-
-error:
-	return ret;
-}
-
-/*
  * Parse a single line of from a configuration file and set the value found in
  * the configuration object.
  *
@@ -209,12 +140,12 @@ static int parse_config_line(const char *line, struct configuration *config)
 	}
 
 	if (!strcmp(tokens[0], conf_toraddr_str)) {
-		ret = set_tor_address(tokens[1], config);
+		ret = conf_file_set_tor_address(tokens[1], config);
 		if (ret < 0) {
 			goto error;
 		}
 	} else if (!strcmp(tokens[0], conf_torport_str)) {
-		ret = set_tor_port(tokens[1], config);
+		ret = conf_file_set_tor_port(tokens[1], config);
 		if (ret < 0) {
 			goto error;
 		}
@@ -289,6 +220,83 @@ static int parse_config_file(FILE *fp, struct configuration *config)
 			goto error;
 		}
 	}
+
+error:
+	return ret;
+}
+
+/*
+ * Set the given string port in a configuration object.
+ *
+ * Return 0 on success or else a negative EINVAL if the port is equal to 0 or
+ * over 65535.
+ */
+ATTR_HIDDEN
+int conf_file_set_tor_port(const char *port, struct configuration *config)
+{
+	int ret = 0;
+	char *endptr;
+	unsigned long _port;
+
+	assert(port);
+	assert(config);
+
+	/* Let's avoid a integer overflow here ;). */
+	_port = strtoul(port, &endptr, 10);
+	if (_port == 0 || _port > 65535) {
+		ret = -EINVAL;
+		ERR("Config file invalid port: %s", port);
+		goto error;
+	}
+
+	config->conf_file.tor_port = (in_port_t) _port;
+
+	DBG("Config file setting tor port to %lu", _port);
+
+error:
+	return ret;
+}
+
+/*
+ * Set the given string address in a configuration object.
+ *
+ * Return 0 on success or else a negative value. On error, the address was not
+ * recognized.
+ */
+ATTR_HIDDEN
+int conf_file_set_tor_address(const char *addr, struct configuration *config)
+{
+	int ret;
+
+	assert(addr);
+	assert(config);
+
+	ret = utils_is_address_ipv4(addr);
+	if (ret == 1 ) {
+		config->conf_file.tor_domain = CONNECTION_DOMAIN_INET;
+	} else {
+		ret = utils_is_address_ipv6(addr);
+		if (ret != 1) {
+			/* At this point, the addr is either v4 nor v6 so error. */
+			ERR("Config file unknown tor address: %s", addr);
+			goto error;
+		}
+		config->conf_file.tor_domain = CONNECTION_DOMAIN_INET6;
+	}
+
+	if (config->conf_file.tor_address == NULL) {
+		free(config->conf_file.tor_address);
+		config->conf_file.tor_address = NULL;
+	}
+
+	config->conf_file.tor_address = strdup(addr);
+	if (!config->conf_file.tor_address) {
+		ret = -ENOMEM;
+		goto error;
+	}
+
+	DBG("Config file setting tor address to %s", addr);
+	ret = 0;
 
 error:
 	return ret;
@@ -538,12 +546,12 @@ int config_file_read(const char *filename, struct configuration *config)
 	fp = fopen(filename, "r");
 	if (!fp) {
 		WARN("Config file not found: %s. Using default for Tor", filename);
-		(void) set_tor_address(DEFAULT_TOR_ADDRESS, config);
+		(void) conf_file_set_tor_address(DEFAULT_TOR_ADDRESS, config);
 		/*
 		 * We stringify the default value here so we can print the debug
 		 * statement in the function call to set port.
 		 */
-		(void) set_tor_port(XSTR(DEFAULT_TOR_PORT), config);
+		(void) conf_file_set_tor_port(XSTR(DEFAULT_TOR_PORT), config);
 
 		ret = set_onion_info(
 				DEFAULT_ONION_ADDR_RANGE "/" DEFAULT_ONION_ADDR_MASK, config);

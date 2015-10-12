@@ -94,6 +94,8 @@ struct configuration {
 
 int config_file_read(const char *filename, struct configuration *config);
 void config_file_destroy(struct config_file *conf);
+int conf_file_set_tor_address(const char *addr, struct configuration *config);
+int conf_file_set_tor_port(const char *port, struct configuration *config);
 int conf_file_set_socks5_pass(const char *password,
 		struct configuration *config);
 int conf_file_set_socks5_user(const char *username,
