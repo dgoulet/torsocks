@@ -121,7 +121,7 @@ int connection_addr_set(enum connection_domain domain, const char *ip,
 	assert(ip);
 	assert(addr);
 
-	if (port == 0 || port >= 65535) {
+	if (port == 0) {
 		ret = -EINVAL;
 		ERR("Connection addr set port out of range: %d", port);
 		goto error;
