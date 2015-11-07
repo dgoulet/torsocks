@@ -78,10 +78,11 @@ allowed for non localhost address so the applicaton can handle incoming
 connection. Note that Unix socket are allowed. (Default: 0)
 
 .TP
-.I AllowOutboundLocalhost 0|1
+.I AllowOutboundLocalhost 0|1|2
 Allow outbound connections to the loopback interface meaning that connect()
-will be allowed to connect to localhost addresses bypassing Tor.  This option
-should not be used by most users. (Default: 0)
+will be allowed to connect to localhost addresses bypassing Tor.  If set to 1,
+TCP connections will be allowed.  If set to 2, both TCP/IP and UDP connections
+will be allowed.  This option should not be used by most users. (Default: 0)
 
 .TP
 .I IsolatePID 0|1

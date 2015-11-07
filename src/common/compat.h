@@ -220,9 +220,13 @@ void tsocks_once(tsocks_once_t *o, void (*init_routine)(void));
 #if defined(__NetBSD__)
 #define IS_SOCK_STREAM(type) \
 	((type & ~(SOCK_NONBLOCK | SOCK_CLOEXEC | SOCK_NOSIGPIPE)) == SOCK_STREAM)
+#define IS_SOCK_DGRAM(type) \
+	((type & ~(SOCK_NONBLOCK | SOCK_CLOEXEC | SOCK_NOSIGPIPE)) == SOCK_DGRAM)
 #else /* __NetBSD__ */
 #define IS_SOCK_STREAM(type) \
 	((type & ~(SOCK_NONBLOCK | SOCK_CLOEXEC)) == SOCK_STREAM)
+#define IS_SOCK_DGRAM(type) \
+	((type & ~(SOCK_NONBLOCK | SOCK_CLOEXEC)) == SOCK_DGRAM)
 #endif /* __NetBSD__ */
 
 #endif /* TORSOCKS_COMPAT_H */

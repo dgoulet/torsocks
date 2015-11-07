@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2008 - Shaun Clowes <delius@progsoc.org> 
+ * Copyright (C) 2000-2008 - Shaun Clowes <delius@progsoc.org>
  * 				 2008-2011 - Robert Hogan <robert@roberthogan.net>
  * 				 	  2013 - David Goulet <dgoulet@ev0ke.net>
  *
@@ -45,7 +45,7 @@ TSOCKS_LIBC_DECL(connect, LIBC_CONNECT_RET_TYPE, LIBC_CONNECT_SIG)
  * On error or if validation fails, errno is set and -1 is returned. The caller
  * should *return* right away an error.
  */
-static int validate_socket(int sockfd, const struct sockaddr *addr)
+int tsocks_validate_socket(int sockfd, const struct sockaddr *addr)
 {
 	int ret, sock_type;
 	socklen_t optlen;
@@ -76,8 +76,14 @@ static int validate_socket(int sockfd, const struct sockaddr *addr)
 	DBG("[connect] Socket family %s and type %d",
 			addr->sa_family == AF_INET ? "AF_INET" : "AF_INET6", sock_type);
 
-	/* Refuse non stream socket since Tor can't handle that. */
 	if (!IS_SOCK_STREAM(sock_type)) {
+		if ((tsocks_config.allow_outbound_localhost == 2) &&
+				IS_SOCK_DGRAM(sock_type) && utils_sockaddr_is_localhost(addr)) {
+				DBG("[connect] Allowing localhost UDP socket.");
+				goto libc_call;
+		}
+
+		/* Refuse non stream socket since Tor can't handle that. */
 		DBG("[connect] UDP or ICMP stream can't be handled. Rejecting.");
 		errno = EPERM;
 		goto error;
@@ -115,7 +121,7 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 	 * Validate socket values in order to see if we can handle this connect
 	 * through Tor.
 	 */
-	ret = validate_socket(sockfd, addr);
+	ret = tsocks_validate_socket(sockfd, addr);
 	if (ret == 1) {
 		/* Tor can't handle it so send it to the libc. */
 		goto libc_connect;

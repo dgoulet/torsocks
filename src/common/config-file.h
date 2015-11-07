@@ -82,7 +82,7 @@ struct configuration {
 	/*
 	 * Allow outbound connections to localhost that bypass Tor.
 	 */
-	unsigned int allow_outbound_localhost:1;
+	unsigned int allow_outbound_localhost;
 
 	/*
 	 * Automatically set the SOCKS5 authentication to a unique per-process

@@ -406,6 +406,9 @@ int conf_file_set_allow_outbound_localhost(const char *val,
 	} else if (ret == 1) {
 		config->allow_outbound_localhost = 1;
 		DBG("[config] Outbound localhost connections allowed.");
+	} else if (ret == 2) {
+		config->allow_outbound_localhost = 2;
+		DBG("[config] Outbound localhost connections + UDP allowed.");
 	} else {
 		ERR("[config] Invalid %s value for %s", val,
 				conf_allow_outbound_localhost_str);

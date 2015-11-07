@@ -48,6 +48,16 @@ LIBC_SOCKET_RET_TYPE tsocks_socket(LIBC_SOCKET_SIG)
 		}
 
 		/*
+		 * If outbound localhost UDP traffic is allowed, then allow all UDP
+		 * socket creation.  Validation on the destination addr is done at
+		 * connect()/sendto() time.
+		 */
+		if ((tsocks_config.allow_outbound_localhost == 2) &&
+				IS_SOCK_DGRAM(type)) {
+			goto end;
+		}
+
+		/*
 		 * Print this message only in debug mode. Very often, applications uses
 		 * the libc to do DNS resolution which first tries with UDP and then
 		 * with TCP. It's not critical for the user to know that a non TCP

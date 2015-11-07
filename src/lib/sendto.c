@@ -43,8 +43,8 @@ TSOCKS_LIBC_DECL(sendto, LIBC_SENDTO_RET_TYPE, LIBC_SENDTO_SIG)
  */
 LIBC_SENDTO_RET_TYPE tsocks_sendto(LIBC_SENDTO_SIG)
 {
-#ifdef MSG_FASTOPEN
 	int ret;
+#ifdef MSG_FASTOPEN
 
 	if ((flags & MSG_FASTOPEN) == 0) {
 		/* No TFO, fallback to libc sendto() */
@@ -63,6 +63,12 @@ LIBC_SENDTO_RET_TYPE tsocks_sendto(LIBC_SENDTO_SIG)
 
 libc_sendto:
 #endif /* MSG_FASTOPEN */
+
+	/* Validate that the socket and address are ok to send traffic to. */
+	ret = tsocks_validate_socket(sockfd, dest_addr);
+	if (ret == -1) {
+		return ret;
+	}
 
 	return tsocks_libc_sendto(LIBC_SENDTO_ARGS);
 }
