@@ -96,20 +96,35 @@ tor_shell ()
 torify_app ()
 {
 	local app_path=`which $1`
-
-	# NEVER remove that line or else nothing it torified.
-	set_ld_preload
+	local getcap=`PATH="$PATH:/usr/sbin:/sbin" which getcap`
+	local caps=
 
 	if [ -z $1 ]; then
 		echo "Please provide an application to torify." >&2
 	elif [ -z $app_path ]; then
 		echo "ERROR: $1 cannot be found." >&2
 		exit 1
-	elif [ -u $app_path ]; then
+	fi
+
+	# This must be before torifying because getcap uses cap_get_file(3)
+	# via syscall(2) which breaks torsocks.
+	if [ -n $getcap ]; then
+		caps=`$getcap $app_path`
+	fi
+
+	# NEVER remove that line or else nothing it torified.
+	set_ld_preload
+
+	if [ -u $app_path ]; then
 		echo "ERROR: $1 is setuid. torsocks will not work on a setuid executable." >&2
 		exit 1
 	elif [ -g $app_path ]; then
 		echo "ERROR: $1 is setgid. torsocks will not work on a setgid executable." >&2
+		exit 1
+	elif [ -n "$caps" ]; then
+		echo "ERROR: $1 gains the following elevated capabilities. torsocks will \
+not work with privledged executables.
+$caps" >&2
 		exit 1
 	fi
 
