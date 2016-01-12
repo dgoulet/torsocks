@@ -51,7 +51,7 @@ LIBC_SENDTO_RET_TYPE tsocks_sendto(LIBC_SENDTO_SIG)
 		goto libc_sendto;
 	}
 
-	DBG("[sendto] TCP fast open catched on fd %d", sockfd);
+	DBG("[sendto] TCP fast open caught on fd %d", sockfd);
 
 	ret = connect(sockfd, dest_addr, addrlen);
 	if (ret == 0) {

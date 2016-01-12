@@ -109,7 +109,7 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 	struct connection *new_conn;
 	struct onion_entry *on_entry;
 
-	DBG("Connect catched on fd %d", sockfd);
+	DBG("Connect caught on fd %d", sockfd);
 
 	/*
 	 * Validate socket values in order to see if we can handle this connect
