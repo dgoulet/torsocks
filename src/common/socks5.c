@@ -45,7 +45,7 @@ wait_on_fd(int fd)
 
 /*
  * Receive data on a given file descriptor using recv(2). This handles partial
- * send and EINTR.
+ * recv and EINTR.
  *
  * Return the number of bytes received or a negative errno error.
  */

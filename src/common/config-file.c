@@ -115,7 +115,7 @@ error:
 }
 
 /*
- * Parse a single line of from a configuration file and set the value found in
+ * Parse a single line from a configuration file and set the value found in
  * the configuration object.
  *
  * Return 0 on success or else a negative value.
@@ -241,7 +241,7 @@ int conf_file_set_tor_port(const char *port, struct configuration *config)
 	assert(port);
 	assert(config);
 
-	/* Let's avoid a integer overflow here ;). */
+	/* Let's avoid an integer overflow here ;). */
 	_port = strtoul(port, &endptr, 10);
 	if (_port == 0 || _port > 65535) {
 		ret = -EINVAL;

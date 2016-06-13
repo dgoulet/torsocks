@@ -111,10 +111,10 @@ int utils_is_address_ipv6(const char *ip)
 }
 
 /*
- * This routines breaks up input lines into tokens and places these tokens into
- * the array specified by tokens
+ * This routine breaks up input lines into tokens and places these tokens into
+ * the array specified by tokens.
  *
- * Return the number of token plus one set in the given array.
+ * Return the number of tokens plus one set in the given array.
  */
 ATTR_HIDDEN
 int utils_tokenize_ignore_comments(const char *_line, size_t size, char **tokens)
