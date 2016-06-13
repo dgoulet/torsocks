@@ -26,6 +26,23 @@
 #include "log.h"
 #include "socks5.h"
 
+/* Wait on the given fd for data to become available or any I/O event. Return
+ * 1 on success else a negative errno. */
+static int
+wait_on_fd(int fd)
+{
+	/* By default, fd is ready unless select fails. */
+	int ret = 1;
+	fd_set readfds;
+
+	FD_ZERO(&readfds);
+	FD_SET(fd, &readfds);
+	if (select(fd + 1, &readfds, NULL, NULL, NULL) < 0) {
+		ret = -errno;
+	}
+	return ret;
+}
+
 /*
  * Receive data on a given file descriptor using recv(2). This handles partial
  * send and EINTR.
@@ -49,12 +66,8 @@ static ssize_t recv_data_impl(int fd, void *buf, size_t len)
 				/* Try again after interruption. */
 				continue;
 			} else if (errno == EAGAIN || errno == EWOULDBLOCK) {
-				/* Wait for data to become available */
-				fd_set readfds;
-				FD_ZERO(&readfds);
-				FD_SET(fd, &readfds);
-				if (select(fd + 1, &readfds, NULL, NULL, NULL) < 0) {
-					ret = -errno;
+				ret = wait_on_fd(fd);
+				if (ret < 0) {
 					goto error;
 				}
 				continue;
@@ -106,12 +119,8 @@ static ssize_t send_data_impl(int fd, const void *buf, size_t len)
 				/* Send again after interruption. */
 				continue;
 			} else if (errno == EAGAIN || errno == EWOULDBLOCK) {
-				/* Wait for buffer space to become available */
-				fd_set writefds;
-				FD_ZERO(&writefds);
-				FD_SET(fd, &writefds);
-				if (select(fd + 1, NULL, &writefds, NULL, NULL) < 0) {
-					ret = -errno;
+				ret = wait_on_fd(fd);
+				if (ret < 0) {
 					goto error;
 				}
 				continue;
