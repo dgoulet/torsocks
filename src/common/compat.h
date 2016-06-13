@@ -22,7 +22,8 @@
 #define __darwin__	1
 #endif
 
-#if (defined(__GLIBC__) || defined(__FreeBSD__) || defined(__darwin__) || defined(__NetBSD__))
+#if (defined(__linux__) || defined(__GLIBC__) || defined(__FreeBSD__) || \
+		defined(__darwin__) || defined(__NetBSD__))
 
 #define RTLD_NEXT	((void *) -1)
 
@@ -55,7 +56,7 @@ void tsocks_once(tsocks_once_t *o, void (*init_routine)(void));
 
 #else
 #error "OS not supported."
-#endif /* __GLIBC__, __darwin__, __FreeBSD__, __NetBSD__ */
+#endif /* __linux__, __GLIBC__, __darwin__, __FreeBSD__, __NetBSD__ */
 
 #if defined(__linux__)
 #include <unistd.h>

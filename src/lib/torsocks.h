@@ -33,7 +33,8 @@
 #define TSOCKS_DECL(name, type, sig) \
 	extern type tsocks_##name(sig);
 
-#if (defined(__GLIBC__) || defined(__FreeBSD__) || defined(__darwin__) || defined(__NetBSD__))
+#if (defined(__linux__) || defined(__GLIBC__) || defined(__FreeBSD__) || \
+		defined(__darwin__) || defined(__NetBSD__))
 
 /* connect(2) */
 #include <sys/types.h>
@@ -207,7 +208,7 @@ struct hostent **result, int *h_errnop
 
 #else
 #error "OS not supported."
-#endif /* __GLIBC__ , __FreeBSD__, __darwin__, __NetBSD__ */
+#endif /* __linux__, __GLIBC__ , __FreeBSD__, __darwin__, __NetBSD__ */
 
 #if (defined(__linux__))
 
@@ -241,7 +242,7 @@ struct hostent **result, int *h_errnop
 
 #endif /* __FreeBSD__, __darwin__, __NetBSD__ */
 
-#if defined(__GLIBC__) && defined(__FreeBSD_kernel__)
+#if (defined(__linux__) || defined(__GLIBC__)) && defined(__FreeBSD_kernel__)
 
 /* syscall(2) */
 #define LIBC_SYSCALL_NAME syscall
@@ -250,7 +251,7 @@ struct hostent **result, int *h_errnop
 #define LIBC_SYSCALL_SIG long int number, ...
 #define LIBC_SYSCALL_ARGS number
 
-#endif /* __GLIBC__ && __FreeBSD_kernel__ */
+#endif /* (__linux__ || __GLIBC__) && __FreeBSD_kernel__ */
 
 /* __syscall(2) */
 #if defined(__FreeBSD__)
