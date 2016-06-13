@@ -34,8 +34,8 @@ struct test_host {
 
 /* Tor check hostname/ip. */
 static const struct test_host tor_check = {
-	.name = "sergii.torproject.org",
-	.ip = "38.229.72.22",
+	.name = "perdulce.torproject.org",
+	.ip = "138.201.14.203",
 };
 
 /* moria1 directory authority. */
