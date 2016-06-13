@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2008 - Shaun Clowes <delius@progsoc.org> 
+ * Copyright (C) 2000-2008 - Shaun Clowes <delius@progsoc.org>
  * 				 2008-2011 - Robert Hogan <robert@roberthogan.net>
  * 				 	  2013 - David Goulet <dgoulet@ev0ke.net>
  *
@@ -200,7 +200,8 @@ static int parse_config_line(const char *line, struct configuration *config)
 	/*
 	 * The line is tokenized and each token is NULL terminated.
 	 */
-	nb_token = utils_tokenize_ignore_comments(line, sizeof(tokens), tokens);
+	nb_token = utils_tokenize_ignore_comments(line, DEFAULT_MAX_CONF_TOKEN,
+			tokens);
 	if (nb_token <= 0) {
 		/* Nothing on this line that is useful to parse. */
 		ret = 0;

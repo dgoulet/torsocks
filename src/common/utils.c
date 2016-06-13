@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2008 - Shaun Clowes <delius@progsoc.org> 
+ * Copyright (C) 2000-2008 - Shaun Clowes <delius@progsoc.org>
  * 				 2008-2011 - Robert Hogan <robert@roberthogan.net>
  * 				 	  2013 - David Goulet <dgoulet@ev0ke.net>
  *
@@ -119,7 +119,7 @@ int utils_is_address_ipv6(const char *ip)
 ATTR_HIDDEN
 int utils_tokenize_ignore_comments(const char *_line, size_t size, char **tokens)
 {
-	int ret, i = 0, argc = 0;
+	int ret, i = 0;
 	char *c, *line = NULL, *saveptr;
 
 	assert(_line);
@@ -137,23 +137,12 @@ int utils_tokenize_ignore_comments(const char *_line, size_t size, char **tokens
 		goto end;
 	}
 
-	/* Count number of token. If larger than size, we return an error. */
-	c = line;
-	while ((c = strchr(c + 1, ' '))) {
-		/* Skip consecutive spaces. */
-		if (*(c + 1) == ' ') {
-			continue;
-		}
-		argc++;
-	}
-
-	if (argc > (int)size) {
-		ret = -ENOMEM;
-		goto error;
-	}
-
 	c = strtok_r(line, " \t", &saveptr);
 	while (c != NULL) {
+		if ((size_t) i >= size) {
+			ret = -ENOMEM;
+			goto error;
+		}
 		tokens[i] = strdup(c);
 		if (!tokens[i]) {
 			ret = -ENOMEM;
@@ -165,8 +154,14 @@ int utils_tokenize_ignore_comments(const char *_line, size_t size, char **tokens
 
 end:
 	ret = i;
+	free(line);
+	return ret;
+
 error:
 	free(line);
+	while (i-- > 0) {
+		free(tokens[i]);
+	}
 	return ret;
 }
 
