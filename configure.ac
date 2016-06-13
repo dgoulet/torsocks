@@ -118,7 +118,7 @@ dnl location on Unixish system.
 AC_MSG_CHECKING(file name of the C library)
 AS_CASE([$host_os],
 	[darwin*], [libc_name="libSystem.dylib"],
-	[linux*|kfreebsd*-gnu],
+	[linux*|kfreebsd*-gnu|freebsd*],
 	[
 		libc_name=`ldd /usr/bin/yes | grep 'libc\.' | cut -d ' ' -f 1 | tr -d '\t'`
 		if test "${libc_name}" == ""; then
