@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2008 - Shaun Clowes <delius@progsoc.org> 
+ * Copyright (C) 2000-2008 - Shaun Clowes <delius@progsoc.org>
  * 				 2008-2011 - Robert Hogan <robert@roberthogan.net>
  * 				 	  2013 - David Goulet <dgoulet@ev0ke.net>
  *
@@ -217,8 +217,9 @@ static void init_libc_symbols(void)
 	tsocks_libc_close = dlsym(libc_ptr, LIBC_CLOSE_NAME_STR);
 	tsocks_libc_socket = dlsym(libc_ptr, LIBC_SOCKET_NAME_STR);
 	tsocks_libc_syscall = dlsym(libc_ptr, LIBC_SYSCALL_NAME_STR);
+	tsocks_libc_execve = dlsym(libc_ptr, LIBC_EXECVE_NAME_STR);
 	if (!tsocks_libc_connect || !tsocks_libc_close || !tsocks_libc_socket
-			|| !tsocks_libc_syscall) {
+			|| !tsocks_libc_syscall || !tsocks_libc_execve) {
 		ERR("Unable to lookup symbols in " LIBC_NAME "(%s)", dlerror());
 		goto error;
 	}

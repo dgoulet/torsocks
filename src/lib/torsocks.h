@@ -75,6 +75,15 @@
 #define LIBC_CLOSE_SIG int fd
 #define LIBC_CLOSE_ARGS fd
 
+/* execve(2) */
+#define LIBC_EXECVE_NAME execve
+#define LIBC_EXECVE_NAME_STR XSTR(LIBC_EXECVE_NAME)
+#define LIBC_EXECVE_RET_TYPE int
+#define LIBC_EXECVE_SIG \
+	const char *filename, char *const argv[], char *const envp[]
+#define LIBC_EXECVE_ARGS \
+	filename, argv, envp
+
 /* fclose(3) */
 #include <stdio.h>
 
@@ -324,6 +333,12 @@ extern TSOCKS_LIBC_DECL(close, LIBC_CLOSE_RET_TYPE, LIBC_CLOSE_SIG)
 TSOCKS_DECL(close, LIBC_CLOSE_RET_TYPE, LIBC_CLOSE_SIG)
 #define LIBC_CLOSE_DECL \
 		LIBC_CLOSE_RET_TYPE LIBC_CLOSE_NAME(LIBC_CLOSE_SIG)
+
+/* execve(2) */
+extern TSOCKS_LIBC_DECL(execve, LIBC_EXECVE_RET_TYPE, LIBC_EXECVE_SIG)
+TSOCKS_DECL(execve, LIBC_EXECVE_RET_TYPE, LIBC_EXECVE_SIG)
+#define LIBC_EXECVE_DECL \
+		LIBC_EXECVE_RET_TYPE LIBC_EXECVE_NAME(LIBC_EXECVE_SIG)
 
 /* fclose(3) */
 extern TSOCKS_LIBC_DECL(fclose, LIBC_FCLOSE_RET_TYPE, LIBC_FCLOSE_SIG)
