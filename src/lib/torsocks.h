@@ -36,6 +36,10 @@
 #if (defined(__linux__) || defined(__GLIBC__) || defined(__FreeBSD__) || \
 		defined(__darwin__) || defined(__NetBSD__))
 
+#ifdef __NetBSD__
+#include <sys/param.h>	/* __NetBSD_Version__ */
+#endif
+
 /* connect(2) */
 #include <sys/types.h>
 #include <sys/socket.h>
