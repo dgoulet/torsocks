@@ -37,11 +37,6 @@ LIBC_ACCEPT_RET_TYPE tsocks_accept(LIBC_ACCEPT_SIG)
 		goto libc_call;
 	}
 
-	if (!addr) {
-		errno = EFAULT;
-		goto error;
-	}
-
 	sa_len = sizeof(sa);
 
 	ret = getsockname(sockfd, &sa, &sa_len);
@@ -61,11 +56,10 @@ LIBC_ACCEPT_RET_TYPE tsocks_accept(LIBC_ACCEPT_SIG)
 	/* Inbound localhost connections are allowed. */
 	ret = utils_sockaddr_is_localhost(&sa);
 	if (!ret) {
-
 		/*
 		 * Accept is completely denied here since this means that the
-		 * application can accept inbound connections on non localhost that are
-		 * obviously NOT handled by the Tor network thus reject this call.
+		 * application can accept inbound connections on non localhost that
+		 * are obviously NOT handled by the Tor network thus reject this call.
 		 */
 		DBG("[accept] Non localhost inbound connection are not allowed.");
 		errno = EPERM;
@@ -109,11 +103,6 @@ LIBC_ACCEPT4_RET_TYPE tsocks_accept4(LIBC_ACCEPT4_SIG)
 	if (tsocks_config.allow_inbound) {
 		/* Allowed by the user so directly go to the libc. */
 		goto libc_call;
-	}
-
-	if (!addr) {
-		errno = EFAULT;
-		goto error;
 	}
 
 	sa_len = sizeof(sa);
