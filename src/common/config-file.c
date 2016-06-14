@@ -284,13 +284,13 @@ int conf_file_set_tor_address(const char *addr, struct configuration *config)
 		config->conf_file.tor_domain = CONNECTION_DOMAIN_INET6;
 	}
 
-	if (config->conf_file.tor_address == NULL) {
+	if (config->conf_file.tor_address != NULL) {
 		free(config->conf_file.tor_address);
 		config->conf_file.tor_address = NULL;
 	}
 
 	config->conf_file.tor_address = strdup(addr);
-	if (!config->conf_file.tor_address) {
+	if (config->conf_file.tor_address == NULL) {
 		ret = -ENOMEM;
 		goto error;
 	}
