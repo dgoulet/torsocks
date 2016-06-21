@@ -729,7 +729,7 @@ static void test_socks5_recv_connect_reply_deny_rule(void)
 
 	ret = socks5_recv_connect_reply(conn_stub);
 
-	ok(ret == -ECONNABORTED, "socks5 reply deny rule");
+	ok(ret == -ECONNREFUSED, "socks5 reply deny rule");
 
 	connection_destroy(conn_stub);
 	socks5_init(NULL, NULL);

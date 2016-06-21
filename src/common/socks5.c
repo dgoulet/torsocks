@@ -535,7 +535,7 @@ int socks5_recv_connect_reply(struct connection *conn)
 		break;
 	case SOCKS5_REPLY_DENY_RULE:
 		ERR("Connection not allowed by ruleset");
-		ret = -ECONNABORTED;
+		ret = -ECONNREFUSED;
 		break;
 	case SOCKS5_REPLY_NO_NET:
 		ERR("Network unreachable");
