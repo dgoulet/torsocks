@@ -1,3 +1,35 @@
+2016-06-21 torsocks 2.2.0-rc1
+	* Return connection refused on deny by ruleset error
+	* Fix wrong tor_address check for NULL
+	* Fix: accept{4} wrappers to accept addr to NULL
+	* Fix typos in comments
+	* Add --address and --port for torsocks.
+	* Read environment variables before creating the SOCKS5 connection.
+	* Expose set_tor_{address,port} as conf_file_set_tor_{address,port}.
+	* Use DEFAULT_CONF_FILE_ENV instead of a hardcoded value.
+	* Detect capabilities in torsocks wrapper
+	* Fix: allow port 65535.
+	* Overflow when parsing config lines with many arguments
+	* Add support for localhost only UDP via `AllowOutboundLocalhost 2`.
+	* Add freebsd to the libc detection in configure.ac
+	* Switch from Perl to automake tap. No more run-time Perl needed.
+	* Avoid potential null pointer dereferences in test_connection.
+	* Make sure pipe_fds is initialized in error branch.
+	* Suppress signed/unsigned comparison warnings with justified casts.
+	* Use size_t, not int, for indices below size_t bounds.
+	* Use same type for i as for pool->count, uint32_t.
+	* Avoid signed/unsigned comparison. Assert bound on size.
+	* Use seconds since epoch, not local time, for log timestamps.
+	* Work around broken declaration of gethostbyaddr on older NetBSD.
+	* Use the correct libc symbol for socket, __socket30, on newer NetBSD.
+	* Include <sys/param.h> for __NetBSD_Prereq__ on NetBSD.
+	* Block, rather than busy-wait, in send/recv_data_impl.
+	* Return EIO, not whatever 1 is, on EOF in recv_data.
+	* Block, rather than busy-wait, in send/recv_data_impl.
+	* Hijack execve() syscall to check for cap/setuid
+	* test: Change IPs with the new ones TPO just setup
+	* Add support for musl-libc
+
 2015-05-27 torsocks 2.1.0
 	* Fix: socks5 resolve wasn't sending data correctly
 	* Fix: wrong label when auth_socks5 fail
