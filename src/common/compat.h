@@ -109,6 +109,9 @@ void tsocks_once(tsocks_once_t *o, void (*init_routine)(void));
 #ifndef __NR_accept4
 #define __NR_accept4 -13
 #endif
+#ifndef __NR_sched_getaffinity
+#define __NR_sched_getaffinity -14
+#endif
 
 #define TSOCKS_NR_SOCKET    __NR_socket
 #define TSOCKS_NR_CONNECT   __NR_connect
@@ -123,6 +126,7 @@ void tsocks_once(tsocks_once_t *o, void (*init_routine)(void));
 #define TSOCKS_NR_GETRANDOM __NR_getrandom
 #define TSOCKS_NR_FUTEX     __NR_futex
 #define TSOCKS_NR_ACCEPT4   __NR_accept4
+#define TSOCKS_NR_SCHED_GETAFFINITY __NR_sched_getaffinity
 
 /*
  * Despite glibc providing wrappers for these calls for a long time
@@ -188,6 +192,7 @@ void tsocks_once(tsocks_once_t *o, void (*init_routine)(void));
 #define TSOCKS_NR_GETPEERNAME SYS_getpeername
 #define TSOCKS_NR_LISTEN    SYS_listen
 #define TSOCKS_NR_RECVMSG   SYS_recvmsg
+#define TSOCKS_NR_SCHED_GETAFFINITY SYS_sched_getaffinity
 
 #endif /* __FreeBSD__, __FreeBSD_kernel__, __darwin__, __NetBSD__ */
 

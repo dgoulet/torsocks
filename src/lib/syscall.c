@@ -164,6 +164,25 @@ static LIBC_RECVMSG_RET_TYPE handle_recvmsg(va_list args)
 	return tsocks_recvmsg(sockfd, msg, flags);
 }
 
+/*
+ * Handle sched_getaffinity(2) syscall.
+ * NOTE: ffmpeg is one of the application that needs this one on the
+ * whitelist.
+ */
+static LIBC_SYSCALL_RET_TYPE handle_sched_getaffinity(va_list args)
+{
+	pid_t pid;
+	size_t cpusetsize;
+	cpu_set_t *mask;
+
+	pid = va_arg(args, __typeof__(pid));
+	cpusetsize = va_arg(args, __typeof__(cpusetsize));
+	mask = va_arg(args, __typeof__(mask));
+
+	return tsocks_libc_syscall(TSOCKS_NR_SCHED_GETAFFINITY, pid, cpusetsize,
+			mask);
+}
+
 #if defined(__linux__)
 /*
  * Handle gettid(2) syscall.
@@ -454,6 +473,9 @@ LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int number, va_list args)
 		break;
 	case TSOCKS_NR_INOTIFY_RM_WATCH:
 		ret = handle_inotify_rm_watch(args);
+		break;
+	case TSOCKS_NR_SCHED_GETAFFINITY:
+		ret = handle_sched_getaffinity(args);
 		break;
 #endif /* __linux__ */
 	default:
