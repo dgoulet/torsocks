@@ -65,7 +65,7 @@ void tsocks_once(tsocks_once_t *o, void (*init_routine)(void));
 /*
  * Some old system requires kernel headers for those values. If they are not
  * defined, set them to a bad syscall value. Just to be clear, if the value is
- * undefined, tsocks syscall() will DENY the real syscall if catched.
+ * undefined, tsocks syscall() will DENY the real syscall if caught.
  *
  * The values are not the same per syscall here so we don't end up with
  * duplicates in the switch case in the tsocks sycall wrapper.

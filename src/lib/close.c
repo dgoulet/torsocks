@@ -30,7 +30,7 @@ LIBC_CLOSE_RET_TYPE tsocks_close(LIBC_CLOSE_SIG)
 {
 	struct connection *conn;
 
-	DBG("Close catched for fd %d", fd);
+	DBG("Close caught for fd %d", fd);
 
 	connection_registry_lock();
 	conn = connection_find(fd);

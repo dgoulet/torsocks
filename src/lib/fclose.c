@@ -42,7 +42,7 @@ LIBC_FCLOSE_RET_TYPE tsocks_fclose(LIBC_FCLOSE_SIG)
 		goto error;
 	}
 
-	DBG("[fclose] Close catched for fd %d", fd);
+	DBG("[fclose] Close caught for fd %d", fd);
 
 	connection_registry_lock();
 	conn = connection_find(fd);
