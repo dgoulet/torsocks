@@ -191,7 +191,11 @@ LIBC_GETHOSTBYADDR_RET_TYPE tsocks_gethostbyaddr(LIBC_GETHOSTBYADDR_SIG)
 			goto error;
 		}
 	} else {
-		memcpy(tsocks_he_name, hostname, sizeof(tsocks_he_name));
+		/* The hostname value is a NUL terminated string. Having a bigger
+		 * hostname here than what we return implies that SOCKS5 can resolve a
+		 * bigger hostname than 256 bytes (255 + NUL byte). */
+		assert(strlen(hostname) <= (sizeof(tsocks_he_name) + 1));
+		strncpy(tsocks_he_name, hostname, sizeof(tsocks_he_name));
 		free(hostname);
 		tsocks_he_addr_list[0] = (char *) addr;
 	}
