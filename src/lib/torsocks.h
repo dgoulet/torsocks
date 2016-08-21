@@ -112,7 +112,7 @@
  */
 extern struct hostent tsocks_he;
 extern char *tsocks_he_addr_list[2];
-extern char tsocks_he_addr[INET_ADDRSTRLEN];
+extern char tsocks_he_addr[4];
 extern char tsocks_he_name[255];
 
 #define LIBC_GETHOSTBYNAME_NAME gethostbyname

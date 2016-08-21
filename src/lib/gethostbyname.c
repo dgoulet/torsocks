@@ -22,12 +22,13 @@
 #include <stdlib.h>
 
 #include <common/log.h>
+#include <common/utils.h>
 
 #include "torsocks.h"
 
 struct hostent tsocks_he;
 char *tsocks_he_addr_list[2];
-char tsocks_he_addr[INET_ADDRSTRLEN];
+char tsocks_he_addr[4];
 char tsocks_he_name[255];
 
 /* gethostbyname(3) */
@@ -71,10 +72,19 @@ LIBC_GETHOSTBYNAME_RET_TYPE tsocks_gethostbyname(LIBC_GETHOSTBYNAME_SIG)
 		goto error;
 	}
 
-	/* Resolve the given hostname through Tor. */
-	ret = tsocks_tor_resolve(AF_INET, name, &ip);
-	if (ret < 0) {
-		goto error;
+	/* Man page specifies that it can either be an hostname or IPv4 address.
+	 * If it's an address, go with it else try to resolve it through Tor. */
+	if (utils_is_address_ipv4(name)) {
+		if (inet_pton(AF_INET, name, &ip) <= 0) {
+			goto error;
+		}
+		/* "ip" now contains the network byte order of the address. */
+	} else {
+		/* We have a hostname so resolve it through Tor. */
+		ret = tsocks_tor_resolve(AF_INET, name, &ip);
+		if (ret < 0) {
+			goto error;
+		}
 	}
 
 	/* Reset static host entry of tsocks. */
@@ -82,7 +92,7 @@ LIBC_GETHOSTBYNAME_RET_TYPE tsocks_gethostbyname(LIBC_GETHOSTBYNAME_SIG)
 	memset(tsocks_he_addr_list, 0, sizeof(tsocks_he_addr_list));
 	memset(tsocks_he_addr, 0, sizeof(tsocks_he_addr));
 
-	/* Copy resolved network byte order IP address. */
+	/* Copy network byte order IP address. */
 	memcpy(tsocks_he_addr, &ip, sizeof(tsocks_he_addr));
 
 	tsocks_he_addr_list[0] = tsocks_he_addr;
