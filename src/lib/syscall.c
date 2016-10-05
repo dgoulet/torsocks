@@ -164,6 +164,9 @@ static LIBC_RECVMSG_RET_TYPE handle_recvmsg(va_list args)
 	return tsocks_recvmsg(sockfd, msg, flags);
 }
 
+
+#if defined(__linux__)
+
 /*
  * Handle sched_getaffinity(2) syscall.
  * NOTE: ffmpeg is one of the application that needs this one on the
@@ -183,7 +186,7 @@ static LIBC_SYSCALL_RET_TYPE handle_sched_getaffinity(va_list args)
 			mask);
 }
 
-#if defined(__linux__)
+
 /*
  * Handle gettid(2) syscall.
  */
