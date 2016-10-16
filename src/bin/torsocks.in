@@ -85,6 +85,41 @@ set_ld_preload ()
 	esac
 }
 
+# Report error due to Apple's System Integrity Protection.
+macos_sip_error ()
+{
+	echo "ERROR: $1 is located in a directory protected by Apple's System Integrity Protection." >&2
+	exit 1
+}
+
+# Check if SIP is enabled and if the user is about to violate the blacklist.
+macos_sip_check ()
+{
+	local app_path="$1"
+
+	case "$OSTYPE" in
+		darwin*)
+			# We need to figure out if Apple's System Integrity Protection is
+			# enabled on the users' system.
+			if /usr/bin/csrutil status | grep -q enabled; then
+				local abs_app_dir=`cd "$(dirname "$app_path")" && pwd -P`
+
+				# It seems like /usr/** (with an exception of /usr/local/**),
+				# /System/**, /sbin/**, and /bin/** are currently protected
+				# using SIP.
+				case "$abs_app_dir/`basename $app_path`" in
+					/usr/local/*)
+						# Must be listed before the match on /usr/*
+						;;
+					/usr/*|/System/*|/sbin/*|/bin/*)
+						macos_sip_error $app_path
+						;;
+				esac
+			fi
+			;;
+	esac
+}
+
 # Spawn a torified shell.
 tor_shell ()
 {
@@ -111,6 +146,10 @@ torify_app ()
 	if [ -n "$getcap" ]; then
 		caps=`$getcap $app_path`
 	fi
+
+	# Check if Apple's System Integrity Protection is enabled if the user is
+	# running on macOS.
+	macos_sip_check $app_path
 
 	# NEVER remove that line or else nothing it torified.
 	set_ld_preload
