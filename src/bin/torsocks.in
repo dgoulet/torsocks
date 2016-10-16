@@ -108,7 +108,7 @@ torify_app ()
 
 	# This must be before torifying because getcap uses cap_get_file(3)
 	# via syscall(2) which breaks torsocks.
-	if [ -n $getcap ]; then
+	if [ -n "$getcap" ]; then
 		caps=`$getcap $app_path`
 	fi
 
