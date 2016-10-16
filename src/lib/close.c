@@ -30,7 +30,7 @@ LIBC_CLOSE_RET_TYPE tsocks_close(LIBC_CLOSE_SIG)
 {
 	struct connection *conn;
 
-	DBG("Close caught for fd %d", fd);
+	DBG("[close] Close caught for fd %d", fd);
 
 	connection_registry_lock();
 	conn = connection_find(fd);
@@ -48,7 +48,7 @@ LIBC_CLOSE_RET_TYPE tsocks_close(LIBC_CLOSE_SIG)
 	 * connection pointer is destroyed.
 	 */
 	if (conn) {
-		DBG("Close connection putting back ref");
+		DBG("[close] Close connection putting back ref");
 		connection_put_ref(conn);
 	}
 
