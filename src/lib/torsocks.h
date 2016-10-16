@@ -20,6 +20,8 @@
 #ifndef TORSOCKS_H
 #define TORSOCKS_H
 
+#include "config.h"
+
 #include <common/compat.h>
 #include <common/config-file.h>
 
@@ -232,8 +234,6 @@ struct hostent **result, int *h_errnop
 #endif /* __linux__, __GLIBC__ , __FreeBSD__, __darwin__, __NetBSD__ */
 
 #if (defined(__linux__))
-
-#define _GNU_SOURCE
 
 /* syscall(2) */
 #define LIBC_SYSCALL_NAME syscall

@@ -25,7 +25,9 @@
 #if (defined(__linux__) || defined(__GLIBC__) || defined(__FreeBSD__) || \
 		defined(__darwin__) || defined(__NetBSD__))
 
+#ifndef RTLD_NEXT
 #define RTLD_NEXT	((void *) -1)
+#endif
 
 #include <pthread.h>
 
