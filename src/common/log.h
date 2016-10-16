@@ -74,7 +74,9 @@ void log_destroy(void);
  */
 #define _PERROR(fmt, args...) _ERRMSG("PERROR", MSGERR, fmt, ## args)
 
-#if !defined(__linux__) || ((_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && !defined(_GNU_SOURCE))
+#if !defined(__linux__) || \
+	((_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && !defined(_GNU_SOURCE)) || \
+	!defined(__GLIBC__)
 
 /*
  * Version using XSI strerror_r.
