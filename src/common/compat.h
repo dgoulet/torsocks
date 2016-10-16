@@ -192,7 +192,9 @@ void tsocks_once(tsocks_once_t *o, void (*init_routine)(void));
 #define TSOCKS_NR_GETPEERNAME SYS_getpeername
 #define TSOCKS_NR_LISTEN    SYS_listen
 #define TSOCKS_NR_RECVMSG   SYS_recvmsg
+#ifdef !defined(__darwin__)
 #define TSOCKS_NR_SCHED_GETAFFINITY SYS_sched_getaffinity
+#endif /* ! __darwin__ */
 
 #endif /* __FreeBSD__, __FreeBSD_kernel__, __darwin__, __NetBSD__ */
 
