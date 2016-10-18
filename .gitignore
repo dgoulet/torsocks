@@ -14,6 +14,7 @@ Makefile.in
 *.loT
 *.info
 *.bz2
+*.xz
 *.tar
 aclocal.m4
 autom4te.cache/

@@ -17,7 +17,7 @@ AC_CONFIG_HEADER([include/config.h])
 AC_USE_SYSTEM_EXTENSIONS
 
 # Automake initialization
-AM_INIT_AUTOMAKE([foreign dist-bzip2 no-dist-gzip])
+AM_INIT_AUTOMAKE([foreign dist-xz no-dist-gzip])
 
 # Silent compilation. Easier to spot errors!
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
