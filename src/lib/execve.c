@@ -16,7 +16,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/xattr.h>
 #include <sys/stat.h>
 
 #include "torsocks.h"
@@ -43,6 +42,7 @@ check_cap_suid(const char *filename)
 
 /* Capabilities as such are just on Linux. */
 #ifdef __linux__
+#include <sys/xattr.h>
 	static const char *sec_cap = "security.capability";
 	ssize_t len = getxattr(filename, sec_cap, NULL, 0);
 	if (len > 0) {
