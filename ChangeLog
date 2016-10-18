@@ -1,3 +1,20 @@
+2016-10-18 torsocks 2.2.0
+	* Use xz for dist tarball now
+	* Remove TODO as we use the bugtracker for those
+	* execve: only include xattr.h for Linux
+	* syscall: sched_getaffinity is only Linux
+	* close: Prefix debug messages with [close]
+	* Add check for Apple's System Integrity Protection.
+	* Quote the non-zero length check of $getcap.
+	* compat: Fix bad use of defined macro for OS X
+	* Use AC_USE_SYSTEM_EXTENSIONS to try to use POSIX extensions
+	* log: Fix whitespace in log.h
+	* syscall: OS X doesn't support sched_getaffinity()
+	* Fix memcpy buffer overrun in gethostbyaddr()
+	* Fix memcpy() buffer overrun in gethostbyname()
+	* Fix typo: catched -> caught
+	* syscall: Whitelist sched_getaffinity(2)
+
 2016-06-21 torsocks 2.2.0-rc1
 	* Return connection refused on deny by ruleset error
 	* Fix wrong tor_address check for NULL
