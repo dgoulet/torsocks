@@ -256,7 +256,7 @@ error_dlopen:
 }
 
 /*
- * Initialize logging subsytem using either the default values or the one given
+ * Initialize logging subsystem using either the default values or the one given
  * by the environment variables.
  */
 static void init_logging(void)
@@ -299,7 +299,7 @@ static void init_logging(void)
 
 	/* After this, it is safe to call any logging macros. */
 
-	DBG("Logging subsytem initialized. Level %d, file %s, time %d",
+	DBG("Logging subsystem initialized. Level %d, file %s, time %d",
 			level, filepath, t_status);
 }
 
