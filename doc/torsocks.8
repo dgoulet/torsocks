@@ -137,7 +137,7 @@ This introduces overhead and should only be used when needed.
 Torsocks uses ELF dynamic loader features to intercept dynamic function calls
 from programs in which it is embedded. As a result, non-ELF executables, or
 executables that make system calls directly with the system call trap (int
-0x80).
+0x80) are not supported.
 
 .SH FILES
 /etc/tor/torsocks.conf - default torsocks configuration file
