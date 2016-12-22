@@ -114,6 +114,18 @@ void tsocks_once(tsocks_once_t *o, void (*init_routine)(void));
 #ifndef __NR_sched_getaffinity
 #define __NR_sched_getaffinity -14
 #endif
+#ifndef __NR_seccomp
+#define __NR_seccomp -15
+#endif
+#ifndef __NR_gettimeofday
+#define __NR_gettimeofday -16
+#endif
+#ifndef __NR_clock_gettime
+#define __NR_clock_gettime -17
+#endif
+#ifndef __NR_fork
+#define __NR_fork -18
+#endif
 
 #define TSOCKS_NR_SOCKET    __NR_socket
 #define TSOCKS_NR_CONNECT   __NR_connect
@@ -129,6 +141,10 @@ void tsocks_once(tsocks_once_t *o, void (*init_routine)(void));
 #define TSOCKS_NR_FUTEX     __NR_futex
 #define TSOCKS_NR_ACCEPT4   __NR_accept4
 #define TSOCKS_NR_SCHED_GETAFFINITY __NR_sched_getaffinity
+#define TSOCKS_NR_SECCOMP   __NR_seccomp
+#define TSOCKS_NR_GETTIMEOFDAY __NR_gettimeofday
+#define TSOCKS_NR_CLOCK_GETTIME __NR_clock_gettime
+#define TSOCKS_NR_FORK      __NR_fork
 
 /*
  * Despite glibc providing wrappers for these calls for a long time

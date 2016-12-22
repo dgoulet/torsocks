@@ -372,6 +372,57 @@ static LIBC_SYSCALL_RET_TYPE handle_inotify_rm_watch(va_list args)
 
 	return inotify_rm_watch(fd, wd);
 }
+
+/*
+ * Handle seccomp(2) syscall.
+ */
+static LIBC_SYSCALL_RET_TYPE handle_seccomp(va_list args)
+{
+	unsigned int operation, flags;
+	void *sargs;
+
+	operation = va_arg(args, __typeof__(operation));
+	flags = va_arg(args, __typeof__(flags));
+	sargs = va_arg(args, __typeof__(sargs));
+
+	return tsocks_libc_syscall(TSOCKS_NR_SECCOMP, operation, flags, sargs);
+}
+
+/*
+ * Handle gettimeofday(2) syscall.
+ */
+static LIBC_SYSCALL_RET_TYPE handle_gettimeofday(va_list args)
+{
+	struct timeval *tv;
+	struct timezone *tz;
+
+	tv = va_arg(args, __typeof__(tv));
+	tz = va_arg(args, __typeof__(tz));
+
+	return tsocks_libc_syscall(TSOCKS_NR_GETTIMEOFDAY, tv, tz);
+}
+
+/*
+ * Handle clock_gettime(2) syscall.
+ */
+static LIBC_SYSCALL_RET_TYPE handle_clock_gettime(va_list args)
+{
+	clockid_t clk_id;
+	struct timespec *tp;
+
+	clk_id = va_arg(args, __typeof__(clk_id));
+	tp = va_arg(args, __typeof__(tp));
+
+	return tsocks_libc_syscall(TSOCKS_NR_CLOCK_GETTIME, clk_id, tp);
+}
+
+/*
+ * Handle fork(2) syscall.
+ */
+static LIBC_SYSCALL_RET_TYPE handle_fork(void)
+{
+	return tsocks_libc_syscall(TSOCKS_NR_FORK);
+}
 #endif /* __linux__ */
 
 /*
@@ -477,6 +528,18 @@ LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int number, va_list args)
 		break;
 	case TSOCKS_NR_SCHED_GETAFFINITY:
 		ret = handle_sched_getaffinity(args);
+		break;
+	case TSOCKS_NR_SECCOMP:
+		ret = handle_seccomp(args);
+		break;
+	case TSOCKS_NR_GETTIMEOFDAY:
+		ret = handle_gettimeofday(args);
+		break;
+	case TSOCKS_NR_CLOCK_GETTIME:
+		ret = handle_clock_gettime(args);
+		break;
+	case TSOCKS_NR_FORK:
+		ret = handle_fork();
 		break;
 #endif /* __linux__ */
 	default:
