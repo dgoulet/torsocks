@@ -24,6 +24,7 @@
 #include <lib/torsocks.h>
 
 #include <tap/tap.h>
+#include "helpers.h"
 
 #define NUM_TESTS 4
 
@@ -46,7 +47,7 @@ static const struct test_host tor_dir_auth1 = {
 
 /* maatuska directory authority. */
 static const struct test_host tor_dir_auth2 = {
-	.name = "ehlo.4711.se",
+	.name = "maatuska.4711.se",
 	.ip = "171.25.193.9",
 };
 
@@ -135,13 +136,20 @@ static void test_getaddrinfo(const struct test_host *host)
 
 int main(int argc, char **argv)
 {
+	/* Try to connect to SocksPort localhost:9050 and if we can't skip. This is
+	 * to avoid to have failing test if no tor daemon is available. */
+	if (!helper_is_default_tor_running()) {
+		goto end;
+	}
+
 	/* Libtap call for the number of tests planned. */
 	plan_tests(NUM_TESTS);
 
 	test_getaddrinfo(&tor_check);
-    test_gethostbyname(&tor_dir_auth1);
+	test_gethostbyname(&tor_dir_auth1);
 	test_gethostbyaddr(&tor_dir_auth2);
 	test_getaddrinfo(&tor_localhost);
 
-    return 0;
+end:
+	return 0;
 }
