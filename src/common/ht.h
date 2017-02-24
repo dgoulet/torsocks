@@ -133,7 +133,7 @@ ht_string_hash(const char *s)
   int name##_HT_GROW(struct name *ht, unsigned min_capacity);           \
   void name##_HT_CLEAR(struct name *ht);                                \
   int name##_HT_REP_IS_BAD_(const struct name *ht);                     \
-  static inline void                                                    \
+  ATTR_UNUSED static inline void                                        \
   name##_HT_INIT(struct name *head) {                                   \
     head->hth_table_length = 0;                                         \
     head->hth_table = NULL;                                             \
@@ -143,7 +143,7 @@ ht_string_hash(const char *s)
   }                                                                     \
   /* Helper: returns a pointer to the right location in the table       \
    * 'head' to find or insert the element 'elm'. */                     \
-  static inline struct type **                                          \
+  ATTR_UNUSED static inline struct type **                              \
   name##_HT_FIND_P_(struct name *head, struct type *elm)                \
   {                                                                     \
     struct type **p;                                                    \
@@ -157,9 +157,9 @@ ht_string_hash(const char *s)
     }                                                                   \
     return p;                                                           \
   }                                                                     \
-  /* Return a pointer to the element in the table 'head' matching 'elm', \
-   * or NULL if no such element exists */                               \
-  static inline struct type *                                           \
+  /* Return a pointer to the element in the table 'head' matching       \
+   * 'elm', or NULL if no such element exists */                        \
+  ATTR_UNUSED static inline struct type *                               \
   name##_HT_FIND(const struct name *head, struct type *elm)             \
   {                                                                     \
     struct type **p;                                                    \
@@ -170,11 +170,12 @@ ht_string_hash(const char *s)
   }                                                                     \
   /* Insert the element 'elm' into the table 'head'.  Do not call this  \
    * function if the table might already contain a matching element. */ \
-  static inline void                                                    \
+  ATTR_UNUSED static inline void                                        \
   name##_HT_INSERT(struct name *head, struct type *elm)                 \
   {                                                                     \
     struct type **p;                                                    \
-    if (!head->hth_table || head->hth_n_entries >= head->hth_load_limit) \
+    if (!head->hth_table ||                                             \
+        head->hth_n_entries >= head->hth_load_limit)                    \
       name##_HT_GROW(head, head->hth_n_entries+1);                      \
     ++head->hth_n_entries;                                              \
     HT_SET_HASH_(elm, field, hashfn);                                   \
@@ -185,7 +186,7 @@ ht_string_hash(const char *s)
   /* Insert the element 'elm' into the table 'head'. If there already   \
    * a matching element in the table, replace that element and return   \
    * it. */                                                             \
-  static inline struct type *                                           \
+  ATTR_UNUSED static inline struct type *                               \
   name##_HT_REPLACE(struct name *head, struct type *elm)                \
   {                                                                     \
     struct type **p, *r;                                                \
@@ -206,7 +207,7 @@ ht_string_hash(const char *s)
   }                                                                     \
   /* Remove any element matching 'elm' from the table 'head'.  If such  \
    * an element is found, return it; otherwise return NULL. */          \
-  static inline struct type *                                           \
+  ATTR_UNUSED static inline struct type *                               \
   name##_HT_REMOVE(struct name *head, struct type *elm)                 \
   {                                                                     \
     struct type **p, *r;                                                \
@@ -224,7 +225,7 @@ ht_string_hash(const char *s)
    * using 'data' as its second argument.  If the function returns      \
    * nonzero, remove the most recently examined element before invoking \
    * the function again. */                                             \
-  static inline void                                                    \
+  ATTR_UNUSED static inline void                                        \
   name##_HT_FOREACH_FN(struct name *head,                               \
                        int (*fn)(struct type *, void *),                \
                        void *data)                                      \
@@ -250,7 +251,7 @@ ht_string_hash(const char *s)
   /* Return a pointer to the first element in the table 'head', under   \
    * an arbitrary order.  This order is stable under remove operations, \
    * but not under others. If the table is empty, return NULL. */       \
-  static inline struct type **                                          \
+  ATTR_UNUSED static inline struct type **                              \
   name##_HT_START(struct name *head)                                    \
   {                                                                     \
     unsigned b = 0;                                                     \
@@ -266,7 +267,7 @@ ht_string_hash(const char *s)
    * NULL.  If 'elm' is to be removed from the table, you must call     \
    * this function for the next value before you remove it.             \
    */                                                                   \
-  static inline struct type **                                          \
+  ATTR_UNUSED static inline struct type **                              \
   name##_HT_NEXT(struct name *head, struct type **elm)                  \
   {                                                                     \
     if ((*elm)->field.hte_next) {                                       \
@@ -282,7 +283,7 @@ ht_string_hash(const char *s)
       return NULL;                                                      \
     }                                                                   \
   }                                                                     \
-  static inline struct type **                                          \
+  ATTR_UNUSED static inline struct type **                              \
   name##_HT_NEXT_RMV(struct name *head, struct type **elm)              \
   {                                                                     \
     unsigned h = HT_ELT_HASH_(*elm, field, hashfn);                     \

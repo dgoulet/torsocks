@@ -252,9 +252,6 @@ AX_CHECK_COMPILE_FLAG([--param ssp-buffer-size=1],
 AX_CHECK_COMPILE_FLAG([-fstack-protector-all],
 	[CFLAGS="$CFLAGS -fstack-protector-all"],[],[]
 )
-AX_CHECK_COMPILE_FLAG([-fno-strict-overflow],
-	[CFLAGS="$CFLAGS -fno-strict-overflow"],[],[]
-)
 
 dnl Add hardening linker flags
 AX_CHECK_LINK_FLAG([-pie],[LDFLAGS="$LDFLAGS -pie"],[],[])
