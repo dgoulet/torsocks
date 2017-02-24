@@ -144,7 +144,7 @@ torify_app ()
 	# This must be before torifying because getcap uses cap_get_file(3)
 	# via syscall(2) which breaks torsocks.
 	if [ -n "$getcap" ]; then
-		caps=`$getcap $app_path`
+		caps=`$getcap $app_path 2>/dev/null`
 	fi
 
 	# Check if Apple's System Integrity Protection is enabled if the user is
