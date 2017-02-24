@@ -104,13 +104,13 @@ static void test_config_file_read_invalid_values(void)
 
 	memset(&config, 0x0, sizeof(config));
 	ret = config_file_read(fixture("config4"), &config);
-	ok(ret == -1 &&
+	ok(ret == 0 &&
 		config.conf_file.tor_address == NULL,
 		"TorAddress invalid IPv4 returns -1");
 
 	memset(&config, 0x0, sizeof(config));
 	ret = config_file_read(fixture("config5"), &config);
-	ok(ret == -1 &&
+	ok(ret == 0 &&
 		config.conf_file.tor_address == NULL,
 		"TorAddress invalid IPv6 returns -1");
 

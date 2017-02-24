@@ -36,10 +36,10 @@ static void test_is_address_ipv4(void)
 	ok(ret == 1, "Valid IPv4 address");
 
 	ret = utils_is_address_ipv4("127.0.0.256");
-	ok(ret == -1, "Invalid IPv4 address");
+	ok(ret == 0, "Invalid IPv4 address");
 
 	ret = utils_is_address_ipv4("::1");
-	ok(ret == -1, "Invalid IPv4 address when IPv6");
+	ok(ret == 0, "Invalid IPv4 address when IPv6");
 }
 
 static void test_is_address_ipv6(void)
@@ -55,10 +55,10 @@ static void test_is_address_ipv6(void)
 	ok(ret == 1, "Valid IPv6 address");
 
 	ret = utils_is_address_ipv6("2001:DB8:0:0:8:800:200C:G");
-	ok(ret == -1, "Invalid IPv6 address");
+	ok(ret == 0, "Invalid IPv6 address");
 
 	ret = utils_is_address_ipv6("192.168.0.1");
-	ok(ret == -1, "Invalid IPv6 address when IPv4");
+	ok(ret == 0, "Invalid IPv6 address when IPv4");
 }
 
 static void test_localhost_resolve(void)
