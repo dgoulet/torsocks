@@ -366,3 +366,31 @@ int utils_get_port_from_addr(const struct sockaddr *sa)
 
 	return port;
 }
+
+/*
+ * For a given sockaddr, return a const pointer to the address data structure.
+ * Return NULL if family is not IPv4 or IPv6.
+ */
+ATTR_HIDDEN
+const char *utils_get_addr_from_sockaddr(const struct sockaddr *sa)
+{
+  static char buf[256];
+  const void *addrp;
+
+  assert(sa);
+
+  memset(buf, 0, sizeof(buf));
+
+  if (sa->sa_family == AF_INET) {
+    addrp = &((const struct sockaddr_in *) sa)->sin_addr;
+  } else if (sa->sa_family == AF_INET6) {
+    addrp = &((const struct sockaddr_in6 *) sa)->sin6_addr;
+  } else {
+    goto end;
+  }
+
+  inet_ntop(sa->sa_family, addrp, buf, sizeof(buf));
+
+end:
+  return buf;
+}
