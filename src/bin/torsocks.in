@@ -294,6 +294,10 @@ do
 			# Set full DEBUG with 5 being the highest possible level.
 			export TORSOCKS_LOG_LEVEL=5
 			;;
+		-q|--quiet)
+			# Silence logging.
+			export TORSOCKS_LOG_LEVEL=1
+			;;
 		--shell)
 			tor_shell
 			break
