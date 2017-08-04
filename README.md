@@ -28,7 +28,7 @@ Requirements
 Installation
 -----------------
 
-	$ ./autogen.sh
+    $ ./autogen.sh
     $ ./configure
     $ make
     $ sudo make install
