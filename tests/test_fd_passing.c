@@ -28,6 +28,7 @@
 #include <lib/torsocks.h>
 
 #include <tap/tap.h>
+#include "helpers.h"
 
 #define NUM_TESTS 5
 
@@ -514,10 +515,17 @@ error:
 
 int main(int argc, char **argv)
 {
+	/* Try to connect to SocksPort localhost:9050 and if we can't skip. This is
+	 * to avoid to have failing test if no tor daemon is available. */
+	if (!helper_is_default_tor_running()) {
+		goto end;
+	}
+
 	/* Libtap call for the number of tests planned. */
 	plan_tests(NUM_TESTS);
 
 	test_inet_socket();
 
-    return 0;
+end:
+	return 0;
 }
