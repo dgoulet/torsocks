@@ -423,6 +423,20 @@ static LIBC_SYSCALL_RET_TYPE handle_fork(void)
 {
 	return tsocks_libc_syscall(TSOCKS_NR_FORK);
 }
+
+/*
+ * Handle memfd_create(2) syscall.
+ */
+static LIBC_SYSCALL_RET_TYPE handle_memfd_create(va_list args)
+{
+	const char *name;
+	unsigned int flags;
+
+	name = va_arg(args, __typeof__(name));
+	flags = va_arg(args, __typeof__(flags));
+
+	return tsocks_libc_syscall(TSOCKS_NR_MEMFD_CREATE, name, flags);
+}
 #endif /* __linux__ */
 
 /*
@@ -540,6 +554,9 @@ LIBC_SYSCALL_RET_TYPE tsocks_syscall(long int number, va_list args)
 		break;
 	case TSOCKS_NR_FORK:
 		ret = handle_fork();
+		break;
+	case TSOCKS_NR_MEMFD_CREATE:
+		ret = handle_memfd_create(args);
 		break;
 #endif /* __linux__ */
 	default:
