@@ -58,6 +58,7 @@
 # Tamas Szerb <toma@rulez.org>
 # Modified by Robert Hogan <robert@roberthogan.net> April 16th 2006
 # Modified by David Goulet <dgoulet@ev0ke.net> 2013
+# Modified by Alex Xu (Hello71) <alex_y_xu@yahoo.ca> 2018
 
 prefix=@prefix@
 exec_prefix=@exec_prefix@
@@ -67,15 +68,108 @@ LIB_NAME="libtorsocks"
 SHLIB_EXT="@SHLIB_EXT@"
 SHLIB="${LIBDIR}/${LIB_NAME}.${SHLIB_EXT}"
 
+# https://github.com/mkropat/sh-realpath
+#
+# Copyright (c) 2014 Michael Kropat
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+realpath() {
+    canonicalize_path "$(resolve_symlinks "$1")"
+}
+
+resolve_symlinks() {
+    _resolve_symlinks "$1"
+}
+
+_resolve_symlinks() {
+    _assert_no_path_cycles "$@" || return
+
+    local dir_context path
+    path=$(readlink -- "$1")
+    if [ $? -eq 0 ]; then
+        dir_context=$(dirname -- "$1")
+        _resolve_symlinks "$(_prepend_dir_context_if_necessary "$dir_context" "$path")" "$@"
+    else
+        printf '%s\n' "$1"
+    fi
+}
+
+_prepend_dir_context_if_necessary() {
+    if [ "$1" = . ]; then
+        printf '%s\n' "$2"
+    else
+        _prepend_path_if_relative "$1" "$2"
+    fi
+}
+
+_prepend_path_if_relative() {
+    case "$2" in
+        /* ) printf '%s\n' "$2" ;;
+         * ) printf '%s\n' "$1/$2" ;;
+    esac
+}
+
+_assert_no_path_cycles() {
+    local target path
+
+    target=$1
+    shift
+
+    for path in "$@"; do
+        if [ "$path" = "$target" ]; then
+            return 1
+        fi
+    done
+}
+
+canonicalize_path() {
+    if [ -d "$1" ]; then
+        _canonicalize_dir_path "$1"
+    else
+        _canonicalize_file_path "$1"
+    fi
+}
+
+_canonicalize_dir_path() {
+    (cd "$1" 2>/dev/null && pwd -P)
+}
+
+_canonicalize_file_path() {
+    local dir file
+    dir=$(dirname -- "$1")
+    file=$(basename -- "$1")
+    (cd "$dir" 2>/dev/null && printf '%s/%s\n' "$(pwd -P)" "$file")
+}
+
 # Set @LDPRELOAD@ variable with torsocks library path.
 set_ld_preload ()
 {
-	if [ -z "$@LDPRELOAD@" ]; then
-		export @LDPRELOAD@="${SHLIB}"
-	else
-		echo "$@LDPRELOAD@" | grep -q "${SHLIB}" || \
-			export @LDPRELOAD@="${SHLIB} $@LDPRELOAD@"
-	fi
+	case "$@LDPRELOAD@" in
+		*"${SHLIB}"*) ;;
+		'')
+			export @LDPRELOAD@="${SHLIB}"
+			;;
+		*)
+			export @LDPRELOAD@="${SHLIB}:$@LDPRELOAD@"
+			;;
+	esac
 
 	# OS X specific env variable
 	case "$OSTYPE" in
@@ -88,7 +182,7 @@ set_ld_preload ()
 # Report error due to Apple's System Integrity Protection.
 macos_sip_error ()
 {
-	echo "ERROR: $1 is located in a directory protected by Apple's System Integrity Protection." >&2
+	printf "ERROR: %s is located in a directory protected by Apple's System Integrity Protection.\n" "$1" >&2
 	exit 1
 }
 
@@ -101,21 +195,20 @@ macos_sip_check ()
 		darwin*)
 			# We need to figure out if Apple's System Integrity Protection is
 			# enabled on the users' system.
-			if /usr/bin/csrutil status | grep -q enabled; then
-				local abs_app_dir=`cd "$(dirname "$app_path")" && pwd -P`
-
-				# It seems like /usr/** (with an exception of /usr/local/**),
-				# /System/**, /sbin/**, and /bin/** are currently protected
-				# using SIP.
-				case "$abs_app_dir/`basename $app_path`" in
-					/usr/local/*)
-						# Must be listed before the match on /usr/*
-						;;
-					/usr/*|/System/*|/sbin/*|/bin/*)
-						macos_sip_error $app_path
-						;;
-				esac
-			fi
+			case "$(/usr/bin/csrutil status)" in
+				*enabled*)
+					# It seems like /usr/** (with an exception of /usr/local/**),
+					# /System/**, /sbin/**, and /bin/** are currently protected
+					# using SIP.
+					case "$(realpath "$app_path")" in
+						/usr/local/*)
+							# Must be listed before the match on /usr/*
+							;;
+						/usr/*|/System/*|/sbin/*|/bin/*)
+							macos_sip_error "$app_path"
+							;;
+					esac
+			esac
 			;;
 	esac
 }
@@ -124,14 +217,14 @@ macos_sip_check ()
 tor_shell ()
 {
 	set_ld_preload
-	echo "$0: New torified shell coming right up..."
+	echo "New torified shell coming right up..."
 	${SHELL:-/bin/sh}
 }
 
 torify_app ()
 {
-	local app_path="`which $1`"
-	local getcap="`PATH="$PATH:/usr/sbin:/sbin" which getcap`"
+	local app_path="$(command -v "$1")"
+	local getcap="$(PATH="$PATH:/usr/sbin:/sbin" command -v getcap)"
 	local caps=
 
 	if [ -z "$1" ]; then
@@ -144,7 +237,7 @@ torify_app ()
 	# This must be before torifying because getcap uses cap_get_file(3)
 	# via syscall(2) which breaks torsocks.
 	if [ -n "$getcap" ]; then
-		caps="`$getcap $app_path 2>/dev/null`"
+		caps="$("$getcap" "$app_path" 2>/dev/null)"
 	fi
 
 	# Check if Apple's System Integrity Protection is enabled if the user is
@@ -161,9 +254,7 @@ torify_app ()
 		echo "ERROR: $1 is setgid. torsocks will not work on a setgid executable." >&2
 		exit 1
 	elif [ -n "$caps" ]; then
-		echo "ERROR: $1 gains the following elevated capabilities. torsocks will \
-not work with privledged executables.
-$caps" >&2
+		printf "ERROR: %s gains the following elevated capabilities. torsocks will not work with privileged executables.\n%s" "$app_path" "$caps" >&2
 		exit 1
 	fi
 
@@ -218,10 +309,9 @@ if [ $# -eq 0 ] ; then
 	exit 1
 fi
 
-# Ensure libtorsocks exists,
-if [ ! -f "$SHLIB" ]; then
-   echo "$0: $SHLIB does not exist! Try re-installing torsocks."
-   exit
+if [ ! -e "$SHLIB" ]; then
+   echo "ERROR: $SHLIB does not exist! Try re-installing torsocks." >&2
+   exit 1
 fi
 
 while true;
@@ -235,7 +325,7 @@ do
 			;;
 		off)
 			check_script_sourced "$1"
-			export @LDPRELOAD@="`echo -n $@LDPRELOAD@ | sed "s#$SHLIB *##"`"
+			export @LDPRELOAD@="$(printf '%s' "$@LDPRELOAD@" | sed "s#$SHLIB *##")"
 			if [ -z "$@LDPRELOAD@" ]; then
 				unset @LDPRELOAD@
 				case "$OSTYPE" in
@@ -248,7 +338,7 @@ do
 			break
 			;;
 		show|sh)
-			echo "@LDPRELOAD@=\"$@LDPRELOAD@\""
+			printf '%s="%s"\n' "@LDPRELOAD@" "$@LDPRELOAD@"
 			break
 			;;
 		-h|--help)
