@@ -301,6 +301,7 @@ LIBC_GETHOSTBYADDR_R_RET_TYPE tsocks_gethostbyaddr_r(LIBC_GETHOSTBYADDR_R_SIG)
 
 	he->h_aliases = NULL;
 	he->h_length = strlen(he->h_name);
+	he->h_addrtype = type;
 	/* Assign the address list within the data of the given buffer. */
 	data->addr_list[0] = (char *) addr;
 	data->addr_list[1] = NULL;

@@ -26,7 +26,7 @@
 #include <tap/tap.h>
 #include "helpers.h"
 
-#define NUM_TESTS 4
+#define NUM_TESTS 5
 
 struct test_host {
 	const char *name;
@@ -76,26 +76,56 @@ static void test_gethostbyname(const struct test_host *host)
 	return;
 }
 
+static void test_gethostbyaddr_r(const struct test_host *host)
+{
+  int result;
+  in_addr_t addr;
+  struct hostent ret;
+  char buf[1024];
+  int buflen = sizeof buf;
+  struct hostent *result_entp;
+  int h_errno;
+
+  assert(host);
+  diag("gethostbyaddr_r test");
+
+  addr = inet_addr(host->ip);
+	result = gethostbyaddr_r((const void *)&addr,
+				INET_ADDRSTRLEN, AF_INET, &ret, buf, buflen, &result_entp, &h_errno);
+
+  if (result) {
+    fail("Resolving address %s: %d", host->ip, result);
+  }
+
+  if (strcmp(host->name, result_entp->h_name) != 0) {
+    fail("Wrong resolved name: %s", result_entp->h_name);
+  }
+
+  if (result_entp->h_addrtype != AF_INET) {
+    fail("Wrong resolved address family: %d", result_entp->h_addrtype);
+  }
+
+  ok(1, "Resolved address");
+}
+
 static void test_gethostbyaddr(const struct test_host *host)
 {
 	struct hostent *he;
-    in_addr_t addr;
+  in_addr_t addr;
 
 	assert(host);
 
 	diag("gethostbyaddr test");
 
-    addr = inet_addr(host->ip);
-
-    he = gethostbyaddr((const void *)&addr, INET_ADDRSTRLEN, AF_INET);
-    if (he) {
-		ok(strcmp(host->name, he->h_name) == 0,
-				"Resolving address %s", host->ip);
-    } else {
+	addr = inet_addr(host->ip);
+	he = gethostbyaddr((const void *)&addr, INET_ADDRSTRLEN, AF_INET);
+	if (he) {
+		ok(strcmp(host->name, he->h_name) == 0, "Resolving address %s", host->ip);
+	} else {
 		fail("Resolving address %s", host->ip);
 	}
 
-    return;
+	return;
 }
 
 static void test_getaddrinfo(const struct test_host *host)
@@ -148,6 +178,7 @@ int main(int argc, char **argv)
 	test_getaddrinfo(&tor_check);
 	test_gethostbyname(&tor_dir_auth1);
 	test_gethostbyaddr(&tor_dir_auth2);
+	test_gethostbyaddr_r(&tor_dir_auth2);
 	test_getaddrinfo(&tor_localhost);
 
 end:
