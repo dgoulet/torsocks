@@ -60,7 +60,7 @@ int tsocks_validate_socket(int sockfd, const struct sockaddr *addr)
 	 * to allow AF_UNIX/_LOCAL socket to work with torsocks.
 	 */
 	if (addr->sa_family != AF_INET && addr->sa_family != AF_INET6) {
-		DBG("[conect] Connection is not IPv4/v6. Ignoring.");
+		DBG("[connect] Connection is not IPv4/v6. Ignoring.");
 		/* Ask the call to use the libc connect. */
 		goto libc_call;
 	}

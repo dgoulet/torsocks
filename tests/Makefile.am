@@ -30,7 +30,7 @@ test_socket_LDADD = $(LIBTAP) $(LIBTORSOCKS)
 test_connect_SOURCES = test_connect.c
 test_connect_LDADD = $(LIBTAP) $(LIBTORSOCKS)
 
-test_fd_passing_SOURCES = test_fd_passing.c
+test_fd_passing_SOURCES = test_fd_passing.c $(HELPER_SOURCES)
 test_fd_passing_LDADD = $(LIBTAP) $(LIBTORSOCKS) -lpthread
 
 test_getpeername_SOURCES = test_getpeername.c $(HELPER_SOURCES)
