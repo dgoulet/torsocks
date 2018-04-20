@@ -145,20 +145,22 @@ int log_init(int level, const char *filepath, enum log_time_status t_status)
 	}
 
 	if (filepath) {
-		logconfig.fp = fopen(filepath, "a");
-		if (!logconfig.fp) {
-			fprintf(stderr, "[tsocks] Unable to open log file %s\n", filepath);
-			ret = -errno;
-			goto error;
-		}
-
 		logconfig.filepath = strdup(filepath);
 		if (!logconfig.filepath) {
 			perror("[tsocks] log init strdup");
 			ret = -errno;
-			fclose(logconfig.fp);
 			goto error;
 		}
+
+		logconfig.fp = fopen(filepath, "a");
+		if (!logconfig.fp) {
+			fprintf(stderr, "[tsocks] Unable to open log file %s\n", filepath);
+			free(logconfig.filepath);
+			logconfig.filepath = NULL;
+			ret = -errno;
+			goto error;
+		}
+		setbuf(logconfig.fp, NULL);
 	} else {
 		/* The default output is stderr if no filepath is given. */
 		ret = fileno(stderr);
@@ -182,12 +184,22 @@ ATTR_HIDDEN
 void log_destroy(void)
 {
 	free(logconfig.filepath);
-	if (logconfig.fp) {
-		int ret;
+	logconfig.filepath = NULL;
 
-		ret = fclose(logconfig.fp);
-		if (ret) {
-			perror("[tsocks] fclose log destroy");
-		}
+	/* Don't call fclose() because torsocks fclose() generates log messages and
+	 * so calling it here could cause a loop. Just zero out the fp so it won't
+	 * be used again. */
+	logconfig.fp = NULL;
+}
+
+/*
+ * Clean up if the fd for the log file gets closed.
+ */
+ATTR_HIDDEN
+void log_fd_close_notify(int fd)
+{
+	if (fd >= 0 && logconfig.fp && (fd == fileno(logconfig.fp))) {
+		log_print("[tsocks] Log file descriptor closed. Stopping logging.\n");
+		log_destroy();
 	}
 }

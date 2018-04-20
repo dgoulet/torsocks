@@ -52,6 +52,12 @@ LIBC_CLOSE_RET_TYPE tsocks_close(LIBC_CLOSE_SIG)
 		connection_put_ref(conn);
 	}
 
+	/*
+	 * Let the log system detect when the log file fd is about to be
+	 * closed and clean up.
+	 */
+	log_fd_close_notify(fd);
+
 	/* Return the original libc close. */
 	return tsocks_libc_close(fd);
 }

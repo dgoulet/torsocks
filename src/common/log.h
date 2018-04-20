@@ -51,6 +51,7 @@ extern int tsocks_loglevel;
 void log_print(const char *fmt, ...);
 int log_init(int level, const char *filepath, enum log_time_status t_status);
 void log_destroy(void);
+void log_fd_close_notify(int fd);
 
 #define __tsocks_print(level, fmt, args...) \
 	do { \
