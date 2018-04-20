@@ -126,6 +126,9 @@ void tsocks_once(tsocks_once_t *o, void (*init_routine)(void));
 #ifndef __NR_fork
 #define __NR_fork -18
 #endif
+#ifndef __NR_memfd_create
+#define __NR_memfd_create -19
+#endif
 
 #define TSOCKS_NR_SOCKET    __NR_socket
 #define TSOCKS_NR_CONNECT   __NR_connect
@@ -145,6 +148,7 @@ void tsocks_once(tsocks_once_t *o, void (*init_routine)(void));
 #define TSOCKS_NR_GETTIMEOFDAY __NR_gettimeofday
 #define TSOCKS_NR_CLOCK_GETTIME __NR_clock_gettime
 #define TSOCKS_NR_FORK      __NR_fork
+#define TSOCKS_NR_MEMFD_CREATE __NR_memfd_create
 
 /*
  * Despite glibc providing wrappers for these calls for a long time
