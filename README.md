@@ -7,9 +7,13 @@ Torsocks allows you to use most applications in a safe way with Tor. It ensures
 that DNS requests are handled safely and explicitly rejects any traffic other
 than TCP from the application you're using.
 
-Torsocks is an ELF shared library that is loaded before all others. The library
-overrides every needed Internet communication libc function calls such as
-connect(2) or gethostbyname(3).
+Torsocks is an ELF shared library that is loaded before all others. The
+library overrides every needed Internet communication libc function calls such
+as connect(2) or gethostbyname(3).
+
+BE ADVISE: It uses the LD\_PRELOAD mechanism (man ld.so.8) which means that if
+the application is not using the libc or for instance uses raw syscalls,
+torsocks will be useless and the traffic will not go through Tor.
 
 This process is transparent to the user and if torsocks detects any
 communication that can't go through the Tor network such as UDP traffic, for
@@ -20,7 +24,7 @@ will force the application to quit and stop everything.
 Requirements
 -----------------
 
-    - autoconf
+	- autoconf
 	- automake
 	- libtool
 	- gcc
