@@ -165,7 +165,7 @@ int socks5_connect(struct connection *conn)
 	 * the right socket family. Thus, trying to establish a connection to a
 	 * remote IPv6, we have to connect to the Tor daemon in v6.
 	 */
-	switch (conn->dest_addr.domain) {
+	switch (tsocks_config.socks5_addr.domain) {
 	case CONNECTION_DOMAIN_NAME:
 		/*
 		 * For a domain name such as an onion address, use the default IPv4 to
