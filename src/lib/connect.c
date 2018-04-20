@@ -156,10 +156,11 @@ LIBC_CONNECT_RET_TYPE tsocks_connect(LIBC_CONNECT_SIG)
 	onion_pool_unlock(&tsocks_onion_pool);
 	if (on_entry) {
 		/*
-		 * Create a connection without a destination address since we will set
+		 * Create a connection with the onion IP cookie since getpeername()
+		 * might need it, and set connection domain and hostname to use
 		 * the onion address name found before.
 		 */
-		new_conn = connection_create(sockfd, NULL);
+		new_conn = connection_create(sockfd, addr);
 		if (!new_conn) {
 			errno = ENOMEM;
 			goto error;
