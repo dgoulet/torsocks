@@ -30,8 +30,6 @@
 
 static struct socks5_method_req method_req;
 static struct socks5_request req;
-static struct socks5_request_ipv4 req_ipv4;
-static struct socks5_request_ipv6 req_ipv6;
 static struct socks5_request_domain req_name;
 static struct socks5_request_resolve req_resolve;
 static struct socks5_request_resolve_ptr req_resolve_ptr;
@@ -138,37 +136,12 @@ static ssize_t socks5_recv_method_no_accept_stub(int fd, void *buf, size_t len)
  * send_connect_request test doubles
  */
 
-static ssize_t socks5_send_connect_request_ipv4_spy(int fd, const void *buf,
-		size_t len)
-{
-	ssize_t buf_len = 0;
-
-	set_socks5_request(buf);
-	buf_len += sizeof(struct socks5_request);
-
-	req_ipv4 = (*(struct socks5_request_ipv4 *) (buf + buf_len));
-
-	return 1;
-}
-
-static ssize_t socks5_send_connect_request_ipv6_spy(int fd, const void *buf,
-		size_t len)
-{
-	ssize_t buf_len = 0;
-
-	set_socks5_request(buf);
-	buf_len += sizeof(struct socks5_request);
-
-	req_ipv6 = (*(struct socks5_request_ipv6 *) (buf + buf_len));
-
-	return 1;
-}
-
 static ssize_t socks5_send_connect_request_domain_spy(int fd, const void *buf,
 		size_t len)
 {
 	ssize_t buf_len = 0;
 
+	memset(&req_name, 0, sizeof(req_name));
 	set_socks5_request(buf);
 	buf_len += sizeof(struct socks5_request);
 
@@ -597,24 +570,19 @@ static void test_socks5_send_connect_request(void)
 {
 	int ret;
 	struct connection *conn_stub;
-	char ip[INET6_ADDRSTRLEN];
 
 	conn_stub = get_connection_stub();
-	socks5_init(socks5_send_connect_request_ipv4_spy, NULL);
+	socks5_init(socks5_send_connect_request_domain_spy, NULL);
 
 	ret = socks5_send_connect_request(conn_stub);
-
-	inet_ntop(AF_INET,
-		(struct sockaddr_in *)&req_ipv4.addr,
-		ip, INET6_ADDRSTRLEN);
 
 	ok(ret == 0 &&
 		req.ver == SOCKS5_VERSION &&
 		req.cmd == SOCKS5_CMD_CONNECT &&
 		req.rsv == 0 &&
-		req.atyp == SOCKS5_ATYP_IPV4 &&
-		strncmp(ip, "127.0.0.1", INET6_ADDRSTRLEN) == 0 &&
-		req_ipv4.port == htons(9050),
+		req.atyp == SOCKS5_ATYP_DOMAIN &&
+		strncmp((char *) req_name.name, "127.0.0.1", INET6_ADDRSTRLEN) == 0 &&
+		req_name.port == htons(9050),
 		"socks5 send connect request IPv4");
 
 	connection_destroy(conn_stub);
@@ -623,21 +591,17 @@ static void test_socks5_send_connect_request(void)
 	/* IPv6 */
 
 	conn_stub = get_connection_ipv6_stub();
-	socks5_init(socks5_send_connect_request_ipv6_spy, NULL);
+	socks5_init(socks5_send_connect_request_domain_spy, NULL);
 
 	ret = socks5_send_connect_request(conn_stub);
-
-	inet_ntop(AF_INET6,
-		(struct sockaddr_in *)&req_ipv6.addr,
-		ip, INET6_ADDRSTRLEN);
 
 	ok(ret == 0 &&
 		req.ver == SOCKS5_VERSION &&
 		req.cmd == SOCKS5_CMD_CONNECT &&
 		req.rsv == 0 &&
-		req.atyp == SOCKS5_ATYP_IPV6 &&
-		strncmp(ip, "::1", INET6_ADDRSTRLEN) == 0 &&
-		req_ipv6.port == htons(9050),
+		req.atyp == SOCKS5_ATYP_DOMAIN &&
+		strncmp((char *) req_name.name, "::1", INET6_ADDRSTRLEN) == 0 &&
+		req_name.port == htons(9050),
 		"socks5 send connect request IPv6");
 
 	/* Domain name */

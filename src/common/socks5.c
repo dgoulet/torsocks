@@ -385,75 +385,60 @@ int socks5_send_connect_request(struct connection *conn)
 	unsigned char buffer[1500];
 	ssize_t buf_len, ret_send;
 	struct socks5_request msg;
+	struct socks5_request_domain req_name;
+	const char *retp;
 
 	assert(conn);
 	assert(conn->fd >= 0);
 
+	memset(&req_name, 0, sizeof(req_name));
 	memset(buffer, 0, sizeof(buffer));
 	buf_len = sizeof(msg);
 
+	/* Set up the header part. It is always the same, even the address type as
+	 * Tor handles IPv4/IPv6 as a Domain Name so SafeSocks doesn't complain. For
+	 * this reason, we always send ATYP 0x03 (domain name) to Tor. */
 	msg.ver = SOCKS5_VERSION;
 	msg.cmd = SOCKS5_CMD_CONNECT;
 	/* Always zeroed. */
 	msg.rsv = 0;
+	msg.atyp = SOCKS5_ATYP_DOMAIN;
+	memcpy(buffer, &msg, buf_len);
 
+	/* Depending on the domain of the connection, we'll set the hostname
+	 * accordingly that is transforming the address into a text format. */
 	switch (conn->dest_addr.domain) {
 	case CONNECTION_DOMAIN_INET:
 	{
-		struct socks5_request_ipv4 req_ipv4;
-
-		msg.atyp = SOCKS5_ATYP_IPV4;
-		/* Copy the first part of the request. */
-		memcpy(buffer, &msg, buf_len);
-
-		/* Prepare the ipv4 payload to be copied in the send buffer. */
-		memcpy(req_ipv4.addr, &conn->dest_addr.u.sin.sin_addr,
-				sizeof(req_ipv4.addr));
-		req_ipv4.port = conn->dest_addr.u.sin.sin_port;
-
-		/* Copy ipv4 request portion in the buffer. */
-		memcpy(buffer + buf_len, &req_ipv4, sizeof(req_ipv4));
-		buf_len += sizeof(req_ipv4);
+		retp = inet_ntop(AF_INET, &conn->dest_addr.u.sin.sin_addr,
+				(char *) req_name.name, sizeof(req_name.name));
+		if (retp == NULL) {
+			ERR("Socks5 connection malformed IPv4");
+			ret = -EINVAL;
+			goto error;
+		}
+		req_name.port = conn->dest_addr.u.sin.sin_port;
 		break;
 	}
 	case CONNECTION_DOMAIN_INET6:
 	{
-		struct socks5_request_ipv6 req_ipv6;
-
-		msg.atyp = SOCKS5_ATYP_IPV6;
-		/* Copy the first part of the request. */
-		memcpy(buffer, &msg, buf_len);
-
-		/* Prepare the ipv6 payload to be copied in the send buffer. */
-		memcpy(req_ipv6.addr, &conn->dest_addr.u.sin6.sin6_addr,
-				sizeof(req_ipv6.addr));
-		req_ipv6.port = conn->dest_addr.u.sin6.sin6_port;
-
-		/* Copy ipv6 request portion in the buffer. */
-		memcpy(buffer + buf_len, &req_ipv6, sizeof(req_ipv6));
-		buf_len += sizeof(req_ipv6);
+		retp = inet_ntop(AF_INET6, &conn->dest_addr.u.sin6.sin6_addr,
+				(char *) req_name.name, sizeof(req_name.name));
+		if (retp == NULL) {
+			ERR("Socks5 connection malformed IPv4");
+			ret = -EINVAL;
+			goto error;
+		}
+		req_name.port = conn->dest_addr.u.sin6.sin6_port;
 		break;
 	}
 	case CONNECTION_DOMAIN_NAME:
 	{
-		struct socks5_request_domain req_name;
-
-		msg.atyp = SOCKS5_ATYP_DOMAIN;
-		/* Copy the first part of the request. */
-		memcpy(buffer, &msg, buf_len);
-
 		/* Setup domain name request buffer. */
 		req_name.len = strlen(conn->dest_addr.hostname.addr);
-		memcpy(req_name.name, conn->dest_addr.hostname.addr, req_name.len);
+		memcpy(req_name.name, conn->dest_addr.hostname.addr,
+						strlen(conn->dest_addr.hostname.addr));
 		req_name.port = conn->dest_addr.hostname.port;
-
-		/* Copy ipv6 request portion in the buffer. */
-		memcpy(buffer + buf_len, &req_name.len, sizeof(req_name.len));
-		buf_len += sizeof(req_name.len);
-		memcpy(buffer + buf_len, req_name.name, req_name.len);
-		buf_len += req_name.len;
-		memcpy(buffer + buf_len, &req_name.port, sizeof(req_name.port));
-		buf_len += sizeof(req_name.port);
 		break;
 	}
 	default:
@@ -461,6 +446,15 @@ int socks5_send_connect_request(struct connection *conn)
 		ret = -EINVAL;
 		goto error;
 	}
+
+	/* Common for everyone, copy the filled up request buffer. */
+	req_name.len = strlen((char *) req_name.name);
+	memcpy(buffer + buf_len, &req_name.len, sizeof(req_name.len));
+	buf_len += sizeof(req_name.len);
+	memcpy(buffer + buf_len, req_name.name, req_name.len);
+	buf_len += req_name.len;
+	memcpy(buffer + buf_len, &req_name.port, sizeof(req_name.port));
+	buf_len += sizeof(req_name.port);
 
 	DBG("Socks5 sending connect request to fd %d", conn->fd);
 
