@@ -26,7 +26,7 @@
 #include <tap/tap.h>
 #include "helpers.h"
 
-#define NUM_TESTS 5
+#define NUM_TESTS 6
 
 struct test_host {
 	const char *name;
@@ -74,6 +74,27 @@ static void test_gethostbyname(const struct test_host *host)
 	}
 
 	return;
+}
+
+static void test_gethostbyaddr_r_failed(void)
+{
+	int result;
+	in_addr_t addr;
+	struct hostent ret;
+	char buf[1024];
+	int buflen = sizeof buf;
+	struct hostent *result_entp;
+	int h_errno;
+
+	diag("gethostbyaddr_r test");
+
+	/* RFC 6890 - An address from TEST-NET-1.  Selected in hopes that it will
+		 +   * _not_ reverse resolve to anything.
+		 +   */
+	addr = inet_addr("192.0.2.1");
+	result = gethostbyaddr_r((const void *)&addr,
+				INET_ADDRSTRLEN, AF_INET, &ret, buf, buflen, &result_entp, &h_errno);
+	ok(0 != result, "Impossible reverse resolve failed as desired.");
 }
 
 static void test_gethostbyaddr_r(const struct test_host *host)
@@ -179,6 +200,7 @@ int main(int argc, char **argv)
 	test_gethostbyname(&tor_dir_auth1);
 	test_gethostbyaddr(&tor_dir_auth2);
 	test_gethostbyaddr_r(&tor_dir_auth2);
+	test_gethostbyaddr_r_failed();
 	test_getaddrinfo(&tor_localhost);
 
 end:

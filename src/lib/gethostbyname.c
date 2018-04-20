@@ -263,9 +263,12 @@ LIBC_GETHOSTBYADDR_R_RET_TYPE tsocks_gethostbyaddr_r(LIBC_GETHOSTBYADDR_R_SIG)
 	/* This call allocates hostname. On error, it's untouched. */
 	ret = tsocks_tor_resolve_ptr(addr, &data->hostname, type);
 	if (ret < 0) {
+		/* We can represent any IPv4 address in dotted quad notation in fewer than
+		 * 32 bytes (max should be 16 if we count a nul terminator). */
+		char addrbuf[32];
 		const char *ret_str;
 
-		ret_str = inet_ntop(type, addr, buf, buflen);
+		ret_str = inet_ntop(type, addr, &addrbuf[0], sizeof(addrbuf));
 		if (!ret_str) {
 			ret = HOST_NOT_FOUND;
 			if (errno == ENOSPC) {
