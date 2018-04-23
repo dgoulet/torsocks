@@ -199,7 +199,6 @@ ATTR_HIDDEN
 void log_fd_close_notify(int fd)
 {
 	if (fd >= 0 && logconfig.fp && (fd == fileno(logconfig.fp))) {
-		log_print("[tsocks] Log file descriptor closed. Stopping logging.\n");
 		log_destroy();
 	}
 }
