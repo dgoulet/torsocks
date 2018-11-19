@@ -1,3 +1,39 @@
+2018-11-19 torsocks 2.3.0
+	* Fix a bunch of stuff in the wrapper script, #24967
+	* gethostbyaddr_r: always assign result
+	* log: Remove log line when logging is stopped
+	* gethostbyaddr_r: Don't put garbage in data->hostname
+	* gethostbyaddr_r: Populate h_addrtype field
+	* log: Avoid crash or file corruption when closing logs
+	* connect: Always pass .onion IP cookie to connection object
+	* Merge remote-tracking branch 'yawning/bug23715'
+	* Make torsocks always connect to the configured Tor port
+	* test: Make getpeername test connect to moria1
+	* socks5: Always use ATYP 0x03 for CONNECT command
+	* Merge remote-tracking branch 'upstream/master'
+	* doc: Clarify the libc limitation in README
+	* accept4: Initialize libc symbol early
+	* Bug 23715: Support memfd_create(2).
+	* test: Detect if tor is running in test_fd_passing
+	* No tab in the README
+	* Merge remote-tracking branch 'debian/bugfix/typo-subsytem'
+	* Merge remote-tracking branch 'debian/bugfix/typo-catched'
+	* Merge remote-tracking branch 'debian/bugfix/typo-conect'
+	* doc: Add autogen.sh step to README
+	* Add a -q/--quiet to torsocks
+	* tests: Add a check for a running Tor
+	* Make cpp conditional for definition of handle_mmap match use
+	* utils: Add useful function for later use
+	* man: Some words were missing
+	* Remove clang warnings
+	* Add missing quotes to variable in torsocks.in
+	* Fix check_addr() to return either 0 or 1
+	* Ignore stderr for getcap command
+	* syscall: Add seccomp, gettimeofday, clock_gettime, fork
+	* Fix typo: conect → connect.
+	* Fix typo: subsytem → subsystem.
+	* Fix typo: catched → caught.
+
 2016-10-18 torsocks 2.2.0
 	* Use xz for dist tarball now
 	* Remove TODO as we use the bugtracker for those

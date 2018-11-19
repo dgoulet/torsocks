@@ -3,7 +3,7 @@
 ##############################################################################
 
 # Process this file with autoconf to produce a configure script.
-AC_INIT([torsocks], [2.2.0],[dgoulet@torproject.org],[],[https://torproject.org])
+AC_INIT([torsocks], [2.3.0],[dgoulet@torproject.org],[],[https://torproject.org])
 AC_CONFIG_AUX_DIR([config])
 AC_CANONICAL_TARGET
 # Get hostname and other information.
