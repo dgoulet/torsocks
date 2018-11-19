@@ -349,6 +349,9 @@ LIBC_GETHOSTBYNAME_R_RET_TYPE tsocks_gethostbyname_r(LIBC_GETHOSTBYNAME_R_SIG)
 		char padding[];
 	} *data;
 
+	/* result must be NULL if no entry is found or if an error occurs */
+	*result = NULL;
+
 	DBG("[gethostbyname_r] Requesting %s hostname", name);
 
 	if (!name) {
@@ -389,6 +392,9 @@ LIBC_GETHOSTBYNAME_R_RET_TYPE tsocks_gethostbyname_r(LIBC_GETHOSTBYNAME_R_SIG)
 	he->h_aliases = NULL;
 	he->h_length = sizeof(in_addr_t);
 	he->h_addrtype = AF_INET;
+
+	/* Assign result as specified by the documentation */
+	*result = he;
 
 	DBG("[gethostbyname_r] Hostname %s resolved to %u.%u.%u.%u", name,
 			ip & 0XFF, (ip >> 8) & 0XFF, (ip >> 16) & 0XFF, (ip >> 24) & 0xFF);
