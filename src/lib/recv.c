@@ -92,7 +92,7 @@ LIBC_RECVMSG_RET_TYPE tsocks_recvmsg(LIBC_RECVMSG_SIG)
 
 	do {
 		/* Just peek the data to inspect the payload for fd. */
-		ret = tsocks_libc_recvmsg(sockfd, &msg_hdr, MSG_PEEK);
+		ret = tsocks_libc_recvmsg(sockfd, &msg_hdr, MSG_PEEK | flags);
 	} while (ret < 0 && errno == EINTR);
 	if (ret < 0) {
 		/* Use the current errno set by the call above. */
