@@ -62,7 +62,7 @@ static int insert_onion_entry(struct onion_entry *entry,
 	assert(entry);
 	assert(pool);
 
-	if (pool->count > pool->size) {
+	if (pool->count >= pool->size) {
 		/* Double the size of the pool. */
 		ret = resize_onion_pool(pool, pool->size * 2);
 		if (ret < 0) {
