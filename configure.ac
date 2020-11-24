@@ -124,7 +124,7 @@ AS_CASE([$host_os],
 	[linux*|kfreebsd*-gnu|freebsd*],
 	[
 		libc_name=`ldd /usr/bin/yes | grep 'libc\.' | cut -d ' ' -f 1 | tr -d '\t'`
-		if test "${libc_name}" == ""; then
+		if test "${libc_name}" = ""; then
 			# Default libc on most system.
 			libc_name="libc.so.6"
 		fi
