@@ -95,6 +95,9 @@ static void test_gethostbyaddr_r_failed(void)
 	result = gethostbyaddr_r((const void *)&addr,
 				INET_ADDRSTRLEN, AF_INET, &ret, buf, buflen, &result_entp, &h_errno);
 	ok(0 != result, "Impossible reverse resolve failed as desired.");
+    if (result_entp) {
+        fail("Result pointer should be NULL on failed resolve")
+    }
 }
 
 static void test_gethostbyaddr_r(const struct test_host *host)

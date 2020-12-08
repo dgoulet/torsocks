@@ -310,14 +310,18 @@ LIBC_GETHOSTBYADDR_R_RET_TYPE tsocks_gethostbyaddr_r(LIBC_GETHOSTBYADDR_R_SIG)
 	data->addr_list[1] = NULL;
 	he->h_addr_list = data->addr_list;
 
-	if (result) {
-		*result = he;
-	}
-
 	/* Everything went good. */
 	ret = 0;
 
 error:
+	if (result) {
+		if (ret == 0) {
+			*result = he;
+		} else {
+			*result = NULL;
+		}
+	}
+
 	return ret;
 }
 
