@@ -30,16 +30,16 @@ LIBC_LISTEN_RET_TYPE tsocks_listen(LIBC_LISTEN_SIG)
 {
 	int ret;
 	socklen_t addrlen;
-	struct sockaddr sa;
+	struct sockaddr_storage ss;
 
 	if (tsocks_config.allow_inbound) {
 		/* Allowed by the user so directly go to the libc. */
 		goto libc_call;
 	}
 
-	addrlen = sizeof(sa);
+	addrlen = sizeof(ss);
 
-	ret = getsockname(sockfd, &sa, &addrlen);
+	ret = getsockname(sockfd, (struct sockaddr*)&ss, &addrlen);
 	if (ret < 0) {
 		PERROR("[listen] getsockname");
 		goto error;
@@ -49,12 +49,12 @@ LIBC_LISTEN_RET_TYPE tsocks_listen(LIBC_LISTEN_SIG)
 	 * Listen () on a Unix socket is allowed else we are going to try to match
 	 * it on INET localhost socket.
 	 */
-	if (sa.sa_family == AF_UNIX) {
+	if (ss.ss_family == AF_UNIX) {
 		goto libc_call;
 	}
 
 	/* Inbound localhost connections are allowed. */
-	ret = utils_sockaddr_is_localhost(&sa);
+	ret = utils_sockaddr_is_localhost((struct sockaddr*)&ss);
 	if (!ret) {
 		/*
 		 * Listen is completely denied here since this means that the
