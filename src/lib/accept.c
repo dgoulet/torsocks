@@ -29,17 +29,17 @@ TSOCKS_LIBC_DECL(accept, LIBC_ACCEPT_RET_TYPE, LIBC_ACCEPT_SIG)
 LIBC_ACCEPT_RET_TYPE tsocks_accept(LIBC_ACCEPT_SIG)
 {
 	int ret;
-	socklen_t sa_len;
-	struct sockaddr sa;
+	socklen_t ss_len;
+	struct sockaddr_storage ss;
 
 	if (tsocks_config.allow_inbound) {
 		/* Allowed by the user so directly go to the libc. */
 		goto libc_call;
 	}
 
-	sa_len = sizeof(sa);
+	ss_len = sizeof(ss);
 
-	ret = getsockname(sockfd, &sa, &sa_len);
+	ret = getsockname(sockfd, (struct sockaddr*)&ss, &ss_len);
 	if (ret < 0) {
 		PERROR("[accept] getsockname");
 		goto error;
@@ -49,12 +49,12 @@ LIBC_ACCEPT_RET_TYPE tsocks_accept(LIBC_ACCEPT_SIG)
 	 * accept() on a Unix socket is allowed else we are going to try to match
 	 * it on INET localhost socket.
 	 */
-	if (sa.sa_family == AF_UNIX) {
+	if (ss.ss_family == AF_UNIX) {
 		goto libc_call;
 	}
 
 	/* Inbound localhost connections are allowed. */
-	ret = utils_sockaddr_is_localhost(&sa);
+	ret = utils_sockaddr_is_localhost((struct sockaddr*)&ss);
 	if (!ret) {
 		/*
 		 * Accept is completely denied here since this means that the
@@ -97,17 +97,17 @@ TSOCKS_LIBC_DECL(accept4, LIBC_ACCEPT4_RET_TYPE, LIBC_ACCEPT4_SIG)
 LIBC_ACCEPT4_RET_TYPE tsocks_accept4(LIBC_ACCEPT4_SIG)
 {
 	int ret;
-	socklen_t sa_len;
-	struct sockaddr sa;
+	socklen_t ss_len;
+	struct sockaddr_storage ss;
 
 	if (tsocks_config.allow_inbound) {
 		/* Allowed by the user so directly go to the libc. */
 		goto libc_call;
 	}
 
-	sa_len = sizeof(sa);
+	ss_len = sizeof(ss);
 
-	ret = getsockname(sockfd, &sa, &sa_len);
+	ret = getsockname(sockfd, (struct sockaddr*)&ss, &ss_len);
 	if (ret < 0) {
 		PERROR("[accept4] getsockname");
 		goto error;
@@ -117,12 +117,12 @@ LIBC_ACCEPT4_RET_TYPE tsocks_accept4(LIBC_ACCEPT4_SIG)
 	 * accept4() on a Unix socket is allowed else we are going to try to match
 	 * it on INET localhost socket.
 	 */
-	if (sa.sa_family == AF_UNIX) {
+	if (ss.ss_family == AF_UNIX) {
 		goto libc_call;
 	}
 
 	/* Inbound localhost connections are allowed. */
-	ret = utils_sockaddr_is_localhost(&sa);
+	ret = utils_sockaddr_is_localhost((struct sockaddr*)&ss);
 	if (!ret) {
 
 		/*
