@@ -47,6 +47,9 @@ struct configuration tsocks_config;
  */
 struct onion_pool tsocks_onion_pool;
 
+/* Indicate if libc symbols were initialized previously. */
+static TSOCKS_INIT_ONCE(init_libc_symbols_once);
+
 /* Indicate if the library was initialized previously. */
 static TSOCKS_INIT_ONCE(init_once);
 
@@ -321,7 +324,7 @@ static void tsocks_init(void)
 	 * We need to save libc symbols *before* we override them so torsocks can
 	 * use the original libc calls.
 	 */
-	init_libc_symbols();
+	tsocks_once(&init_libc_symbols_once, &init_libc_symbols);
 
 	/*
 	 * Read configuration file and set the global config.
@@ -693,6 +696,14 @@ void *tsocks_find_libc_symbol(const char *symbol,
 	}
 
 	return fct_ptr;
+}
+
+/*
+ * Initialize libc symbols.
+ */
+void __attribute__((constructor)) tsocks_initialize_libc_symbols(void)
+{
+	tsocks_once(&init_libc_symbols_once, &init_libc_symbols);
 }
 
 /*

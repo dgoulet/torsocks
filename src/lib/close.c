@@ -68,7 +68,7 @@ LIBC_CLOSE_RET_TYPE tsocks_close(LIBC_CLOSE_SIG)
 LIBC_CLOSE_DECL
 {
 	if (!tsocks_libc_close) {
-		tsocks_initialize();
+		tsocks_initialize_libc_symbols();
 	}
 	return tsocks_close(LIBC_CLOSE_ARGS);
 }
